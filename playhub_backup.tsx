@@ -38,9 +38,7 @@ export const PlayHub: React.FC = () => {
   const [gameKey, setGameKey] = useState<number>(1);
   const [moveHistory, setMoveHistory] = useState<string[]>([]);
   const [gameStatus, setGameStatus] = useState<string | null>(null);
-  const [eloChangeMsg, setEloChangeMsg] = useState<string | null>(null);
   const [gameResult, setGameResult] = useState<'1-0' | '0-1' | '1/2-1/2' | '*'>('*');
-  const [myColor, setMyColor] = useState<'w' | 'b'>('w');
   const [lastPgn, setLastPgn] = useState<string>('');
   const [showReviewModal, setShowReviewModal] = useState<boolean>(false);
   const [isBotThinking, setIsBotThinking] = useState<boolean>(false);
@@ -148,29 +146,15 @@ export const PlayHub: React.FC = () => {
         setIsMatchmaking(false);
         const myElo = user ? user.stats.rapid : 1500;
         const diff = Math.floor(Math.random() * 41) - 20; // -20 to +20 deviation
-        const oppElo = myElo + diff;
-
-        let playAsBlack = false;
-        if (myElo > oppElo) {
-          playAsBlack = Math.random() < 0.75;
-        } else if (myElo < oppElo) {
-          playAsBlack = Math.random() > 0.75;
-        } else {
-          playAsBlack = Math.random() < 0.5;
-        }
-
-        setMyColor(playAsBlack ? 'b' : 'w');
-
         setOnlineOpponent({
           name: 'Grandmaster_X',
-          rating: oppElo,
+          rating: myElo + diff,
           country: '🇬🇧',
           avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80'
         });
         resetGameStates();
       }, 2500);
     } else {
-      setMyColor('w');
       resetGameStates();
     }
   };
@@ -180,7 +164,6 @@ export const PlayHub: React.FC = () => {
     setGameKey((prev) => prev + 1);
     setMoveHistory([]);
     setGameStatus(null);
-    setEloChangeMsg(null);
     setGameResult('*');
     setIsClockRunning(false);
     setCurrentTurn('w');
@@ -258,7 +241,7 @@ export const PlayHub: React.FC = () => {
           }
         }
       } catch (err) {
-        void('Bot move calculation error:', err);
+        console.error('Bot move calculation error:', err);
       } finally {
         setIsBotThinking(false);
       }
@@ -297,9 +280,9 @@ export const PlayHub: React.FC = () => {
     setGameStatus(result.reason);
     setLastPgn(result.pgn || chessRef.current.pgn());
 
-    const isWin = result.winner === myColor && !result.isAbort;
-    const isLoss = result.winner !== myColor && result.winner !== 'draw' && !result.isAbort;
-    const resString = result.isAbort ? '*' : isWin ? (myColor === 'w' ? '1-0' : '0-1') : isLoss ? (myColor === 'w' ? '0-1' : '1-0') : '1/2-1/2';
+    const isWin = result.winner === 'w' && !result.isAbort;
+    const isLoss = result.winner === 'b' && !result.isAbort;
+    const resString = result.isAbort ? '*' : isWin ? '1-0' : isLoss ? '0-1' : '1/2-1/2';
     setGameResult(resString);
 
     const tcCategory: 'bullet' | 'blitz' | 'rapid' = (() => {
@@ -318,12 +301,8 @@ export const PlayHub: React.FC = () => {
         });
       } catch {}
       updateRating(tcCategory, +14);
-      setEloChangeMsg('+14 Elo (Win)');
     } else if (isLoss) {
       updateRating(tcCategory, -12);
-      setEloChangeMsg('-12 Elo (Loss)');
-    } else {
-      setEloChangeMsg('0 Elo (Draw/Abort)');
     }
 
     if (user && !result.isAbort) {
@@ -567,9 +546,9 @@ export const PlayHub: React.FC = () => {
                         <span>{onlineOpponent.name}</span>
                       </>
                     ) : (
-                      `Player 2 (${myColor === 'w' ? 'Black' : 'White'})`
+                      'Player 2 (Online)'
                     )
-                  ) : `Player 2 (${myColor === 'w' ? 'Black' : 'White'})`}
+                  ) : 'Player 2 (Black)'}
                   {mode === 'bot' && (
                     <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">
                       BOT
@@ -582,23 +561,23 @@ export const PlayHub: React.FC = () => {
               </div>
             </div>
 
-            {/* Top Clock */}
+            {/* Black Clock */}
             <div
               className={`px-4 py-1.5 rounded-xl font-mono text-base font-black border transition-all ${
-                currentTurn === (myColor === 'w' ? 'b' : 'w') && isClockRunning
+                currentTurn === 'b' && isClockRunning
                   ? 'bg-red-500/20 text-red-300 border-red-500/80 shadow-md animate-pulse'
                   : 'bg-[#080d1a] text-slate-400 border-slate-800'
               }`}
             >
-              {formatClock(myColor === 'w' ? blackTime : whiteTime)}
+              {formatClock(blackTime)}
             </div>
           </div>
 
           {/* CHESSBOARD */}
           <ChessBoard
             key={`game-${gameKey}`}
-            orientation={myColor}
-            playerColor={mode === 'bot' ? 'w' : mode === 'online' ? myColor : 'both'}
+            orientation="w"
+            playerColor={mode === 'bot' ? 'w' : 'both'}
             customTheme={boardTheme}
             onMove={handleMoveMade}
             onGameOver={handleGameOver}
@@ -619,7 +598,7 @@ export const PlayHub: React.FC = () => {
               <div>
                 <div className="text-xs font-bold text-white flex items-center gap-1.5 font-cinzel">
                   <span>{user?.countryFlag || '🇮🇳'}</span>
-                  <span>{user?.username || `Player 1 (${myColor === 'w' ? 'White' : 'Black'})`}</span>
+                  <span>{user?.username || 'Player 1 (White)'}</span>
                   <span className="text-[9px] px-1.5 py-0.2 rounded bg-gradient-to-r from-blue-600 to-red-600 text-white font-black">
                     YOU
                   </span>
@@ -660,12 +639,12 @@ export const PlayHub: React.FC = () => {
               )}
               <div
                 className={`px-4 py-1.5 rounded-xl font-mono text-base font-black border transition-all ${
-                  currentTurn === myColor && isClockRunning
+                  currentTurn === 'w' && isClockRunning
                     ? 'bg-blue-500/20 text-blue-300 border-blue-500/80 shadow-md'
                     : 'bg-[#080d1a] text-slate-400 border-slate-800'
                 }`}
               >
-                {formatClock(myColor === 'w' ? whiteTime : blackTime)}
+                {formatClock(whiteTime)}
               </div>
             </div>
           </div>
@@ -678,13 +657,6 @@ export const PlayHub: React.FC = () => {
             <div className="p-4 rounded-2xl bg-gradient-to-r from-blue-950/90 to-red-950/90 border-2 border-amber-500/80 text-center space-y-2 shadow-2xl">
               <h4 className="text-sm font-black text-amber-300 font-cinzel">Game Concluded</h4>
               <p className="text-xs text-slate-200">{gameStatus}</p>
-              {eloChangeMsg && (
-                <div className="inline-block px-3 py-1 bg-black/40 rounded-full border border-slate-700/50 mt-1 mb-2">
-                  <span className={`text-xs font-black ${eloChangeMsg.startsWith('+') ? 'text-green-400' : eloChangeMsg.startsWith('-') ? 'text-red-400' : 'text-slate-400'}`}>
-                    Elo Change: {eloChangeMsg}
-                  </span>
-                </div>
-              )}
               <div className="flex items-center justify-center gap-2 pt-1">
                 <button
                   onClick={handleStartNewGame}

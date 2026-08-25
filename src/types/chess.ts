@@ -189,7 +189,7 @@ export interface ClubMessage {
 export interface Club {
   id: string;
   name: string;
-  tag: string; // e.g. "VAJRA"
+  tag: string; // e.g. "ROYAL"
   description: string;
   banner: string;
   icon: string;

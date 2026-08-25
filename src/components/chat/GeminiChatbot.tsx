@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { motion } from 'motion/react';
 import { ChessPiece } from '../chess/ChessPiece';
 import { Send, Bot, Sparkles, X, Minimize2, Maximize2, Trash2, HelpCircle, ChevronRight, Compass } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
@@ -113,7 +114,7 @@ I am aware of your live chessboard, active tactical puzzles, and match moves. As
 
       setMessages((prev) => [...prev, botMsg]);
     } catch (err: any) {
-      console.error('Chat error:', err);
+      void('Chat error:', err);
       const errorMsg: ChatMessage = {
         id: `gemini_err_${Date.now()}`,
         sender: 'gemini',
@@ -135,12 +136,11 @@ I am aware of your live chessboard, active tactical puzzles, and match moves. As
   ];
 
   return (
-    <>
+    <motion.div drag dragMomentum={false} className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2">
       {/* Floating Circle Button: White Pawn on Black Background with Gold Ring */}
-      <div className="fixed bottom-6 right-6 z-50">
-        {!isOpen && (
-          <button
-            id="gemini-chatbot-trigger-btn"
+      {!isOpen && (
+        <button
+          id="gemini-chatbot-trigger-btn"
             onClick={() => setIsOpen(true)}
             className="group relative w-14 h-14 rounded-full bg-black border-2 border-amber-400 shadow-[0_0_25px_rgba(245,158,11,0.45)] hover:shadow-[0_0_35px_rgba(245,158,11,0.7)] flex items-center justify-center transition-all duration-300 transform hover:scale-110 active:scale-95 cursor-pointer"
             title="Chat with Gemini Chess Coach (Content-Aware)"
@@ -161,12 +161,11 @@ I am aware of your live chessboard, active tactical puzzles, and match moves. As
             </span>
           </button>
         )}
-      </div>
 
       {/* Floating / Expanded Chat Window */}
       {isOpen && (
         <div
-          className={`fixed bottom-6 right-6 z-50 bg-[#10141e] border-2 border-amber-500/60 rounded-2xl shadow-[0_15px_50px_rgba(0,0,0,0.8)] backdrop-blur-xl flex flex-col overflow-hidden transition-all duration-300 ${
+          className={`bg-[#10141e] border-2 border-amber-500/60 rounded-2xl shadow-[0_15px_50px_rgba(0,0,0,0.8)] backdrop-blur-xl flex flex-col overflow-hidden transition-all duration-300 ${
             isExpanded ? 'w-[92vw] sm:w-[620px] h-[82vh]' : 'w-[92vw] sm:w-[420px] h-[560px]'
           }`}
         >
@@ -322,6 +321,6 @@ I am aware of your live chessboard, active tactical puzzles, and match moves. As
           </form>
         </div>
       )}
-    </>
+    </motion.div>
   );
 };

@@ -23,6 +23,7 @@ interface TournamentContextType {
   joinTournament: (tournamentId: string, userClubIds?: string[]) => JoinTournamentResult;
   leaveTournament: (tournamentId: string) => { success: boolean; message: string };
   withdrawTournament: (tournamentId: string) => { success: boolean; message: string };
+  rejoinTournament: (tournamentId: string) => { success: boolean; message: string };
   startTournament: (tournamentId: string) => void;
   simulateNextRound: (tournamentId: string) => void;
   completeTournament: (tournamentId: string) => void;
@@ -30,8 +31,8 @@ interface TournamentContextType {
 
 const initialTournaments: Tournament[] = [
   {
-    id: 'tour_vajra_club_championship',
-    name: 'Vajra Brotherhood Club Cup',
+    id: 'tour_royal_club_championship',
+    name: 'Royal Brotherhood Club Cup',
     format: 'swiss',
     timeControl: '10+0',
     totalRounds: 4,
@@ -43,7 +44,7 @@ const initialTournaments: Tournament[] = [
     hostName: 'ArjunaWarrior',
     isClubOnly: true,
     clubId: 'club_1',
-    clubName: 'Vajra Chess Brotherhood',
+    clubName: 'Royal Chess Brotherhood',
     participants: [
       { id: 'user_master_1', username: 'ArjunaWarrior', rating: 1650, avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0 },
       { id: 'bot_1', username: 'Grandmaster Vishy', rating: 1720, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0, isBot: true },
@@ -68,7 +69,7 @@ const initialTournaments: Tournament[] = [
       { id: 'user_master_1', username: 'ArjunaWarrior', rating: 1650, avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80', score: 2.5, wins: 2, draws: 1, losses: 0, streak: 2 },
       { id: 'bot_1', username: 'Grandmaster Vishy', rating: 1720, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80', score: 3.0, wins: 3, draws: 0, losses: 0, streak: 3, isBot: true },
       { id: 'bot_2', username: 'Sage Chanakya', rating: 1610, avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80', score: 2.0, wins: 2, draws: 0, losses: 1, streak: 1, isBot: true },
-      { id: 'bot_3', username: 'Gaja Tactician', rating: 1540, avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=200&q=80', score: 1.5, wins: 1, draws: 1, losses: 1, streak: 0, isBot: true },
+      { id: 'bot_3', username: 'Grand Tactician', rating: 1540, avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=200&q=80', score: 1.5, wins: 1, draws: 1, losses: 1, streak: 0, isBot: true },
       { id: 'bot_4', username: 'Bhisma Defender', rating: 1480, avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=200&q=80', score: 1.0, wins: 1, draws: 0, losses: 2, streak: 0, isBot: true },
       { id: 'bot_5', username: 'Karna The Archer', rating: 1590, avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=200&q=80', score: 1.0, wins: 1, draws: 0, losses: 2, streak: 0, isBot: true },
       { id: 'bot_6', username: 'Drona Strategist', rating: 1680, avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&q=80', score: 0.5, wins: 0, draws: 1, losses: 2, streak: 0, isBot: true },
@@ -78,7 +79,7 @@ const initialTournaments: Tournament[] = [
   },
   {
     id: 'tour_arena_blitz',
-    name: 'Gaja Elephant Arena',
+    name: 'Grand Elephant Arena',
     format: 'arena',
     timeControl: '3+0',
     totalRounds: 10,
@@ -114,7 +115,7 @@ const initialTournaments: Tournament[] = [
       { id: 'user_master_1', username: 'ArjunaWarrior', rating: 1650, avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0 },
       { id: 'bot_1', username: 'Grandmaster Vishy', rating: 1720, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0, isBot: true },
       { id: 'bot_2', username: 'Sage Chanakya', rating: 1610, avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0, isBot: true },
-      { id: 'bot_3', username: 'Gaja Tactician', rating: 1540, avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0, isBot: true }
+      { id: 'bot_3', username: 'Grand Tactician', rating: 1540, avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0, isBot: true }
     ],
     matches: []
   },
@@ -202,7 +203,7 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const botParticipants: TournamentParticipant[] = [
       { id: 'bot_1', username: 'Grandmaster Vishy', rating: 1720, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0, isBot: true },
       { id: 'bot_2', username: 'Sage Chanakya', rating: 1610, avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0, isBot: true },
-      { id: 'bot_3', username: 'Gaja Tactician', rating: 1540, avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0, isBot: true },
+      { id: 'bot_3', username: 'Grand Tactician', rating: 1540, avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0, isBot: true },
       { id: 'bot_4', username: 'Bhisma Defender', rating: 1480, avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0, isBot: true },
       { id: 'bot_5', username: 'Karna The Archer', rating: 1590, avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0, isBot: true },
       { id: 'bot_6', username: 'Drona Strategist', rating: 1680, avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0, isBot: true },
@@ -350,6 +351,26 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return { success: true, message: `Successfully withdrawn from "${targetTour.name}".` };
   };
 
+  const rejoinTournament = (tournamentId: string): { success: boolean; message: string } => {
+    if (!user) {
+      return { success: false, message: 'Please sign in to manage tournament registrations.' };
+    }
+    setTournaments((prev) =>
+      prev.map((t) => {
+        if (t.id === tournamentId) {
+          return {
+            ...t,
+            participants: t.participants.map((p) =>
+              p.id === user.id ? { ...p, withdrawn: false } : p
+            )
+          };
+        }
+        return t;
+      })
+    );
+    return { success: true, message: 'Successfully rejoined tournament.' };
+  };
+
   const leaveTournament = withdrawTournament;
 
   const startTournament = (tournamentId: string) => {
@@ -454,6 +475,7 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         joinTournament,
         leaveTournament,
         withdrawTournament,
+        rejoinTournament,
         startTournament,
         simulateNextRound,
         completeTournament

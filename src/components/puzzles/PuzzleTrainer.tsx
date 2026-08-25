@@ -165,7 +165,7 @@ export const PuzzleTrainer: React.FC = () => {
       chessRef.current = tempChess;
       setPuzzleFen(tempChess.fen());
     } catch (e) {
-      console.error('Error revealing solution moves:', e);
+      void('Error revealing solution moves:', e);
     }
   };
 
@@ -230,7 +230,7 @@ export const PuzzleTrainer: React.FC = () => {
         });
         setPuzzleFen(chessRef.current.fen());
       } catch (err) {
-        console.error('Chess move error:', err);
+        void('Chess move error:', err);
       }
 
       const nextPlayerIdx = moveIndex + 1;

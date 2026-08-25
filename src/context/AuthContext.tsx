@@ -66,8 +66,8 @@ const defaultUser: UserProfile = {
     },
     {
       id: 'tm_2',
-      tournamentId: 'tour_gaja_arena',
-      tournamentName: 'Gaja Elephant Arena',
+      tournamentId: 'tour_grand_arena',
+      tournamentName: 'Grand Elephant Arena',
       format: 'arena',
       tier: 'silver',
       placement: 2,

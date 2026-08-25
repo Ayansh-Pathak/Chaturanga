@@ -95,7 +95,7 @@ export const GameReviewModal: React.FC<GameReviewModalProps> = ({
       setMoveList(parsedMoves);
       setCurrentMoveIndex(parsedMoves.length - 1);
     } catch (e) {
-      console.error('PGN Parse error:', e);
+      void('PGN Parse error:', e);
     }
 
     // Fetch Stockfish 18 + Gemini review from backend

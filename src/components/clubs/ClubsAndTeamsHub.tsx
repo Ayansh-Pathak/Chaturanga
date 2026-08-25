@@ -29,7 +29,8 @@ export const ClubsAndTeamsHub: React.FC = () => {
 
   const [filterType, setFilterType] = useState<'all' | 'clubs' | 'teams'>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedClub, setSelectedClub] = useState<Club>(clubs[0] || null);
+  const [selectedClubId, setSelectedClubId] = useState<string | null>(clubs[0]?.id || null);
+  const selectedClub = clubs.find((c) => c.id === selectedClubId) || clubs[0] || null;
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [chatInput, setChatInput] = useState('');
 
@@ -75,7 +76,7 @@ export const ClubsAndTeamsHub: React.FC = () => {
       isPrivate,
       clubPassword.trim()
     );
-    setSelectedClub(newClub);
+    setSelectedClubId(newClub.id);
     setShowCreateModal(false);
     setName('');
     setTag('');
@@ -210,7 +211,7 @@ export const ClubsAndTeamsHub: React.FC = () => {
               return (
                 <div
                   key={club.id}
-                  onClick={() => setSelectedClub(club)}
+                  onClick={() => setSelectedClubId(club.id)}
                   className={`p-4 rounded-2xl border transition-all cursor-pointer ${
                     isSelected
                       ? 'bg-gradient-to-br from-[#101b33] to-[#1e1026] border-blue-500/80 shadow-[0_0_20px_rgba(59,130,246,0.3)] ring-1 ring-blue-400/50'
@@ -226,9 +227,6 @@ export const ClubsAndTeamsHub: React.FC = () => {
                         <h4 className="text-sm font-bold text-white truncate font-cinzel">
                           {club.name}
                         </h4>
-                        <span className="text-[9px] font-extrabold px-1.5 py-0.2 rounded bg-blue-500/20 text-blue-300 border border-blue-500/40 uppercase">
-                          [{club.tag}]
-                        </span>
                         {club.isPrivate && (
                           <Lock size={12} className="text-amber-400" title="Password Protected" />
                         )}
@@ -276,9 +274,6 @@ export const ClubsAndTeamsHub: React.FC = () => {
                       <h2 className="text-xl sm:text-2xl font-black text-white font-cinzel">
                         {selectedClub.name}
                       </h2>
-                      <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-gradient-to-r from-blue-600 to-red-600 text-white shadow-sm">
-                        {selectedClub.tag}
-                      </span>
                       {selectedClub.isPrivate && (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
                           <Lock size={11} /> Password Protected
@@ -301,7 +296,7 @@ export const ClubsAndTeamsHub: React.FC = () => {
                   ) : (
                     <button
                       onClick={() => handleJoinClick(selectedClub)}
-                      className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-red-600 hover:from-blue-500 hover:to-red-500 text-white font-black text-xs shadow-lg transition-all active:scale-95 border border-blue-400/30"
+                      className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs shadow-lg transition-all active:scale-95 border border-blue-400/50"
                     >
                       <UserPlus size={16} /> Join {selectedClub.isTeam ? 'Team' : 'Club'}
                     </button>
@@ -362,43 +357,54 @@ export const ClubsAndTeamsHub: React.FC = () => {
 
               {/* Chat & Discussion Wall (7 Cols) */}
               <div className="md:col-span-7 p-5 rounded-2xl bg-gradient-to-b from-[#0c1427] to-[#120e1e] border border-blue-500/20 shadow-lg flex flex-col justify-between h-[360px]">
-                <div>
-                  <h3 className="text-xs font-black uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-1.5">
-                    <MessageSquare size={14} className="text-red-400" />
-                    Guild Wall & Strategy Chat
-                  </h3>
+                {isMember ? (
+                  <>
+                    <div>
+                      <h3 className="text-xs font-black uppercase tracking-wider text-slate-300 mb-3 flex items-center gap-1.5">
+                        <MessageSquare size={14} className="text-red-400" />
+                        Guild Wall & Strategy Chat
+                      </h3>
 
-                  <div className="space-y-2.5 overflow-y-auto max-h-56 pr-1">
-                    {selectedClub.messages.map((msg) => (
-                      <div key={msg.id} className="p-2.5 rounded-xl bg-[#090e1c] border border-slate-800/80 space-y-1">
-                        <div className="flex items-center justify-between text-[10px]">
-                          <span className="font-bold text-blue-300">{msg.authorName}</span>
-                          <span className="text-slate-500">{msg.createdAt}</span>
-                        </div>
-                        <p className="text-xs text-slate-200">{msg.content}</p>
+                      <div className="space-y-2.5 overflow-y-auto max-h-56 pr-1">
+                        {selectedClub.messages.map((msg) => (
+                          <div key={msg.id} className="p-2.5 rounded-xl bg-[#090e1c] border border-slate-800/80 space-y-1">
+                            <div className="flex items-center justify-between text-[10px]">
+                              <span className="font-bold text-blue-300">{msg.authorName}</span>
+                              <span className="text-slate-500">{msg.createdAt}</span>
+                            </div>
+                            <p className="text-xs text-slate-200">{msg.content}</p>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </div>
+                    </div>
 
-                {/* Input */}
-                <form onSubmit={handleSendMessage} className="pt-3 border-t border-slate-800 flex gap-2">
-                  <input
-                    type="text"
-                    value={chatInput}
-                    onChange={(e) => setChatInput(e.target.value)}
-                    placeholder={isMember ? 'Post announcement or message...' : 'Join to participate in chat'}
-                    disabled={!isMember}
-                    className="flex-1 px-3 py-2 rounded-xl bg-[#090e1c] border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-400 disabled:opacity-50"
-                  />
-                  <button
-                    type="submit"
-                    disabled={!isMember || !chatInput.trim()}
-                    className="p-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-red-600 hover:from-blue-500 hover:to-red-500 text-white transition-all disabled:opacity-50"
-                  >
-                    <Send size={15} />
-                  </button>
-                </form>
+                    {/* Input */}
+                    <form onSubmit={handleSendMessage} className="pt-3 border-t border-slate-800 flex gap-2">
+                      <input
+                        type="text"
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        placeholder="Post announcement or message..."
+                        className="flex-1 px-3 py-2 rounded-xl bg-[#090e1c] border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-400"
+                      />
+                      <button
+                        type="submit"
+                        disabled={!chatInput.trim()}
+                        className="p-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-red-600 hover:from-blue-500 hover:to-red-500 text-white transition-all disabled:opacity-50"
+                      >
+                        <Send size={15} />
+                      </button>
+                    </form>
+                  </>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center text-center opacity-60">
+                    <Lock size={40} className="text-slate-500 mb-3" />
+                    <h3 className="text-sm font-bold text-slate-300 mb-1">Members Only</h3>
+                    <p className="text-xs text-slate-500 max-w-xs">
+                      Join this {selectedClub.isTeam ? 'team' : 'club'} to view the strategy chat and post announcements.
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -504,7 +510,7 @@ export const ClubsAndTeamsHub: React.FC = () => {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Royal Gaja Brotherhood"
+                  placeholder="e.g. Royal Grand Brotherhood"
                   required
                   className="w-full px-3.5 py-2.5 rounded-xl bg-[#0a0f1d] border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-400"
                 />
@@ -517,7 +523,7 @@ export const ClubsAndTeamsHub: React.FC = () => {
                   maxLength={6}
                   value={tag}
                   onChange={(e) => setTag(e.target.value.toUpperCase())}
-                  placeholder="e.g. GAJA"
+                  placeholder="e.g. GRAND"
                   required
                   className="w-full px-3.5 py-2.5 rounded-xl bg-[#0a0f1d] border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-400 uppercase font-mono"
                 />

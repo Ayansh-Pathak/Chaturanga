@@ -95,7 +95,7 @@ export const ChessPiece: React.FC<ChessPieceProps> = ({
           </svg>
         );
 
-      case 'b': // BISHOP: Elephant Head (Gaja / Hastin) with crown & tusks
+      case 'b': // BISHOP: Elephant Head (Grand / Hastin) with crown & tusks
         return (
           <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-md select-none pointer-events-none" style={{ width: size, height: size }}>
             <ellipse cx="50" cy="86" rx="32" ry="8" fill={shadowColor} />

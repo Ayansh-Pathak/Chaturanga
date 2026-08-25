@@ -29,7 +29,7 @@ import {
 import confetti from 'canvas-confetti';
 
 export const TournamentHub: React.FC = () => {
-  const { tournaments, createTournament, joinTournament, leaveTournament, startTournament, simulateNextRound } = useTournaments();
+  const { tournaments, createTournament, joinTournament, leaveTournament, rejoinTournament, startTournament, simulateNextRound } = useTournaments();
   const { user, awardTournamentMedal, addGameRecord, updateRating } = useAuth();
   const { clubs } = useClubs();
 
@@ -118,6 +118,15 @@ export const TournamentHub: React.FC = () => {
     }
   };
 
+  const handleRejoinTournament = (tourId: string) => {
+    const res = rejoinTournament(tourId);
+    if (res.success) {
+      showToast(res.message, 'success');
+    } else {
+      showToast(res.message, 'error');
+    }
+  };
+
   const handleStartMatch = (opponent: { name: string; rating: number; avatar: string }) => {
     setOpponentBot(opponent);
     setActiveMatchGame(true);
@@ -171,6 +180,7 @@ export const TournamentHub: React.FC = () => {
   });
 
   const isUserInSelectedTour = !!user && !!selectedTournament?.participants.some((p) => p.id === user.id);
+  const isUserWithdrawnFromSelectedTour = !!user && !!selectedTournament?.participants.find((p) => p.id === user.id)?.withdrawn;
   const isSelectedClubRestricted = !!selectedTournament?.isClubOnly && 
     !!selectedTournament?.clubId && 
     !userClubIds.includes(selectedTournament.clubId) && 
@@ -452,13 +462,23 @@ export const TournamentHub: React.FC = () => {
                         <span className="px-3.5 py-2.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold text-xs flex items-center gap-1.5 shadow-sm">
                           <CheckCircle size={14} /> Registered ✓
                         </span>
-                        <button
-                          onClick={() => setWithdrawTourTarget(selectedTournament)}
-                          title="Withdraw from tournament"
-                          className="px-3.5 py-2.5 rounded-xl bg-red-950/60 hover:bg-red-900/90 text-red-300 hover:text-white border border-red-500/40 hover:border-red-400 text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
-                        >
-                          <LogOut size={13} /> Withdraw
-                        </button>
+                        {isUserWithdrawnFromSelectedTour ? (
+                          <button
+                            onClick={() => handleRejoinTournament(selectedTournament.id)}
+                            title="Rejoin tournament"
+                            className="px-3.5 py-2.5 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/90 text-emerald-300 hover:text-white border border-emerald-500/40 hover:border-emerald-400 text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+                          >
+                            <UserPlus size={13} /> Join
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => setWithdrawTourTarget(selectedTournament)}
+                            title="Withdraw from tournament"
+                            className="px-3.5 py-2.5 rounded-xl bg-red-950/60 hover:bg-red-900/90 text-red-300 hover:text-white border border-red-500/40 hover:border-red-400 text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+                          >
+                            <LogOut size={13} /> Withdraw
+                          </button>
+                        )}
                       </div>
                     )}
 
@@ -634,7 +654,7 @@ export const TournamentHub: React.FC = () => {
                   type="text"
                   value={tourName}
                   onChange={(e) => setTourName(e.target.value)}
-                  placeholder="e.g. Royal Gaja Blitz Cup"
+                  placeholder="e.g. Royal Grand Blitz Cup"
                   required
                   className="w-full px-3.5 py-2.5 rounded-xl bg-[#0a0f1d] border border-slate-700 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400"
                 />

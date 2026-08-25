@@ -27,8 +27,8 @@ interface ClubContextType {
 const initialClubs: Club[] = [
   {
     id: 'club_1',
-    name: 'Vajra Chess Brotherhood',
-    tag: 'VAJRA',
+    name: 'Royal Chess Brotherhood',
+    tag: 'ROYAL',
     description: 'Premier grandmaster guild dedicated to mastery of the elephant bishop tactics, queen sacrifices, and Vedic endgame precision.',
     banner: 'https://images.unsplash.com/photo-1529699211952-734e80c4d42b?auto=format&fit=crop&w=800&q=80',
     icon: '⚡',
@@ -36,14 +36,15 @@ const initialClubs: Club[] = [
     ownerId: 'user_master_1',
     ownerName: 'ArjunaWarrior',
     createdAt: 'August 2026',
-    isPrivate: false,
+    isPrivate: true,
+    password: 'royal',
     members: [
       { userId: 'user_master_1', username: 'ArjunaWarrior', rating: 1650, avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80', role: 'owner', joinedAt: 'Aug 1, 2026' },
       { userId: 'bot_1', username: 'Grandmaster Vishy', rating: 1720, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80', role: 'admin', joinedAt: 'Aug 2, 2026' },
       { userId: 'bot_2', username: 'Sage Chanakya', rating: 1610, avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80', role: 'member', joinedAt: 'Aug 5, 2026' },
     ],
     messages: [
-      { id: 'm1', authorId: 'user_master_1', authorName: 'ArjunaWarrior', authorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80', content: 'Welcome all warriors to Vajra! Prepare for our upcoming Swiss Championship.', createdAt: 'Aug 24, 14:00' },
+      { id: 'm1', authorId: 'user_master_1', authorName: 'ArjunaWarrior', authorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80', content: 'Welcome all warriors to Royal! Prepare for our upcoming Swiss Championship.', createdAt: 'Aug 24, 14:00' },
       { id: 'm2', authorId: 'bot_1', authorName: 'Grandmaster Vishy', authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80', content: 'The elephant bishop maneuver on c4 proved unstoppable in yesterday’s rapid session.', createdAt: 'Aug 24, 16:30' }
     ],
     totalWins: 42,
@@ -51,8 +52,8 @@ const initialClubs: Club[] = [
   },
   {
     id: 'team_1',
-    name: 'Gaja Strikers Team',
-    tag: 'GAJA',
+    name: 'Grand Strikers Team',
+    tag: 'GRAND',
     description: 'Competitive team representing ancient elephant tactics in inter-team leagues, rapid arenas, and knockout tournaments.',
     banner: 'https://images.unsplash.com/photo-1586165368502-1bad197a6461?auto=format&fit=crop&w=800&q=80',
     icon: '🐘',
@@ -61,10 +62,10 @@ const initialClubs: Club[] = [
     ownerName: 'ArjunaWarrior',
     createdAt: 'August 2026',
     isPrivate: true,
-    password: 'gaja',
+    password: 'grand',
     members: [
       { userId: 'user_master_1', username: 'ArjunaWarrior', rating: 1650, avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80', role: 'owner', joinedAt: 'Aug 3, 2026' },
-      { userId: 'bot_3', username: 'Gaja Tactician', rating: 1540, avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=200&q=80', role: 'member', joinedAt: 'Aug 10, 2026' },
+      { userId: 'bot_3', username: 'Grand Tactician', rating: 1540, avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=200&q=80', role: 'member', joinedAt: 'Aug 10, 2026' },
       { userId: 'bot_6', username: 'Drona Strategist', rating: 1680, avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&q=80', role: 'admin', joinedAt: 'Aug 12, 2026' },
     ],
     messages: [
@@ -84,7 +85,8 @@ const initialClubs: Club[] = [
     ownerId: 'bot_2',
     ownerName: 'Sage Chanakya',
     createdAt: 'August 2026',
-    isPrivate: false,
+    isPrivate: true,
+    password: 'veda',
     members: [
       { userId: 'bot_2', username: 'Sage Chanakya', rating: 1610, avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80', role: 'owner', joinedAt: 'Aug 2, 2026' },
       { userId: 'user_master_1', username: 'ArjunaWarrior', rating: 1650, avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80', role: 'member', joinedAt: 'Aug 4, 2026' }

@@ -44,7 +44,7 @@ const initialFeedback: FeedbackPost[] = [
   {
     id: 'fb_2',
     authorId: 'bot_3',
-    authorName: 'Gaja Tactician',
+    authorName: 'Grand Tactician',
     authorAvatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=200&q=80',
     category: 'Tournaments',
     title: 'Double Round Robin Swiss tiebreak calculations using Sonneborn-Berger',

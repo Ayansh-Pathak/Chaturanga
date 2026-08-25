@@ -1,20 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { TournamentProvider } from './context/TournamentContext';
 import { ClubProvider } from './context/ClubContext';
 import { FeedbackProvider } from './context/FeedbackContext';
 import { Navbar } from './components/layout/Navbar';
 import { AuthModal } from './components/auth/AuthModal';
-import { PlayHub } from './components/play/PlayHub';
-import { PuzzleTrainer } from './components/puzzles/PuzzleTrainer';
-import { TournamentHub } from './components/tournaments/TournamentHub';
-import { ClubsAndTeamsHub } from './components/clubs/ClubsAndTeamsHub';
-import { FeedbackPage } from './components/feedback/FeedbackPage';
-import { ProfilePage } from './components/profile/ProfilePage';
 import { Crown, Sparkles, Swords, Puzzle, Trophy, Users, MessageSquare } from 'lucide-react';
 
+const PlayHub = lazy(() => import('./components/play/PlayHub').then(module => ({ default: module.PlayHub })));
+const PuzzleTrainer = lazy(() => import('./components/puzzles/PuzzleTrainer').then(module => ({ default: module.PuzzleTrainer })));
+const TournamentHub = lazy(() => import('./components/tournaments/TournamentHub').then(module => ({ default: module.TournamentHub })));
+const ClubsAndTeamsHub = lazy(() => import('./components/clubs/ClubsAndTeamsHub').then(module => ({ default: module.ClubsAndTeamsHub })));
+const FeedbackPage = lazy(() => import('./components/feedback/FeedbackPage').then(module => ({ default: module.FeedbackPage })));
+const ProfilePage = lazy(() => import('./components/profile/ProfilePage').then(module => ({ default: module.ProfilePage })));
+const PlayerChat = lazy(() => import('./components/chat/PlayerChat').then(module => ({ default: module.PlayerChat })));
+
 function ChaturangaApp() {
-  const [activeTab, setActiveTab] = useState<'play' | 'puzzles' | 'tournaments' | 'clubs' | 'feedback' | 'profile'>('play');
+  const [activeTab, setActiveTab] = useState<'play' | 'puzzles' | 'tournaments' | 'clubs' | 'chat' | 'feedback' | 'profile'>('play');
   const [isAuthOpen, setIsAuthOpen] = useState(false);
 
   return (
@@ -29,12 +31,15 @@ function ChaturangaApp() {
 
       {/* Main View Area */}
       <main className="flex-1 pb-16">
-        {activeTab === 'play' && <PlayHub />}
-        {activeTab === 'puzzles' && <PuzzleTrainer />}
-        {activeTab === 'tournaments' && <TournamentHub />}
-        {activeTab === 'clubs' && <ClubsAndTeamsHub />}
-        {activeTab === 'feedback' && <FeedbackPage />}
-        {activeTab === 'profile' && <ProfilePage />}
+        <Suspense fallback={<div className="flex-1 h-full flex flex-col items-center justify-center py-20 text-slate-400"><span className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></span><span className="mt-4 text-sm">Loading module...</span></div>}>
+          {activeTab === 'play' && <PlayHub />}
+          {activeTab === 'puzzles' && <PuzzleTrainer />}
+          {activeTab === 'tournaments' && <TournamentHub />}
+          {activeTab === 'clubs' && <ClubsAndTeamsHub />}
+          {activeTab === 'chat' && <PlayerChat />}
+          {activeTab === 'feedback' && <FeedbackPage />}
+          {activeTab === 'profile' && <ProfilePage />}
+        </Suspense>
       </main>
 
       {/* Footer */}

@@ -4,7 +4,7 @@ import { PuzzleData } from '../types/chess';
 const curatedSeedPuzzles: PuzzleData[] = [
   {
     id: 1,
-    title: "Gaja King's Pin",
+    title: "King's Pin",
     description: "White to move. Exploit the pinned queen using the Elephant Bishop.",
     fen: "r1b1kb1r/pppp1ppp/8/4q3/4B3/8/PPP2PPP/RNBQK2R w KQkq - 0 8",
     solution: ["O-O", "Qxe4", "Re1"],
@@ -14,7 +14,7 @@ const curatedSeedPuzzles: PuzzleData[] = [
   },
   {
     id: 2,
-    title: "Smothered Mate of Chanakya",
+    title: "Smothered Mate",
     description: "White to move. Deliver the classical royal smothered checkmate.",
     fen: "6k1/5ppp/8/8/8/5N2/5PPP/4Q1K1 w - - 0 1",
     solution: ["Qe8#"],
@@ -54,7 +54,7 @@ const curatedSeedPuzzles: PuzzleData[] = [
   },
   {
     id: 6,
-    title: "The Sanskrit Skewer",
+    title: "The Shining Skewer",
     description: "White to move. Win the heavy rook with a precision bishop skewer.",
     fen: "4r1k1/5ppp/8/8/8/8/4BPPP/4R1K1 w - - 0 1",
     solution: ["Kf1", "Kf8", "Bb5"],
@@ -142,7 +142,7 @@ const themesList = [
   "Decoy",
   "Clearance Sacrifice",
   "Endgame Mastery",
-  "Vedic King Hunt",
+  "Grandmaster King Hunt",
   "Chariot Rook Battery",
   "Zwischenzug",
   "Perpetual Defense"

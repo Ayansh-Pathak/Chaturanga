@@ -22,6 +22,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'tournaments' as const, label: 'Tournaments', icon: <Trophy size={17} /> },
     { id: 'clubs' as const, label: 'Clubs & Teams', icon: <Users size={17} /> },
     { id: 'chat' as const, label: 'Player Chat', icon: <MessageSquare size={17} /> },
+    { id: 'feedback' as const, label: 'Feedback', icon: <MessageSquare size={17} /> },
     { id: 'profile' as const, label: 'Profile & Medals', icon: <Crown size={17} /> },
   ];
 
