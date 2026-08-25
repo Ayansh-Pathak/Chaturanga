@@ -1,0 +1,364 @@
+import React, { useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import { X, Lock, Mail, User, ShieldCheck, RefreshCw, KeyRound, Sparkles } from 'lucide-react';
+
+interface AuthModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  initialMode?: 'login' | 'signup' | 'change_email';
+}
+
+const AVATAR_OPTIONS = [
+  'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
+  'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=200&q=80',
+  'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&q=80',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80',
+  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80'
+];
+
+export const AuthModal: React.FC<AuthModalProps> = ({
+  isOpen,
+  onClose,
+  initialMode = 'login',
+}) => {
+  const { user, login, signup, updateEmail, revertEmail } = useAuth();
+  const [mode, setMode] = useState<'login' | 'signup' | 'change_email'>(initialMode);
+
+  // Form states
+  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [selectedAvatar, setSelectedAvatar] = useState(AVATAR_OPTIONS[0]);
+
+  // Email change state
+  const [newEmail, setNewEmail] = useState('');
+  const [oldEmailPassword, setOldEmailPassword] = useState('');
+  const [revertPassword, setRevertPassword] = useState('');
+
+  const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  if (!isOpen) return null;
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    const res = login(email || username, password);
+    if (res.success) {
+      setMessage({ text: res.message, type: 'success' });
+      setTimeout(onClose, 900);
+    } else {
+      setMessage({ text: res.message, type: 'error' });
+    }
+  };
+
+  const handleSignup = (e: React.FormEvent) => {
+    e.preventDefault();
+    const res = signup(username, email, password, selectedAvatar);
+    if (res.success) {
+      setMessage({ text: res.message, type: 'success' });
+      setTimeout(onClose, 900);
+    } else {
+      setMessage({ text: res.message, type: 'error' });
+    }
+  };
+
+  const handleUpdateEmail = (e: React.FormEvent) => {
+    e.preventDefault();
+    const res = updateEmail(newEmail, oldEmailPassword);
+    if (res.success) {
+      setMessage({ text: res.message, type: 'success' });
+      setNewEmail('');
+      setOldEmailPassword('');
+    } else {
+      setMessage({ text: res.message, type: 'error' });
+    }
+  };
+
+  const handleRevertEmail = (e: React.FormEvent) => {
+    e.preventDefault();
+    const res = revertEmail(revertPassword);
+    if (res.success) {
+      setMessage({ text: res.message, type: 'success' });
+      setRevertPassword('');
+    } else {
+      setMessage({ text: res.message, type: 'error' });
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md">
+      <div className="relative w-full max-w-md bg-gradient-to-b from-[#0e172a] to-[#160d24] border border-blue-500/40 rounded-3xl p-6 sm:p-8 shadow-[0_0_50px_rgba(59,130,246,0.3)] overflow-hidden">
+        
+        {/* Decorative corner glow */}
+        <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl pointer-events-none" />
+
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white rounded-full bg-slate-800/80 transition-colors"
+        >
+          <X size={18} />
+        </button>
+
+        {/* Tabs */}
+        <div className="flex border-b border-slate-800 pb-3 mb-6 gap-2">
+          <button
+            onClick={() => { setMode('login'); setMessage(null); }}
+            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+              mode === 'login'
+                ? 'bg-gradient-to-r from-blue-600 to-red-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Login
+          </button>
+          <button
+            onClick={() => { setMode('signup'); setMessage(null); }}
+            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+              mode === 'signup'
+                ? 'bg-gradient-to-r from-blue-600 to-red-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Signup
+          </button>
+          <button
+            onClick={() => { setMode('change_email'); setMessage(null); }}
+            className={`flex-1 py-2 text-xs font-bold rounded-xl transition-all ${
+              mode === 'change_email'
+                ? 'bg-gradient-to-r from-blue-600 to-red-600 text-white shadow-md'
+                : 'text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Email Settings
+          </button>
+        </div>
+
+        {/* Notification Banner */}
+        {message && (
+          <div
+            className={`mb-4 p-3 rounded-xl text-xs font-semibold ${
+              message.type === 'success'
+                ? 'bg-emerald-950/70 border border-emerald-500/50 text-emerald-300'
+                : 'bg-red-950/70 border border-red-500/50 text-red-300'
+            }`}
+          >
+            {message.text}
+          </div>
+        )}
+
+        {/* LOGIN MODE */}
+        {mode === 'login' && (
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1.5">Username or Email</label>
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-3 text-slate-400" size={16} />
+                <input
+                  type="text"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="arjuna@chaturanga.org or ArjunaWarrior"
+                  required
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0a0f1d] border border-slate-700/80 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-400 transition-colors"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1.5">Password</label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-3 text-slate-400" size={16} />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0a0f1d] border border-slate-700/80 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-400 transition-colors"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-red-600 hover:from-blue-500 hover:to-red-500 text-white font-bold text-sm shadow-lg shadow-blue-600/20 transition-all active:scale-95 border border-blue-400/30"
+            >
+              Sign In to Chaturanga
+            </button>
+          </form>
+        )}
+
+        {/* SIGNUP MODE */}
+        {mode === 'signup' && (
+          <form onSubmit={handleSignup} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1.5">Warrior Name / Handle</label>
+              <div className="relative">
+                <User className="absolute left-3.5 top-3 text-slate-400" size={16} />
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="e.g. RoyalGrandmaster"
+                  required
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0a0f1d] border border-slate-700/80 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-400"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1.5">Email Address</label>
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-3 text-slate-400" size={16} />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="warrior@chaturanga.org"
+                  required
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0a0f1d] border border-slate-700/80 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-400"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-1.5">Choose Password</label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-3 text-slate-400" size={16} />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Minimum 4 characters"
+                  required
+                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#0a0f1d] border border-slate-700/80 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-400"
+                />
+              </div>
+            </div>
+
+            {/* Avatar Selector */}
+            <div>
+              <label className="block text-xs font-bold text-slate-300 mb-2">Select Avatar</label>
+              <div className="flex items-center gap-2 overflow-x-auto pb-2">
+                {AVATAR_OPTIONS.map((av, idx) => (
+                  <img
+                    key={idx}
+                    src={av}
+                    alt={`Avatar ${idx}`}
+                    onClick={() => setSelectedAvatar(av)}
+                    className={`w-10 h-10 rounded-xl object-cover cursor-pointer border-2 transition-all ${
+                      selectedAvatar === av
+                        ? 'border-blue-400 scale-110 shadow-md ring-2 ring-blue-400/40'
+                        : 'border-transparent opacity-70 hover:opacity-100'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-red-600 hover:from-blue-500 hover:to-red-500 text-white font-bold text-sm shadow-lg shadow-blue-600/20 transition-all active:scale-95 border border-blue-400/30"
+            >
+              Create Account & Enter Arena
+            </button>
+          </form>
+        )}
+
+        {/* EMAIL CHANGE & REVERSIBILITY MODE */}
+        {mode === 'change_email' && (
+          <div className="space-y-6">
+            <div className="p-3 rounded-2xl bg-gradient-to-r from-blue-950/40 to-red-950/40 border border-blue-500/30">
+              <div className="flex items-center gap-2 text-xs font-bold text-blue-300 mb-1">
+                <ShieldCheck size={16} className="text-red-400" />
+                <span>Secure Reversible Email Verification</span>
+              </div>
+              <p className="text-[11px] text-slate-300 leading-relaxed">
+                Current Registered Email: <strong className="text-white font-mono">{user?.email || 'arjuna@chaturanga.org'}</strong>
+              </p>
+            </div>
+
+            {/* Change Email Form */}
+            <form onSubmit={handleUpdateEmail} className="space-y-3.5">
+              <h4 className="text-xs font-extrabold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+                <KeyRound size={14} className="text-blue-400" />
+                Change to New Email
+              </h4>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 mb-1">New Email Address</label>
+                <input
+                  type="email"
+                  value={newEmail}
+                  onChange={(e) => setNewEmail(e.target.value)}
+                  placeholder="new.email@chaturanga.org"
+                  required
+                  className="w-full px-3.5 py-2 rounded-xl bg-[#0a0f1d] border border-slate-700 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-bold text-slate-400 mb-1">
+                  Old Email Password <span className="text-red-400 font-normal">(Required to verify ownership)</span>
+                </label>
+                <input
+                  type="password"
+                  value={oldEmailPassword}
+                  onChange={(e) => setOldEmailPassword(e.target.value)}
+                  placeholder="Enter password of current email"
+                  required
+                  className="w-full px-3.5 py-2 rounded-xl bg-[#0a0f1d] border border-slate-700 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-400"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-red-600 hover:from-blue-500 hover:to-red-500 text-white font-bold text-xs shadow-md transition-all active:scale-95"
+              >
+                Apply New Email with Old Password
+              </button>
+            </form>
+
+            {/* Reversible Section */}
+            {user?.previousEmail && (
+              <form onSubmit={handleRevertEmail} className="pt-4 border-t border-slate-800 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs font-extrabold uppercase tracking-wider text-blue-300 flex items-center gap-1.5">
+                    <RefreshCw size={14} className="text-red-400" />
+                    Revert to Previous Email
+                  </h4>
+                  <span className="text-[10px] text-slate-400 font-mono">
+                    {user.previousEmail}
+                  </span>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-400 mb-1">
+                    Current Password to Revert
+                  </label>
+                  <input
+                    type="password"
+                    value={revertPassword}
+                    onChange={(e) => setRevertPassword(e.target.value)}
+                    placeholder="Enter password to restore previous email"
+                    required
+                    className="w-full px-3.5 py-2 rounded-xl bg-[#0a0f1d] border border-slate-700 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-400"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-blue-300 font-bold text-xs border border-blue-500/30 transition-all"
+                >
+                  Restore Previous Email ({user.previousEmail})
+                </button>
+              </form>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
