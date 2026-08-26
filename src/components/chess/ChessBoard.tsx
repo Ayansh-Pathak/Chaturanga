@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Chess, Square, PieceSymbol as ChessJsPieceSymbol, Color } from 'chess.js';
+import { Chess, Square } from 'chess.js';
 import { ChessPiece, PieceColor, PieceSymbol } from './ChessPiece';
 import { chessAudio } from '../../utils/chessAudio';
-import { RotateCw, Volume2, VolumeX, ShieldAlert, Flag, CheckCircle2 } from 'lucide-react';
+import { RotateCw, Volume2, VolumeX, ShieldAlert } from 'lucide-react';
 
 export type BoardTheme = 
   | 'classic'

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { TournamentMedalData, MedalTier } from '../../types/chess';
-import { Crown, Sparkles, Calendar, Clock, Award, ShieldCheck, RotateCw } from 'lucide-react';
+import { Crown, Clock, ShieldCheck, RotateCw } from 'lucide-react';
 
 interface TournamentMedalProps {
   medal: TournamentMedalData;

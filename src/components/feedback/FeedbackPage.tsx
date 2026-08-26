@@ -6,14 +6,7 @@ import {
   MessageSquare, 
   ThumbsUp, 
   PlusCircle, 
-  Send, 
-  CheckCircle2, 
-  Clock, 
-  Sparkles, 
-  Filter, 
-  Bug, 
-  Trophy, 
-  FileText
+  Send
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 

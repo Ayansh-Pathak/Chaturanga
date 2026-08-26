@@ -1,11 +1,11 @@
 import React, { useState, Suspense, lazy } from 'react';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { AuthProvider } from './context/AuthContext';
 import { TournamentProvider } from './context/TournamentContext';
 import { ClubProvider } from './context/ClubContext';
 import { FeedbackProvider } from './context/FeedbackContext';
 import { Navbar } from './components/layout/Navbar';
 import { AuthModal } from './components/auth/AuthModal';
-import { Crown, Sparkles, Swords, Puzzle, Trophy, Users, MessageSquare } from 'lucide-react';
+import { Crown } from 'lucide-react';
 
 const PlayHub = lazy(() => import('./components/play/PlayHub').then(module => ({ default: module.PlayHub })));
 const PuzzleTrainer = lazy(() => import('./components/puzzles/PuzzleTrainer').then(module => ({ default: module.PuzzleTrainer })));
@@ -14,6 +14,7 @@ const ClubsAndTeamsHub = lazy(() => import('./components/clubs/ClubsAndTeamsHub'
 const FeedbackPage = lazy(() => import('./components/feedback/FeedbackPage').then(module => ({ default: module.FeedbackPage })));
 const ProfilePage = lazy(() => import('./components/profile/ProfilePage').then(module => ({ default: module.ProfilePage })));
 const PlayerChat = lazy(() => import('./components/chat/PlayerChat').then(module => ({ default: module.PlayerChat })));
+const GeminiChatbot = lazy(() => import('./components/chat/GeminiChatbot').then(module => ({ default: module.GeminiChatbot })));
 
 function ChaturangaApp() {
   const [activeTab, setActiveTab] = useState<'play' | 'puzzles' | 'tournaments' | 'clubs' | 'chat' | 'feedback' | 'profile'>('play');
@@ -63,6 +64,11 @@ function ChaturangaApp() {
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
       />
+
+      {/* Global AI Chatbot */}
+      <Suspense fallback={null}>
+        <GeminiChatbot gameMode={activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} />
+      </Suspense>
     </div>
   );
 }

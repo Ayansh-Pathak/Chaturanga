@@ -6,7 +6,6 @@ import { PuzzleData } from '../../types/chess';
 import { useAuth } from '../../context/AuthContext';
 import { chessAudio } from '../../utils/chessAudio';
 import {
-  Puzzle,
   Flame,
   CheckCircle,
   XCircle,
@@ -15,17 +14,10 @@ import {
   Calendar,
   Search,
   Filter,
-  Zap,
   Layers,
   Sparkles,
   HelpCircle,
-  Clock,
-  Trophy,
-  Target,
-  Swords,
-  Play,
   RotateCcw,
-  Volume2,
   FastForward,
   Eye,
 } from 'lucide-react';
@@ -165,13 +157,13 @@ export const PuzzleTrainer: React.FC = () => {
       chessRef.current = tempChess;
       setPuzzleFen(tempChess.fen());
     } catch (e) {
-      void('Error revealing solution moves:', e);
+      console.error('Error revealing solution moves:', e);
     }
   };
 
   const getFormattedSolutionMoves = () => {
     const moves: { num: number; white: string; black?: string }[] = [];
-    let isWhite = currentPuzzle.toMove === 'w';
+    const isWhite = currentPuzzle.toMove === 'w';
     let moveNum = 1;
     let idx = 0;
 
@@ -230,7 +222,7 @@ export const PuzzleTrainer: React.FC = () => {
         });
         setPuzzleFen(chessRef.current.fen());
       } catch (err) {
-        void('Chess move error:', err);
+        console.error('Chess move error:', err);
       }
 
       const nextPlayerIdx = moveIndex + 1;

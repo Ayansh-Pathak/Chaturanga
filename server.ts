@@ -229,6 +229,150 @@ Provide a concise, highly insightful, and encouraging Grandmaster Game Review in
   }
 });
 
+// 4. In-Memory Matchmaking for Real "Play Online" (No Mock Bots)
+interface MatchmakingTicket {
+  id: string;
+  name: string;
+  rating: number;
+  timeControl: string;
+  avatar: string;
+  country: string;
+  timestamp: number;
+  res?: express.Response;
+}
+
+const matchmakingQueue: MatchmakingTicket[] = [];
+
+// Cleanup stale queue tickets older than 5 minutes
+function purgeStaleTickets() {
+  const now = Date.now();
+  for (let i = matchmakingQueue.length - 1; i >= 0; i--) {
+    if (now - matchmakingQueue[i].timestamp > 5 * 60 * 1000) {
+      if (matchmakingQueue[i].res && !matchmakingQueue[i].res.headersSent) {
+        matchmakingQueue[i].res.json({ status: "timeout", message: "Queue search timed out after 5 minutes." });
+      }
+      matchmakingQueue.splice(i, 1);
+    }
+  }
+}
+
+app.get("/api/matchmake/status", (req, res) => {
+  purgeStaleTickets();
+  const timeControl = req.query.timeControl as string;
+  const rating = Number(req.query.rating) || 1500;
+  
+  const activeInTc = matchmakingQueue.filter(p => !timeControl || p.timeControl === timeControl);
+  const activeInDeviation = activeInTc.filter(p => Math.abs(p.rating - rating) <= 20);
+
+  res.json({
+    totalSearching: matchmakingQueue.length,
+    activeInTimeControl: activeInTc.length,
+    activeWithinDeviation: activeInDeviation.length,
+    timestamp: Date.now()
+  });
+});
+
+app.post("/api/matchmake", (req, res) => {
+  const { id, name, rating, timeControl, avatar, country } = req.body;
+  if (!id || !timeControl) {
+    return res.status(400).json({ error: "id and timeControl are required" });
+  }
+
+  const now = Date.now();
+  purgeStaleTickets();
+
+  const userRating = Number(rating) || 1500;
+
+  // Search for an active player who clicked 'Play Online' in last 5 min with same timeControl & Elo within 20 points
+  const matchIndex = matchmakingQueue.findIndex(p =>
+    p.id !== id &&
+    p.timeControl === timeControl &&
+    Math.abs(p.rating - userRating) <= 20 &&
+    (now - p.timestamp <= 5 * 60 * 1000)
+  );
+
+  if (matchIndex !== -1) {
+    const matchedOpponent = matchmakingQueue.splice(matchIndex, 1)[0];
+    const matchId = `match_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+    const isWhite = Math.random() < 0.5;
+
+    // Send response to matched waiting player
+    if (matchedOpponent.res && !matchedOpponent.res.headersSent) {
+      matchedOpponent.res.json({
+        status: "match",
+        matchId,
+        color: isWhite ? "w" : "b",
+        opponent: {
+          id,
+          name: name || "Grandmaster",
+          rating: userRating,
+          avatar: avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
+          country: country || "🌍"
+        }
+      });
+    }
+
+    // Send response to the connecting player
+    return res.json({
+      status: "match",
+      matchId,
+      color: !isWhite ? "w" : "b",
+      opponent: {
+        id: matchedOpponent.id,
+        name: matchedOpponent.name,
+        rating: matchedOpponent.rating,
+        avatar: matchedOpponent.avatar,
+        country: matchedOpponent.country
+      }
+    });
+  }
+
+  // Remove any existing ticket for this same user id
+  const existingIdx = matchmakingQueue.findIndex(p => p.id === id);
+  if (existingIdx !== -1) {
+    const old = matchmakingQueue.splice(existingIdx, 1)[0];
+    if (old.res && !old.res.headersSent) {
+      old.res.json({ status: "cancelled", message: "Superseded by new search request." });
+    }
+  }
+
+  // Enqueue new ticket
+  const ticket: MatchmakingTicket = {
+    id,
+    name: name || "Player",
+    rating: userRating,
+    timeControl,
+    avatar: avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
+    country: country || "🌍",
+    timestamp: now,
+    res
+  };
+  matchmakingQueue.push(ticket);
+
+  // Long poll window: up to 25s per request before asking client to continue polling
+  setTimeout(() => {
+    const idx = matchmakingQueue.findIndex(p => p.id === id && p.timestamp === now);
+    if (idx !== -1) {
+      const p = matchmakingQueue.splice(idx, 1)[0];
+      if (p.res && !p.res.headersSent) {
+        p.res.json({ status: "waiting", message: "Searching for players matching Elo ±20 in active pool..." });
+      }
+    }
+  }, 25000);
+});
+
+app.post("/api/matchmake/cancel", (req, res) => {
+  const { id } = req.body;
+  const idx = matchmakingQueue.findIndex(p => p.id === id);
+  if (idx !== -1) {
+    const p = matchmakingQueue.splice(idx, 1)[0];
+    if (p.res && !p.res.headersSent) {
+      p.res.json({ status: "cancelled", message: "Matchmaking search cancelled by user." });
+    }
+  }
+  res.json({ success: true, message: "Removed from matchmaking queue" });
+});
+
 // Vite middleware for development & static file handling for production
 async function startServer() {
   if (process.env.NODE_ENV !== "production") {

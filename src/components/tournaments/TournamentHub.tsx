@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import { useTournaments } from '../../context/TournamentContext';
 import { useAuth } from '../../context/AuthContext';
 import { useClubs } from '../../context/ClubContext';
@@ -14,8 +14,6 @@ import {
   PlusCircle, 
   CheckCircle, 
   Award, 
-  ArrowRight, 
-  Flame, 
   Swords, 
   Sparkles,
   Zap,
@@ -29,8 +27,15 @@ import {
 import confetti from 'canvas-confetti';
 
 export const TournamentHub: React.FC = () => {
-  const { tournaments, createTournament, joinTournament, leaveTournament, rejoinTournament, startTournament, simulateNextRound } = useTournaments();
-  const { user, awardTournamentMedal, addGameRecord, updateRating } = useAuth();
+  const { user } = useAuth();
+const { tournaments } = useTournaments();
+
+const currentUserId = user?.id;
+const [isUpdatingMembership, setIsUpdatingMembership] = useState(false);
+const [membershipError, setMembershipError] = useState<string | null>(null);
+
+  const { createTournament, joinTournament, leaveTournament, rejoinTournament, startTournament, simulateNextRound } = useTournaments();
+  const { awardTournamentMedal, addGameRecord, updateRating } = useAuth();
   const { clubs } = useClubs();
 
   const userClubs = clubs.filter((c) => c.members.some((m) => m.userId === user?.id));
@@ -41,9 +46,12 @@ export const TournamentHub: React.FC = () => {
   const [withdrawTourTarget, setWithdrawTourTarget] = useState<Tournament | null>(null);
   const [activeMatchGame, setActiveMatchGame] = useState<boolean>(false);
   const [opponentBot, setOpponentBot] = useState<{ name: string; rating: number; avatar: string } | null>(null);
+  const [activeMatchGameMoves, setActiveMatchGameMoves] = useState<number>(0);
   const [filterTab, setFilterTab] = useState<'all' | 'public' | 'club'>('all');
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
-
+const isParticipant = selectedTournament?.participants?.some(
+(participant) => participant.id === currentUserId
+) ?? false;
   // Creation form state
   const [tourName, setTourName] = useState('');
   const [tourFormat, setTourFormat] = useState<TournamentFormat>('swiss');
@@ -130,6 +138,7 @@ export const TournamentHub: React.FC = () => {
   const handleStartMatch = (opponent: { name: string; rating: number; avatar: string }) => {
     setOpponentBot(opponent);
     setActiveMatchGame(true);
+    setActiveMatchGameMoves(0);
   };
 
   const handleGameComplete = (result: { winner: 'w' | 'b' | 'draw'; reason: string; pgn: string }) => {
@@ -375,12 +384,37 @@ export const TournamentHub: React.FC = () => {
                     </div>
                   </div>
 
-                  <button
-                    onClick={() => setActiveMatchGame(false)}
-                    className="text-xs text-slate-300 hover:text-white px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700"
-                  >
-                    Exit Game
-                  </button>
+                  <div className="flex gap-2">
+                    {activeMatchGameMoves < 2 ? (
+                      <button
+                        onClick={() => {
+                          handleGameComplete({ winner: 'draw', reason: 'Aborted', pgn: '' });
+                        }}
+                        className="text-xs text-slate-300 hover:text-white px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 font-bold"
+                      >
+                        Abort
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => {
+                            handleGameComplete({ winner: 'draw', reason: 'Draw by agreement', pgn: '' });
+                          }}
+                          className="text-xs text-slate-300 hover:text-white px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 font-bold"
+                        >
+                          Offer Draw
+                        </button>
+                        <button
+                          onClick={() => {
+                            handleGameComplete({ winner: 'b', reason: 'Resignation', pgn: '' });
+                          }}
+                          className="text-xs text-red-300 hover:text-white px-3 py-1.5 rounded-lg bg-red-950/60 hover:bg-red-900/90 border border-red-500/40 font-bold"
+                        >
+                          Resign
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
 
                 <div className="flex justify-center">
@@ -390,6 +424,7 @@ export const TournamentHub: React.FC = () => {
                     playerColor="w"
                     customTheme="crimson_sapphire"
                     onGameOver={handleGameComplete}
+                    onMove={() => setActiveMatchGameMoves((prev) => prev + 1)}
                     interactive={true}
                   />
                 </div>
@@ -459,25 +494,34 @@ export const TournamentHub: React.FC = () => {
                     {/* Joined Status / Withdraw Option */}
                     {isUserInSelectedTour && selectedTournament.status !== 'completed' && (
                       <div className="flex items-center gap-2">
-                        <span className="px-3.5 py-2.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold text-xs flex items-center gap-1.5 shadow-sm">
-                          <CheckCircle size={14} /> Registered ✓
-                        </span>
                         {isUserWithdrawnFromSelectedTour ? (
-                          <button
-                            onClick={() => handleRejoinTournament(selectedTournament.id)}
-                            title="Rejoin tournament"
-                            className="px-3.5 py-2.5 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/90 text-emerald-300 hover:text-white border border-emerald-500/40 hover:border-emerald-400 text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
-                          >
-                            <UserPlus size={13} /> Join
-                          </button>
+                          <>
+                            <span className="px-3.5 py-2.5 rounded-xl bg-slate-800/80 text-slate-400 border border-slate-700 font-bold text-xs flex items-center gap-1.5 shadow-sm">
+                              Unregistered
+                            </span>
+                            <button
+                              onClick={() => handleRejoinTournament(selectedTournament.id)}
+                              title="Rejoin tournament"
+                              className="px-3.5 py-2.5 rounded-xl bg-emerald-950/60 hover:bg-emerald-900/90 text-emerald-300 hover:text-white border border-emerald-500/40 hover:border-emerald-400 text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+                            >
+                              <UserPlus size={13} /> Join
+                            </button>
+                          </>
                         ) : (
-                          <button
-                            onClick={() => setWithdrawTourTarget(selectedTournament)}
-                            title="Withdraw from tournament"
-                            className="px-3.5 py-2.5 rounded-xl bg-red-950/60 hover:bg-red-900/90 text-red-300 hover:text-white border border-red-500/40 hover:border-red-400 text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
-                          >
-                            <LogOut size={13} /> Withdraw
-                          </button>
+                          <>
+                            <span className="px-3.5 py-2.5 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 font-bold text-xs flex items-center gap-1.5 shadow-sm">
+                              <CheckCircle size={14} /> Registered ✓
+                            </span>
+                            {selectedTournament.status === 'upcoming' && (
+                              <button
+                                onClick={() => setWithdrawTourTarget(selectedTournament)}
+                                title="Withdraw from tournament"
+                                className="px-3.5 py-2.5 rounded-xl bg-red-950/60 hover:bg-red-900/90 text-red-300 hover:text-white border border-red-500/40 hover:border-red-400 text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+                              >
+                                <LogOut size={13} /> Withdraw
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     )}
@@ -485,7 +529,13 @@ export const TournamentHub: React.FC = () => {
                     {/* Host Controls */}
                     {selectedTournament.status === 'upcoming' && (
                       <button
-                        onClick={() => startTournament(selectedTournament.id)}
+                        onClick={() => {
+                          if (selectedTournament.participants.length < 2) {
+                            showToast('Minimum 2 players required to start a tournament.', 'error');
+                          } else {
+                            startTournament(selectedTournament.id);
+                          }
+                        }}
                         className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-md active:scale-95"
                       >
                         <Play size={14} /> Start Tournament
@@ -513,7 +563,7 @@ export const TournamentHub: React.FC = () => {
                 </div>
 
                 {/* Tournament Winners Showcase if completed */}
-                {selectedTournament.status === 'completed' && selectedTournament.winners && (
+                {selectedTournament.status === 'completed' && selectedTournament.winners && selectedTournament.participants.length > 2 && (
                   <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-b from-[#101b33] to-[#1c0f24] border-2 border-blue-500/60 space-y-4 shadow-xl">
                     <div className="text-center space-y-1">
                       <div className="flex items-center justify-center gap-1.5 text-blue-300 font-extrabold text-sm font-cinzel">
@@ -548,6 +598,21 @@ export const TournamentHub: React.FC = () => {
                         />
                       ))}
                     </div>
+                  </div>
+                )}
+
+                {/* 2-Player Duel Completion Notice (No medals for 2 player tournaments) */}
+                {selectedTournament.status === 'completed' && selectedTournament.participants.length <= 2 && (
+                  <div className="p-5 rounded-3xl bg-[#0c1427] border border-blue-500/40 text-center space-y-2 shadow-lg">
+                    <div className="flex items-center justify-center gap-2 text-amber-300 font-bold text-sm font-cinzel">
+                      <Trophy size={18} className="text-amber-400" /> 2-Player Duel Concluded
+                    </div>
+                    <p className="text-xs text-slate-300">
+                      Winner: <strong className="text-white">{selectedTournament.participants[0]?.username || 'Player 1'}</strong> (Score: {selectedTournament.participants[0]?.score} pts).
+                    </p>
+                    <p className="text-[11px] text-slate-400">
+                      <em>Note: Official Chaturanga Medals are reserved exclusively for multi-player tournaments (&gt;2 participants).</em>
+                    </p>
                   </div>
                 )}
 

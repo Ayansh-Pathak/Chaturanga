@@ -16,10 +16,15 @@ interface ClubContextType {
     isTeam: boolean,
     banner: string,
     isPrivate?: boolean,
-    password?: string
+    password?: string,
+    icon?: string
   ) => Club;
   joinClub: (clubId: string, password?: string) => JoinClubResult;
   leaveClub: (clubId: string) => void;
+  deleteClub: (clubId: string) => void;
+  updateClubIcon: (clubId: string, icon: string) => void;
+  updateClubBanner: (clubId: string, banner: string) => void;
+  updateMemberAvatar: (clubId: string, userId: string, newAvatar: string) => void;
   postMessage: (clubId: string, text: string) => void;
   getClubById: (clubId: string) => Club | undefined;
 }
@@ -119,11 +124,14 @@ export const ClubProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isTeam: boolean,
     banner: string,
     isPrivate: boolean = false,
-    password: string = ''
+    password: string = '',
+    icon?: string
   ) => {
     const defaultBanner = isTeam
       ? 'https://images.unsplash.com/photo-1586165368502-1bad197a6461?auto=format&fit=crop&w=800&q=80'
       : 'https://images.unsplash.com/photo-1529699211952-734e80c4d42b?auto=format&fit=crop&w=800&q=80';
+
+    const defaultIcon = isTeam ? '🛡️' : '👑';
 
     const newClub: Club = {
       id: `${isTeam ? 'team' : 'club'}_${Date.now()}`,
@@ -131,7 +139,7 @@ export const ClubProvider: React.FC<{ children: React.ReactNode }> = ({ children
       tag: tag.toUpperCase(),
       description,
       banner: banner || defaultBanner,
-      icon: isTeam ? '🛡️' : '👑',
+      icon: icon?.trim() ? icon.trim() : defaultIcon,
       isTeam,
       ownerId: user ? user.id : 'guest',
       ownerName: user ? user.username : 'ArjunaWarrior',
@@ -252,6 +260,41 @@ export const ClubProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return clubs.find((c) => c.id === clubId);
   };
 
+  const deleteClub = (clubId: string) => {
+    setClubs((prev) => prev.filter((c) => c.id !== clubId));
+  };
+
+  const updateClubBanner = (clubId: string, banner: string) => {
+    setClubs((prev) =>
+      prev.map((c) => {
+        if (c.id === clubId) {
+          return { ...c, banner };
+        }
+        return c;
+      })
+    );
+  };
+
+  const updateClubIcon = (clubId: string, icon: string) => {
+    setClubs((prev) =>
+      prev.map((c) => (c.id === clubId ? { ...c, icon } : c))
+    );
+  };
+
+  const updateMemberAvatar = (clubId: string, userId: string, newAvatar: string) => {
+    setClubs((prev) =>
+      prev.map((c) => {
+        if (c.id === clubId) {
+          return {
+            ...c,
+            members: c.members.map((m) => (m.userId === userId ? { ...m, avatar: newAvatar } : m))
+          };
+        }
+        return c;
+      })
+    );
+  };
+
   return (
     <ClubContext.Provider
       value={{
@@ -259,6 +302,10 @@ export const ClubProvider: React.FC<{ children: React.ReactNode }> = ({ children
         createClub,
         joinClub,
         leaveClub,
+        deleteClub,
+        updateClubIcon,
+        updateClubBanner,
+        updateMemberAvatar,
         postMessage,
         getClubById
       }}

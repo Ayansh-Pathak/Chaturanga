@@ -1,27 +1,24 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Chess } from 'chess.js';
 import { ChessBoard, BoardTheme } from '../chess/ChessBoard';
-import { ChessPiece } from '../chess/ChessPiece';
 import { useAuth } from '../../context/AuthContext';
-import { TimeControl } from '../../types/chess';
 import { GameReviewModal } from '../analysis/GameReviewModal';
 import {
   Bot,
   Users,
   RotateCcw,
   Clock,
-  Crown,
-  Flame,
   Sparkles,
   Sliders,
-  Play,
-  Award,
   BookOpen,
-  Volume2,
-  ChevronRight,
   ShieldAlert,
   HelpCircle,
-  BarChart2
+  Radio,
+  Globe,
+  X,
+  Search,
+  Zap,
+  Loader2
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
@@ -45,6 +42,9 @@ export const PlayHub: React.FC = () => {
   const [showReviewModal, setShowReviewModal] = useState<boolean>(false);
   const [isBotThinking, setIsBotThinking] = useState<boolean>(false);
   const [isMatchmaking, setIsMatchmaking] = useState<boolean>(false);
+  const [matchmakingSearchSeconds, setMatchmakingSearchSeconds] = useState<number>(0);
+  const [matchmakingStatusText, setMatchmakingStatusText] = useState<string>('Searching online pool...');
+  const matchmakingAbortRef = useRef<AbortController | null>(null);
   const [onlineOpponent, setOnlineOpponent] = useState<{name: string, rating: number, country: string, avatar: string} | null>(null);
 
   // Time control settings
@@ -140,35 +140,111 @@ export const PlayHub: React.FC = () => {
     return () => clearInterval(timer);
   }, [isClockRunning, currentTurn, gameStatus]);
 
+  // Matchmaking timer effect
+  useEffect(() => {
+    let interval: any;
+    if (isMatchmaking) {
+      setMatchmakingSearchSeconds(0);
+      interval = setInterval(() => {
+        setMatchmakingSearchSeconds((prev) => prev + 1);
+      }, 1000);
+    } else {
+      setMatchmakingSearchSeconds(0);
+    }
+    return () => clearInterval(interval);
+  }, [isMatchmaking]);
+
+  // Clean up matchmaking when leaving component
+  useEffect(() => {
+    return () => {
+      if (matchmakingAbortRef.current) {
+        matchmakingAbortRef.current.abort();
+      }
+    };
+  }, []);
+
+  const handleCancelMatchmaking = async () => {
+    if (matchmakingAbortRef.current) {
+      matchmakingAbortRef.current.abort();
+      matchmakingAbortRef.current = null;
+    }
+    setIsMatchmaking(false);
+    setMatchmakingStatusText('Matchmaking cancelled.');
+    try {
+      await fetch('/api/matchmake/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: user?.id || 'guest_user' })
+      });
+    } catch {
+      // no-op
+    }
+  };
+
   const handleStartNewGame = () => {
     if (mode === 'online') {
       setIsMatchmaking(true);
       setOnlineOpponent(null);
-      setTimeout(() => {
-        setIsMatchmaking(false);
-        const myElo = user ? user.stats.rapid : 1500;
-        const diff = Math.floor(Math.random() * 41) - 20; // -20 to +20 deviation
-        const oppElo = myElo + diff;
+      setMatchmakingStatusText('Searching for real players (active in last 5m, ±20 Elo)...');
 
-        let playAsBlack = false;
-        if (myElo > oppElo) {
-          playAsBlack = Math.random() < 0.75;
-        } else if (myElo < oppElo) {
-          playAsBlack = Math.random() > 0.75;
-        } else {
-          playAsBlack = Math.random() < 0.5;
+      const tc = isCustomTime ? `${customMinutes}+${customIncrement}` : selectedTimeControl;
+      const myRating = user ? user.stats.rapid : 1500;
+      const myId = user ? user.id : `player_${Math.random().toString(36).slice(2, 9)}`;
+      const myName = user ? user.username : 'Chaturanga Player';
+      const myAvatar = user ? user.avatar : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80';
+
+      const pollMatchmaking = async () => {
+        const controller = new AbortController();
+        matchmakingAbortRef.current = controller;
+
+        try {
+          const res = await fetch('/api/matchmake', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              id: myId,
+              name: myName,
+              rating: myRating,
+              timeControl: tc,
+              avatar: myAvatar,
+              country: '🇮🇳'
+            }),
+            signal: controller.signal
+          });
+
+          const data = await res.json();
+
+          if (data.status === 'match') {
+            setIsMatchmaking(false);
+            setMyColor(data.color as 'w' | 'b');
+            setOnlineOpponent(data.opponent);
+            resetGameStates();
+            try {
+              confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
+            } catch {}
+          } else if (data.status === 'waiting') {
+            setMatchmakingStatusText(`Searching pool for Elo ${myRating - 20} – ${myRating + 20} in ${tc}...`);
+            // Poll again
+            setTimeout(() => {
+              if (matchmakingAbortRef.current === controller) {
+                pollMatchmaking();
+              }
+            }, 1000);
+          } else if (data.status === 'timeout') {
+            setMatchmakingStatusText('Search timed out after 5 minutes. Click retry to search again.');
+            setIsMatchmaking(false);
+          } else {
+            setIsMatchmaking(false);
+          }
+        } catch (e: any) {
+          if (e.name !== 'AbortError') {
+            console.error('Matchmaking error:', e);
+            setIsMatchmaking(false);
+          }
         }
+      };
 
-        setMyColor(playAsBlack ? 'b' : 'w');
-
-        setOnlineOpponent({
-          name: 'Grandmaster_X',
-          rating: oppElo,
-          country: '🇬🇧',
-          avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80'
-        });
-        resetGameStates();
-      }, 2500);
+      pollMatchmaking();
     } else {
       setMyColor('w');
       resetGameStates();
@@ -258,7 +334,7 @@ export const PlayHub: React.FC = () => {
           }
         }
       } catch (err) {
-        void('Bot move calculation error:', err);
+        console.error('Bot move calculation error:', err);
       } finally {
         setIsBotThinking(false);
       }
@@ -292,7 +368,7 @@ export const PlayHub: React.FC = () => {
     }
   };
 
-  const handleGameOver = (result: { winner: 'w' | 'b' | 'draw'; reason: string; pgn: string; isAbort?: boolean }) => {
+  function handleGameOver(result: { winner: 'w' | 'b' | 'draw'; reason: string; pgn: string; isAbort?: boolean }) {
     setIsClockRunning(false);
     setGameStatus(result.reason);
     setLastPgn(result.pgn || chessRef.current.pgn());
@@ -909,11 +985,90 @@ export const PlayHub: React.FC = () => {
         </div>
       </div>
 
+      {/* Real Live Matchmaking Modal (No Mock Bots) */}
+      {isMatchmaking && (
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="relative w-full max-w-md p-6 rounded-3xl bg-gradient-to-b from-[#0e172e] to-[#070b16] border-2 border-blue-500/60 shadow-2xl space-y-6 text-center animate-in fade-in zoom-in-95 duration-200">
+            {/* Header & Close */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-blue-400 font-bold text-sm tracking-wide uppercase">
+                <Radio className="animate-pulse text-blue-400" size={18} />
+                <span>Live Opponent Search</span>
+              </div>
+              <button
+                onClick={handleCancelMatchmaking}
+                className="p-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors"
+                title="Cancel matchmaking"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Radar Pulse Visual */}
+            <div className="relative w-28 h-28 mx-auto flex items-center justify-center">
+              <div className="absolute inset-0 rounded-full border border-blue-500/30 animate-ping opacity-60" />
+              <div className="absolute inset-2 rounded-full border border-indigo-500/40 animate-pulse" />
+              <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-blue-600 to-red-600 p-0.5 shadow-xl flex items-center justify-center">
+                <div className="w-full h-full rounded-full bg-[#0b1021] flex items-center justify-center">
+                  <Globe className="text-blue-300 animate-spin" style={{ animationDuration: '6s' }} size={28} />
+                </div>
+              </div>
+            </div>
+
+            {/* Matchmaking Info & Strict Criteria */}
+            <div className="space-y-3">
+              <h3 className="text-lg font-extrabold text-white font-cinzel tracking-wide">
+                Searching Global Online Pool
+              </h3>
+              <p className="text-xs text-slate-300 max-w-xs mx-auto leading-relaxed">
+                {matchmakingStatusText}
+              </p>
+
+              {/* Strict Filters Details */}
+              <div className="grid grid-cols-2 gap-2 text-left p-3 rounded-2xl bg-[#090e1c] border border-blue-500/30 text-xs">
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Elo Target</span>
+                  <span className="font-mono font-bold text-amber-300">
+                    {(user ? user.stats.rapid : 1500) - 20} – {(user ? user.stats.rapid : 1500) + 20}
+                  </span>
+                  <span className="text-[10px] text-slate-500 block">(±20 deviation)</span>
+                </div>
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase font-bold block">Time Control</span>
+                  <span className="font-mono font-bold text-blue-300">
+                    {isCustomTime ? `${customMinutes}+${customIncrement}` : selectedTimeControl}
+                  </span>
+                  <span className="text-[10px] text-slate-500 block">Last 5 min active</span>
+                </div>
+              </div>
+
+              {/* Live Search Timer */}
+              <div className="flex items-center justify-center gap-2 text-xs font-mono text-slate-400">
+                <Clock size={13} className="text-slate-400" />
+                <span>Elapsed: </span>
+                <span className="text-white font-bold">
+                  {Math.floor(matchmakingSearchSeconds / 60)}:
+                  {('0' + (matchmakingSearchSeconds % 60)).slice(-2)}
+                </span>
+              </div>
+            </div>
+
+            {/* Cancel Button */}
+            <button
+              onClick={handleCancelMatchmaking}
+              className="w-full py-3 px-4 rounded-2xl bg-gradient-to-r from-red-600/80 to-red-700/80 hover:from-red-600 hover:to-red-700 text-white font-bold text-xs tracking-wider uppercase transition-all shadow-lg active:scale-95"
+            >
+              Cancel Matchmaking
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Stockfish 18 & Gemini Review Modal */}
       <GameReviewModal
         isOpen={showReviewModal}
         onClose={() => setShowReviewModal(false)}
-        pgn={lastPgn || (moveHistory.length > 0 ? chessRef.current.pgn() : '1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5')}
+        pgn={lastPgn || '1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5'}
         whitePlayerName={user?.username || 'Player 1'}
         blackPlayerName={mode === 'bot' ? 'Computer' : 'Player 2'}
         whiteRating={user?.stats.rapid || 1650}

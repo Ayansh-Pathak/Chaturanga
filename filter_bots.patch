@@ -1,0 +1,38 @@
+--- src/context/TournamentContext.tsx
++++ src/context/TournamentContext.tsx
+@@ -198,6 +198,24 @@
+     const dateFormatted = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+     const timeFormatted = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+ 
++    let clubMemberIds: string[] = [];
++    if (isClubOnly && clubId) {
++      try {
++        const savedClubs = localStorage.getItem('chaturanga_clubs');
++        if (savedClubs) {
++          const parsedClubs = JSON.parse(savedClubs);
++          const club = parsedClubs.find((c: any) => c.id === clubId);
++          if (club && club.members) {
++            clubMemberIds = club.members.map((m: any) => m.userId);
++          }
++        }
++      } catch (e) {
++        console.error('Could not fetch club members for tournament', e);
++      }
++    }
++
+     // Seed with realistic participants
+     const botParticipants: TournamentParticipant[] = [
+       { id: 'bot_1', username: 'Grandmaster Vishy', rating: 1720, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0, isBot: true },
+@@ -247,7 +265,11 @@
+       isClubOnly: !!isClubOnly,
+       clubId,
+       clubName,
+-      participants: [hostParticipant, ...botParticipants.slice(0, format === 'knockout' ? 7 : (isClubOnly ? 3 : 7))],
++      participants: [
++        hostParticipant,
++        ...botParticipants
++          .filter(bot => !isClubOnly || clubMemberIds.includes(bot.id))
++          .slice(0, format === 'knockout' ? 7 : 7)
++      ],
+       matches: []
+     };

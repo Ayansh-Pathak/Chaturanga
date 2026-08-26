@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Crown, Swords, Puzzle, Trophy, Users, MessageSquare, User, Flame, LogIn, Sparkles } from 'lucide-react';
+import { Crown, Swords, Puzzle, Trophy, Users, MessageSquare, Flame, LogIn } from 'lucide-react';
 
 interface NavbarProps {
   activeTab: 'play' | 'puzzles' | 'tournaments' | 'clubs' | 'chat' | 'feedback' | 'profile';

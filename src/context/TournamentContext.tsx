@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { Tournament, TournamentFormat, TimeControl, TournamentParticipant, TournamentMedalData } from '../types/chess';
+import { Tournament, TournamentFormat, TimeControl, TournamentParticipant } from '../types/chess';
 import { useAuth } from './AuthContext';
 
 export interface JoinTournamentResult {
@@ -199,6 +199,22 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const dateFormatted = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     const timeFormatted = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 
+    let clubMemberIds: string[] = [];
+    if (isClubOnly && clubId) {
+      try {
+        const savedClubs = localStorage.getItem('chaturanga_clubs');
+        if (savedClubs) {
+          const parsedClubs = JSON.parse(savedClubs);
+          const club = parsedClubs.find((c: any) => c.id === clubId);
+          if (club && club.members) {
+            clubMemberIds = club.members.map((m: any) => m.userId);
+          }
+        }
+      } catch (e) {
+        console.error('Could not fetch club members for tournament', e);
+      }
+    }
+
     // Seed with realistic participants
     const botParticipants: TournamentParticipant[] = [
       { id: 'bot_1', username: 'Grandmaster Vishy', rating: 1720, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0, isBot: true },
@@ -247,7 +263,12 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       isClubOnly: !!isClubOnly,
       clubId,
       clubName,
-      participants: [hostParticipant, ...botParticipants.slice(0, format === 'knockout' ? 7 : (isClubOnly ? 3 : 7))],
+      participants: [
+        hostParticipant,
+        ...botParticipants
+          .filter(bot => !isClubOnly || clubMemberIds.includes(bot.id))
+          .slice(0, format === 'knockout' ? 7 : 7)
+      ],
       matches: []
     };
 
@@ -416,11 +437,11 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           updatedParticipants.sort((a, b) => b.score - a.score || b.rating - a.rating);
 
           if (isFinal) {
-            // Award medals for top 4
+            const hasMedals = updatedParticipants.length > 2;
             const [gold, silver, bronze, brass] = updatedParticipants;
             
-            // If user is in top 4, award tournament medal
-            if (user) {
+            // Medals are strictly awarded only if there are MORE than 2 participants (no medals for 2-player tournaments)
+            if (user && hasMedals) {
               const userIdx = updatedParticipants.findIndex((p) => p.id === user.id);
               if (userIdx >= 0 && userIdx < 4) {
                 const tierMap: ('gold' | 'silver' | 'bronze' | 'brass')[] = ['gold', 'silver', 'bronze', 'brass'];
@@ -441,12 +462,12 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               status: 'completed',
               currentRound: t.totalRounds,
               participants: updatedParticipants,
-              winners: {
+              winners: hasMedals ? {
                 gold: gold || updatedParticipants[0],
                 silver: silver || updatedParticipants[1],
                 bronze: bronze || updatedParticipants[2],
                 brass: brass || updatedParticipants[3],
-              }
+              } : undefined
             };
           }
 

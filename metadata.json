@@ -1,6 +1,6 @@
-{
+ {
   "name": "Chaturanga",
-  "description": "FIDE-compliant chess platform with custom elephant-head bishops and crown kings, Elo progression, 5000+ tactical puzzles, Swiss/Arena/Round Robin/Knockout tournaments, clubs, teams, custom medals, and feedback system.",
+  "description": "FIDE-compliant chess platform with custom elephant-head bishops and crown kings, Elo progression, 5000+ tactical puzzles, Swiss/Arena/Round Robin/Knockout tournaments, clubs, teams, custom medals, Gemini Powered Chatbot, Stockfish 18 Game Review and Analysis, and feedback system.",
   "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

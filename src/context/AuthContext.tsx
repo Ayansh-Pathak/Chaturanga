@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { UserProfile, TournamentMedalData, RatingMilestoneMedalData, GameRecord } from '../types/chess';
+import { UserProfile, TournamentMedalData, GameRecord } from '../types/chess';
 import confetti from 'canvas-confetti';
 
 interface AuthContextType {

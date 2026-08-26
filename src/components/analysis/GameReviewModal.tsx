@@ -1,23 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Chess } from 'chess.js';
 import { ChessPiece } from '../chess/ChessPiece';
-import { ChessBoard, BoardTheme } from '../chess/ChessBoard';
+import { ChessBoard } from '../chess/ChessBoard';
 import {
   X,
-  Sparkles,
-  Award,
   TrendingUp,
   Cpu,
   ChevronLeft,
   ChevronRight,
   RotateCcw,
   CheckCircle2,
-  AlertTriangle,
-  Flame,
-  ShieldCheck,
-  Share2,
-  Copy,
-  BookOpen
+  Copy
 } from 'lucide-react';
 
 interface GameReviewModalProps {
@@ -95,7 +88,7 @@ export const GameReviewModal: React.FC<GameReviewModalProps> = ({
       setMoveList(parsedMoves);
       setCurrentMoveIndex(parsedMoves.length - 1);
     } catch (e) {
-      void('PGN Parse error:', e);
+      console.error('PGN Parse error:', e);
     }
 
     // Fetch Stockfish 18 + Gemini review from backend

@@ -14,12 +14,10 @@ import {
   Legend,
 } from 'recharts';
 import {
-  User,
   Trophy,
   Crown,
   Award,
   Flame,
-  Zap,
   Mail,
   Lock,
   ShieldCheck,
@@ -31,10 +29,8 @@ import {
   Calendar,
   CheckCircle2,
   AlertCircle,
-  Eye,
   Camera,
-  Globe,
-  Sliders
+  Globe
 } from 'lucide-react';
 
 const PRESET_AVATARS = [
