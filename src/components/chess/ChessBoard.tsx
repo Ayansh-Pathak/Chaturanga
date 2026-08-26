@@ -22,6 +22,7 @@ interface ChessBoardProps {
   playerColor?: 'w' | 'b' | 'both';
   customTheme?: BoardTheme;
   interactive?: boolean;
+  lastMoveHighlight?: { from: Square; to: Square } | null;
 }
 
 export const ChessBoard: React.FC<ChessBoardProps> = ({
@@ -33,13 +34,14 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
   playerColor = 'both',
   customTheme = 'classic',
   interactive = true,
+  lastMoveHighlight,
 }) => {
   const [game, setGame] = useState<Chess>(new Chess(initialFen));
   const [selectedSquare, setSelectedSquare] = useState<Square | null>(null);
   const [legalMoves, setLegalMoves] = useState<Square[]>([]);
   const [boardOrientation, setBoardOrientation] = useState<'w' | 'b'>(orientation);
   const [pendingPromotion, setPendingPromotion] = useState<{ from: Square; to: Square } | null>(null);
-  const [lastMove, setLastMove] = useState<{ from: Square; to: Square } | null>(null);
+  const [lastMove, setLastMove] = useState<{ from: Square; to: Square } | null>(lastMoveHighlight || null);
   const [inCheckSquare, setInCheckSquare] = useState<Square | null>(null);
   const [soundOn, setSoundOn] = useState<boolean>(true);
 
@@ -50,12 +52,20 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
       setGame(newGame);
       setSelectedSquare(null);
       setLegalMoves([]);
-      setLastMove(null);
+      if (lastMoveHighlight !== undefined) {
+        setLastMove(lastMoveHighlight);
+      }
       checkGameState(newGame);
     } catch {
       // Invalid FEN fallback
     }
-  }, [initialFen]);
+  }, [initialFen, lastMoveHighlight]);
+
+  useEffect(() => {
+    if (lastMoveHighlight !== undefined) {
+      setLastMove(lastMoveHighlight);
+    }
+  }, [lastMoveHighlight]);
 
   useEffect(() => {
     setBoardOrientation(orientation);

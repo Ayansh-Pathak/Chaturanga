@@ -7,7 +7,7 @@ import { createServer as createViteServer } from "vite";
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3000;
 
 app.use(express.json());
 
@@ -111,8 +111,8 @@ ${contextSnippet}`;
     return res.json({ reply: replyText });
   } catch (error: any) {
     console.error("Gemini Chat API Error:", error);
-    return res.status(500).json({
-      reply: "I am contemplating the Vedic chess board. Ensure strong center control, protect your king, and look for tactical elephant bishop skewers.",
+    return res.status(200).json({
+      reply: "I am contemplating the Vedic chess board. Ensure strong center control, protect your royal king, and look for tactical elephant bishop skewers on long diagonals!",
       error: error.message,
     });
   }

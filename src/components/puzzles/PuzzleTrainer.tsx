@@ -38,6 +38,7 @@ export const PuzzleTrainer: React.FC = () => {
 
   // Active puzzle game instance & board FEN
   const [puzzleFen, setPuzzleFen] = useState<string>(currentPuzzle.fen);
+  const [puzzleLastMove, setPuzzleLastMove] = useState<{ from: string; to: string } | null>(null);
   const [puzzleKey, setPuzzleKey] = useState<number>(1);
   const [moveIndex, setMoveIndex] = useState<number>(0);
   const [status, setStatus] = useState<'solving' | 'correct' | 'failed' | 'skipped'>('solving');
@@ -94,6 +95,7 @@ export const PuzzleTrainer: React.FC = () => {
     setCurrentPuzzle(p);
     chessRef.current = new Chess(p.fen);
     setPuzzleFen(p.fen);
+    setPuzzleLastMove(null);
     setPuzzleKey((k) => k + 1);
     setMoveIndex(0);
     setStatus('solving');
@@ -215,12 +217,15 @@ export const PuzzleTrainer: React.FC = () => {
     if (isCorrect) {
       // Execute move on internal chess instance
       try {
-        chessRef.current.move({
+        const moveRes = chessRef.current.move({
           from: move.from,
           to: move.to,
           promotion: move.promotion || 'q',
         });
-        setPuzzleFen(chessRef.current.fen());
+        if (moveRes) {
+          setPuzzleFen(chessRef.current.fen());
+          setPuzzleLastMove({ from: move.from, to: move.to });
+        }
       } catch (err) {
         console.error('Chess move error:', err);
       }
@@ -237,8 +242,11 @@ export const PuzzleTrainer: React.FC = () => {
           try {
             // Play bot move (either SAN like 'Qxe4' or UCI)
             const isCapture = botMove.includes('x');
-            chessRef.current.move(botMove);
-            setPuzzleFen(chessRef.current.fen());
+            const botRes = chessRef.current.move(botMove);
+            if (botRes) {
+              setPuzzleFen(chessRef.current.fen());
+              setPuzzleLastMove({ from: botRes.from, to: botRes.to });
+            }
             if (isCapture) {
               chessAudio.playCapture();
             } else {
@@ -248,12 +256,15 @@ export const PuzzleTrainer: React.FC = () => {
             // fallback UCI
             try {
               if (botMove.length >= 4) {
-                chessRef.current.move({
+                const botRes = chessRef.current.move({
                   from: botMove.slice(0, 2),
                   to: botMove.slice(2, 4),
                   promotion: botMove.length > 4 ? botMove[4] : undefined,
                 });
-                setPuzzleFen(chessRef.current.fen());
+                if (botRes) {
+                  setPuzzleFen(chessRef.current.fen());
+                  setPuzzleLastMove({ from: botRes.from, to: botRes.to });
+                }
                 chessAudio.playMove(true);
               }
             } catch {}
@@ -438,6 +449,7 @@ export const PuzzleTrainer: React.FC = () => {
           <ChessBoard
             key={`puzzle-${puzzleKey}`}
             initialFen={puzzleFen}
+            lastMoveHighlight={puzzleLastMove}
             orientation={currentPuzzle.toMove}
             playerColor={currentPuzzle.toMove}
             customTheme={boardTheme}

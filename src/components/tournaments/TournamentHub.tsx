@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
+import { Chess } from 'chess.js';
 import { useTournaments } from '../../context/TournamentContext';
 import { useAuth } from '../../context/AuthContext';
 import { useClubs } from '../../context/ClubContext';
@@ -47,6 +48,10 @@ const [membershipError, setMembershipError] = useState<string | null>(null);
   const [activeMatchGame, setActiveMatchGame] = useState<boolean>(false);
   const [opponentBot, setOpponentBot] = useState<{ name: string; rating: number; avatar: string } | null>(null);
   const [activeMatchGameMoves, setActiveMatchGameMoves] = useState<number>(0);
+  const [matchFen, setMatchFen] = useState<string>('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+  const [matchLastMove, setMatchLastMove] = useState<{ from: string; to: string } | null>(null);
+  const [isOpponentThinking, setIsOpponentThinking] = useState<boolean>(false);
+  const matchChessRef = useRef<Chess>(new Chess());
   const [filterTab, setFilterTab] = useState<'all' | 'public' | 'club'>('all');
   const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 const isParticipant = selectedTournament?.participants?.some(
@@ -137,8 +142,85 @@ const isParticipant = selectedTournament?.participants?.some(
 
   const handleStartMatch = (opponent: { name: string; rating: number; avatar: string }) => {
     setOpponentBot(opponent);
+    matchChessRef.current = new Chess();
+    setMatchFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+    setMatchLastMove(null);
+    setIsOpponentThinking(false);
     setActiveMatchGame(true);
     setActiveMatchGameMoves(0);
+  };
+
+  const handleTournamentMoveMade = (move: { from: string; to: string; san: string; promotion?: string }) => {
+    try {
+      const res = matchChessRef.current.move({
+        from: move.from,
+        to: move.to,
+        promotion: move.promotion || 'q',
+      });
+      if (res) {
+        setMatchFen(matchChessRef.current.fen());
+        setMatchLastMove({ from: move.from, to: move.to });
+        setActiveMatchGameMoves((prev) => prev + 1);
+
+        if (matchChessRef.current.isGameOver()) {
+          if (matchChessRef.current.isCheckmate()) {
+            handleGameComplete({ winner: 'w', reason: 'Checkmate! You won the tournament round!', pgn: matchChessRef.current.pgn() });
+          } else {
+            handleGameComplete({ winner: 'draw', reason: 'Draw (Stalemate / 50-move rule)', pgn: matchChessRef.current.pgn() });
+          }
+          return;
+        }
+
+        // Trigger tournament bot response
+        setIsOpponentThinking(true);
+        const oppRating = opponentBot?.rating || 1650;
+        const thinkTime = Math.min(1200, Math.max(400, 300 + (oppRating / 3000) * 700));
+
+        setTimeout(() => {
+          try {
+            const moves = matchChessRef.current.moves({ verbose: true });
+            if (moves.length === 0) return;
+
+            let selectedMove = moves[0];
+            const pieceValues: Record<string, number> = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
+            let bestScore = -9999;
+            for (const m of moves) {
+              let score = 0;
+              if (m.captured) score += (pieceValues[m.captured] || 1) * 10 - (pieceValues[m.piece] || 1);
+              if (m.san.includes('#')) score += 1000;
+              if (m.san.includes('+')) score += 15;
+              if (['d4', 'e4', 'd5', 'e5'].includes(m.to)) score += 6;
+              score += Math.random() * ((3000 - oppRating) / 200);
+              if (score > bestScore) {
+                bestScore = score;
+                selectedMove = m;
+              }
+            }
+
+            const botRes = matchChessRef.current.move(selectedMove);
+            if (botRes) {
+              setMatchFen(matchChessRef.current.fen());
+              setMatchLastMove({ from: botRes.from, to: botRes.to });
+              setActiveMatchGameMoves((prev) => prev + 1);
+
+              if (matchChessRef.current.isGameOver()) {
+                if (matchChessRef.current.isCheckmate()) {
+                  handleGameComplete({ winner: 'b', reason: `${opponentBot?.name || 'Opponent'} delivered checkmate!`, pgn: matchChessRef.current.pgn() });
+                } else {
+                  handleGameComplete({ winner: 'draw', reason: 'Draw', pgn: matchChessRef.current.pgn() });
+                }
+              }
+            }
+          } catch (e) {
+            console.error('Tournament bot move error:', e);
+          } finally {
+            setIsOpponentThinking(false);
+          }
+        }, thinkTime);
+      }
+    } catch (e) {
+      console.error('Tournament move error:', e);
+    }
   };
 
   const handleGameComplete = (result: { winner: 'w' | 'b' | 'draw'; reason: string; pgn: string }) => {
@@ -155,8 +237,8 @@ const isParticipant = selectedTournament?.participants?.some(
       result: isWin ? '1-0' : (isLoss ? '0-1' : '1/2-1/2'),
       reason: result.reason,
       timeControl: selectedTournament.timeControl,
-      pgn: result.pgn,
-      movesCount: 38,
+      pgn: result.pgn || matchChessRef.current.pgn(),
+      movesCount: activeMatchGameMoves + 1,
       date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       mode: 'tournament',
       tournamentName: selectedTournament.name,
@@ -420,12 +502,14 @@ const isParticipant = selectedTournament?.participants?.some(
                 <div className="flex justify-center">
                   <ChessBoard
                     key={`match-${selectedTournament.id}-${selectedTournament.currentRound}`}
+                    initialFen={matchFen}
+                    lastMoveHighlight={matchLastMove}
                     orientation="w"
                     playerColor="w"
                     customTheme="crimson_sapphire"
                     onGameOver={handleGameComplete}
-                    onMove={() => setActiveMatchGameMoves((prev) => prev + 1)}
-                    interactive={true}
+                    onMove={handleTournamentMoveMade}
+                    interactive={!isOpponentThinking}
                   />
                 </div>
               </div>

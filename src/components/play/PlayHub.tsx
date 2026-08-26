@@ -38,6 +38,8 @@ export const PlayHub: React.FC = () => {
   const [eloChangeMsg, setEloChangeMsg] = useState<string | null>(null);
   const [gameResult, setGameResult] = useState<'1-0' | '0-1' | '1/2-1/2' | '*'>('*');
   const [myColor, setMyColor] = useState<'w' | 'b'>('w');
+  const [currentFen, setCurrentFen] = useState<string>('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+  const [lastMoveHighlight, setLastMoveHighlight] = useState<{ from: string; to: string } | null>(null);
   const [lastPgn, setLastPgn] = useState<string>('');
   const [showReviewModal, setShowReviewModal] = useState<boolean>(false);
   const [isBotThinking, setIsBotThinking] = useState<boolean>(false);
@@ -246,13 +248,14 @@ export const PlayHub: React.FC = () => {
 
       pollMatchmaking();
     } else {
-      setMyColor('w');
-      resetGameStates();
+      resetGameStates(myColor);
     }
   };
 
-  const resetGameStates = () => {
+  const resetGameStates = (startingColor: 'w' | 'b' = myColor) => {
     chessRef.current = new Chess();
+    setCurrentFen('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
+    setLastMoveHighlight(null);
     setGameKey((prev) => prev + 1);
     setMoveHistory([]);
     setGameStatus(null);
@@ -261,6 +264,12 @@ export const PlayHub: React.FC = () => {
     setIsClockRunning(false);
     setCurrentTurn('w');
     setIsBotThinking(false);
+
+    if (mode === 'bot' && startingColor === 'b') {
+      setTimeout(() => {
+        triggerBotMove();
+      }, 500);
+    }
   };
 
   // Bot move generation scaled by Elo slider
@@ -320,14 +329,22 @@ export const PlayHub: React.FC = () => {
         const moveResult = chessRef.current.move(selectedMove);
         if (moveResult) {
           setMoveHistory((prev) => [...prev, moveResult.san]);
-          // Add increment to black
-          setBlackTime((prev) => prev + increment);
-          setCurrentTurn('w');
+          setCurrentFen(chessRef.current.fen());
+          setLastMoveHighlight({ from: moveResult.from, to: moveResult.to });
+
+          const botColor = myColor === 'w' ? 'b' : 'w';
+          if (botColor === 'b') {
+            setBlackTime((prev) => prev + increment);
+            setCurrentTurn('w');
+          } else {
+            setWhiteTime((prev) => prev + increment);
+            setCurrentTurn('b');
+          }
 
           // Check if game over after bot move
           if (chessRef.current.isGameOver()) {
             if (chessRef.current.isCheckmate()) {
-              handleGameOver({ winner: 'b', reason: 'Checkmate - Computer won!', pgn: chessRef.current.pgn() });
+              handleGameOver({ winner: botColor, reason: 'Checkmate - Computer won!', pgn: chessRef.current.pgn() });
             } else if (chessRef.current.isDraw()) {
               handleGameOver({ winner: 'draw', reason: 'Draw (Stalemate / 50-move rule)', pgn: chessRef.current.pgn() });
             }
@@ -350,7 +367,11 @@ export const PlayHub: React.FC = () => {
         to: move.to,
         promotion: move.promotion || 'q',
       });
-      if (res) successfulMove = true;
+      if (res) {
+        successfulMove = true;
+        setCurrentFen(chessRef.current.fen());
+        setLastMoveHighlight({ from: move.from, to: move.to });
+      }
     } catch {}
 
     if (!successfulMove) return;
@@ -359,12 +380,15 @@ export const PlayHub: React.FC = () => {
     if (currentTurn === 'w') {
       setWhiteTime((prev) => prev + increment);
       setCurrentTurn('b');
-      if (mode === 'bot') {
+      if (mode === 'bot' && myColor === 'w') {
         triggerBotMove();
       }
     } else {
       setBlackTime((prev) => prev + increment);
       setCurrentTurn('w');
+      if (mode === 'bot' && myColor === 'b') {
+        triggerBotMove();
+      }
     }
   };
 
@@ -673,8 +697,10 @@ export const PlayHub: React.FC = () => {
           {/* CHESSBOARD */}
           <ChessBoard
             key={`game-${gameKey}`}
+            initialFen={currentFen}
+            lastMoveHighlight={lastMoveHighlight}
             orientation={myColor}
-            playerColor={mode === 'bot' ? 'w' : mode === 'online' ? myColor : 'both'}
+            playerColor={mode === 'bot' ? myColor : mode === 'online' ? myColor : 'both'}
             customTheme={boardTheme}
             onMove={handleMoveMade}
             onGameOver={handleGameOver}
@@ -843,6 +869,41 @@ export const PlayHub: React.FC = () => {
                     {preset.label} Elo
                   </button>
                 ))}
+              </div>
+
+              {/* Side Selection */}
+              <div className="pt-2 border-t border-slate-800/80">
+                <div className="text-[10px] text-slate-400 font-bold mb-1.5">Play Side:</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => {
+                      setMyColor('w');
+                      resetGameStates('w');
+                    }}
+                    className={`py-1.5 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                      myColor === 'w'
+                        ? 'bg-white text-slate-900 shadow-md font-extrabold ring-2 ring-amber-400'
+                        : 'bg-[#090e1c] text-slate-300 hover:text-white border border-slate-800'
+                    }`}
+                  >
+                    <span className="w-3 h-3 rounded-full bg-white border border-slate-400 inline-block" />
+                    <span>White (You First)</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setMyColor('b');
+                      resetGameStates('b');
+                    }}
+                    className={`py-1.5 px-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                      myColor === 'b'
+                        ? 'bg-slate-900 text-white shadow-md font-extrabold ring-2 ring-amber-400 border border-slate-700'
+                        : 'bg-[#090e1c] text-slate-300 hover:text-white border border-slate-800'
+                    }`}
+                  >
+                    <span className="w-3 h-3 rounded-full bg-slate-900 border border-slate-500 inline-block" />
+                    <span>Black (Bot First)</span>
+                  </button>
+                </div>
               </div>
             </div>
           )}
