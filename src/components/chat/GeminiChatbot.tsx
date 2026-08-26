@@ -3,6 +3,7 @@ import { motion, useDragControls } from 'motion/react';
 import { ChessPiece } from '../chess/ChessPiece';
 import { Send, Sparkles, X, Minimize2, Maximize2, Trash2, ChevronRight, Compass, RotateCcw, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { apiUrl } from '../../utils/apiBase';
 
 interface ChatMessage {
   id: string;

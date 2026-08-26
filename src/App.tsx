@@ -1,4 +1,4 @@
-import React, { useState, Suspense, lazy } from 'react';
+import React, { useState, Suspense, lazy, useEffect } from 'react';
 import { AuthProvider } from './context/AuthContext';
 import { TournamentProvider } from './context/TournamentContext';
 import { ClubProvider } from './context/ClubContext';
@@ -16,9 +16,26 @@ const ProfilePage = lazy(() => import('./components/profile/ProfilePage').then(m
 const PlayerChat = lazy(() => import('./components/chat/PlayerChat').then(module => ({ default: module.PlayerChat })));
 const GeminiChatbot = lazy(() => import('./components/chat/GeminiChatbot').then(module => ({ default: module.GeminiChatbot })));
 
+type TabId = 'play' | 'puzzles' | 'tournaments' | 'clubs' | 'chat' | 'feedback' | 'profile';
+const VALID_TABS: TabId[] = ['play', 'puzzles', 'tournaments', 'clubs', 'chat', 'feedback', 'profile'];
+
+function getInitialTab(): TabId {
+  // Support ?tab=puzzles or #puzzles in the URL (for GitHub Pages deep links)
+  const hash = window.location.hash.replace('#', '').toLowerCase() as TabId;
+  if (VALID_TABS.includes(hash)) return hash;
+  const search = new URLSearchParams(window.location.search).get('tab') as TabId;
+  if (search && VALID_TABS.includes(search)) return search;
+  return 'play';
+}
+
 function ChaturangaApp() {
-  const [activeTab, setActiveTab] = useState<'play' | 'puzzles' | 'tournaments' | 'clubs' | 'chat' | 'feedback' | 'profile'>('play');
+  const [activeTab, setActiveTab] = useState<TabId>(getInitialTab);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+
+  // Keep URL hash in sync with active tab so the link is shareable
+  useEffect(() => {
+    window.location.hash = activeTab;
+  }, [activeTab]);
 
   return (
     <div className="min-h-screen bg-[#0a0d14] text-slate-100 flex flex-col selection:bg-amber-500 selection:text-black">
