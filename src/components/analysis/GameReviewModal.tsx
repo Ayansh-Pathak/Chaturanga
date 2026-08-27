@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Chess } from 'chess.js';
 import { ChessPiece } from '../chess/ChessPiece';
 import { ChessBoard } from '../chess/ChessBoard';
+import { apiUrl } from '../../utils/apiBase';
 import {
   X,
   TrendingUp,
@@ -98,7 +99,11 @@ export const GameReviewModal: React.FC<GameReviewModalProps> = ({
   const fetchAnalysis = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/gemini/analyze', {
+      const url = apiUrl('/api/gemini/analyze');
+      if (!url) {
+        throw new Error('Static host: API not available');
+      }
+      const res = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

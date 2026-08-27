@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { Crown, Swords, Puzzle, Trophy, Users, MessageSquare, Flame, LogIn } from 'lucide-react';
+import { Crown, Swords, Puzzle, Trophy, Users, MessageSquare, Flame, LogIn, BookOpen } from 'lucide-react';
 
 interface NavbarProps {
   activeTab: 'play' | 'puzzles' | 'tournaments' | 'clubs' | 'chat' | 'feedback' | 'profile';
@@ -24,6 +24,7 @@ export const Navbar: React.FC<NavbarProps> = ({
     { id: 'chat' as const, label: 'Player Chat', icon: <MessageSquare size={17} /> },
     { id: 'feedback' as const, label: 'Feedback', icon: <MessageSquare size={17} /> },
     { id: 'profile' as const, label: 'Profile & Medals', icon: <Crown size={17} /> },
+    { id: 'library' as const, label: 'Library', icon: <BookOpen size={17} /> },
   ];
 
   return (

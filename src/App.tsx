@@ -15,9 +15,10 @@ const FeedbackPage = lazy(() => import('./components/feedback/FeedbackPage').the
 const ProfilePage = lazy(() => import('./components/profile/ProfilePage').then(module => ({ default: module.ProfilePage })));
 const PlayerChat = lazy(() => import('./components/chat/PlayerChat').then(module => ({ default: module.PlayerChat })));
 const GeminiChatbot = lazy(() => import('./components/chat/GeminiChatbot').then(module => ({ default: module.GeminiChatbot })));
+const LibraryPage = lazy(() => import('./components/library/LibraryPage').then(module => ({ default: module.LibraryPage })));
 
-type TabId = 'play' | 'puzzles' | 'tournaments' | 'clubs' | 'chat' | 'feedback' | 'profile';
-const VALID_TABS: TabId[] = ['play', 'puzzles', 'tournaments', 'clubs', 'chat', 'feedback', 'profile'];
+type TabId = 'play' | 'puzzles' | 'tournaments' | 'clubs' | 'chat' | 'feedback' | 'profile' | 'library';
+const VALID_TABS: TabId[] = ['play', 'puzzles', 'tournaments', 'clubs', 'chat', 'feedback', 'profile', 'library'];
 
 function getInitialTab(): TabId {
   // Support ?tab=puzzles or #puzzles in the URL (for GitHub Pages deep links)
@@ -57,6 +58,7 @@ function ChaturangaApp() {
           {activeTab === 'chat' && <PlayerChat />}
           {activeTab === 'feedback' && <FeedbackPage />}
           {activeTab === 'profile' && <ProfilePage />}
+          {activeTab === 'library' && <LibraryPage />}
         </Suspense>
       </main>
 

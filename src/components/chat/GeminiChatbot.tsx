@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, useDragControls } from 'motion/react';
 import { ChessPiece } from '../chess/ChessPiece';
-import { Send, Sparkles, X, Minimize2, Maximize2, Trash2, ChevronRight, Compass, RotateCcw, Loader2 } from 'lucide-react';
+import { Send, Sparkles, X, Minimize2, Maximize2, RotateCcw, Loader2 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { apiUrl } from '../../utils/apiBase';
+import { parseBasicMarkdown } from '../../utils/markdown';
 
 interface ChatMessage {
   id: string;
@@ -43,6 +44,7 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome_msg',
@@ -55,16 +57,19 @@ I am aware of your live chessboard, active tactical puzzles, and match moves. As
   ]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !isMinimized) {
       scrollToBottom();
+      // Auto-focus input when opened
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
-  }, [messages, isOpen]);
+  }, [messages, isOpen, isMinimized]);
 
   const handleSendMessage = async (textToSend?: string) => {
     const query = (textToSend || inputMessage).trim();
@@ -82,7 +87,11 @@ I am aware of your live chessboard, active tactical puzzles, and match moves. As
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/gemini/chat', {
+      const url = apiUrl('/api/gemini/chat');
+      if (!url) {
+        throw new Error('Static host: API not available');
+      }
+      const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -135,14 +144,14 @@ I am aware of your live chessboard, active tactical puzzles, and match moves. As
     'What is the best tactical move here?',
     'Explain the Elephant Bishop strategies',
     'How do I defend against Queen forks?',
-    'Explain FIDE en passant & 50-move rule',
+    'Explain FIDE en passant',
   ];
 
   return (
-    <>
+    <div id="gemini-chatbot-container">
       {!isOpen && (
         <motion.div
-          drag
+          drag={true}
           dragMomentum={false}
           className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-2 cursor-grab active:cursor-grabbing"
         >
@@ -167,15 +176,21 @@ I am aware of your live chessboard, active tactical puzzles, and match moves. As
 
       {isOpen && (
         <motion.div
-          drag
+          drag={isExpanded ? false : true}
+          dragListener={false}
+          dragControls={dragControls}
           dragMomentum={false}
-          className={`fixed z-50 bg-[#10141e] border-2 border-amber-500/60 rounded-2xl shadow-[0_15px_50px_rgba(0,0,0,0.85)] backdrop-blur-xl flex flex-col overflow-hidden transition-all duration-200 ${
-            isExpanded ? 'w-[92vw] sm:w-[620px] h-[82vh]' : isMinimized ? 'w-72 h-[60px]' : 'w-[92vw] sm:w-[420px] h-[560px]'
-          }`}
+          className={
+            "fixed z-50 bg-[#10141e] border-2 border-amber-500/60 rounded-2xl shadow-[0_15px_50px_rgba(0,0,0,0.85)] backdrop-blur-xl flex flex-col overflow-hidden transition-all duration-200 " +
+            (isExpanded ? "w-[92vw] sm:w-[620px] h-[82vh]" : isMinimized ? "w-72 h-[60px]" : "w-[92vw] sm:w-[420px] h-[560px]")
+          }
           style={isExpanded ? { top: '50%', left: '50%', transform: 'translate(-50%, -50%)', touchAction: 'none' } : { bottom: '24px', right: '24px', touchAction: 'none' }}
         >
           {/* Header (Draggable Handle) */}
           <div 
+            onPointerDown={(e: React.PointerEvent<HTMLDivElement>) => {
+                if (!isExpanded) dragControls.start(e);
+              }}
             className="bg-gradient-to-r from-[#171c2b] via-[#1a2133] to-[#121622] px-4 py-3 border-b border-slate-700/80 flex items-center justify-between cursor-grab active:cursor-grabbing select-none"
           >
             <div className="flex items-center gap-3">
@@ -195,7 +210,7 @@ I am aware of your live chessboard, active tactical puzzles, and match moves. As
                   </div>
                   <p className="text-[11px] text-slate-400 flex items-center gap-1">
                     <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                    Drag header to move anywhere
+                    Drag header to move
                   </p>
                 </div>
               )}
@@ -203,7 +218,7 @@ I am aware of your live chessboard, active tactical puzzles, and match moves. As
 
             <div className="flex items-center gap-1 text-slate-400">
               <button
-                onClick={(e) => {
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.stopPropagation();
                   setMessages([{ id: 'reset', sender: 'gemini', text: 'Chat history cleared. How can I guide your chess strategy today?', timestamp: 'Just now' }]);
                 }}
@@ -213,7 +228,7 @@ I am aware of your live chessboard, active tactical puzzles, and match moves. As
                 <RotateCcw size={14} />
               </button>
               <button
-                onClick={(e) => {
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.stopPropagation();
                   setIsExpanded(!isExpanded);
                 }}
@@ -223,7 +238,7 @@ I am aware of your live chessboard, active tactical puzzles, and match moves. As
                 {isExpanded ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
               </button>
               <button
-                onClick={(e) => {
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.stopPropagation();
                   setIsMinimized(!isMinimized);
                 }}
@@ -232,9 +247,8 @@ I am aware of your live chessboard, active tactical puzzles, and match moves. As
               >
                 <Minimize2 size={14} />
               </button>
-              {/* Prominent X button to minimize / close */}
               <button
-                onClick={(e) => {
+                onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.stopPropagation();
                   setIsOpen(false);
                 }}
@@ -259,7 +273,7 @@ I am aware of your live chessboard, active tactical puzzles, and match moves. As
                           : 'bg-[#1e2536] text-slate-200 border border-slate-700/50 rounded-tl-sm'
                       } shadow-md`}
                     >
-                      <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                      <div className="text-sm leading-relaxed whitespace-pre-wrap">{parseBasicMarkdown(msg.text)}</div>
                       <span className="text-[10px] text-white/50 block mt-1.5 text-right">{msg.timestamp}</span>
                     </div>
                   </div>
@@ -276,12 +290,10 @@ I am aware of your live chessboard, active tactical puzzles, and match moves. As
               </div>
 
               <div className="px-4 py-2 bg-[#10141f] border-t border-slate-700/50 overflow-x-auto flex gap-2 hide-scrollbar">
-                {['Tactics here?', 'Evaluate position', 'Best move?'].map((shortcut) => (
+                {quickPrompts.map((shortcut) => (
                   <button
                     key={shortcut}
-                    onClick={() => {
-                      setInputMessage(shortcut);
-                    }}
+                    onClick={() => handleSendMessage(shortcut)}
                     className="whitespace-nowrap px-3 py-1.5 rounded-full bg-[#1c2230] border border-slate-700 text-slate-300 hover:bg-[#252b3d] hover:text-amber-300 text-[11px] font-medium transition-all"
                   >
                     {shortcut}
@@ -290,16 +302,17 @@ I am aware of your live chessboard, active tactical puzzles, and match moves. As
               </div>
 
               <form
-                onSubmit={(e) => {
+                onSubmit={(e: React.FormEvent<HTMLFormElement>) => {
                   e.preventDefault();
                   handleSendMessage();
                 }}
                 className="p-3 bg-[#171c2b] border-t border-slate-700/80 flex items-center gap-2"
               >
                 <input
+                  ref={inputRef}
                   type="text"
                   value={inputMessage}
-                  onChange={(e) => setInputMessage(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInputMessage(e.target.value)}
                   placeholder="Ask Gemini about this game, moves, or tactics..."
                   className="flex-1 bg-[#10141f] border border-slate-700 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 text-slate-100 text-xs px-3.5 py-2.5 rounded-xl outline-none placeholder:text-slate-500 transition-all"
                 />
@@ -315,7 +328,7 @@ I am aware of your live chessboard, active tactical puzzles, and match moves. As
           )}
         </motion.div>
       )}
-    </>
+    </div>
   );
 };
 export default GeminiChatbot;
