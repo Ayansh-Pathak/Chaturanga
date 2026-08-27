@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Chess } from 'chess.js';
+import { Chess, Square } from 'chess.js';
 import { ChessBoard, BoardTheme } from '../chess/ChessBoard';
 import { useAuth } from '../../context/AuthContext';
 import { GameReviewModal } from '../analysis/GameReviewModal';

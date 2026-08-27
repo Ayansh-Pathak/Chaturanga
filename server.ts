@@ -248,8 +248,8 @@ function purgeStaleTickets() {
   const now = Date.now();
   for (let i = matchmakingQueue.length - 1; i >= 0; i--) {
     if (now - matchmakingQueue[i].timestamp > 5 * 60 * 1000) {
-      if (matchmakingQueue[i].res && !matchmakingQueue[i].res.headersSent) {
-        matchmakingQueue[i].res.json({ status: "timeout", message: "Queue search timed out after 5 minutes." });
+      if (matchmakingQueue[i]?.res && !matchmakingQueue[i]?.res?.headersSent) {
+        matchmakingQueue[i]?.res?.json({ status: "timeout", message: "Queue search timed out after 5 minutes." });
       }
       matchmakingQueue.splice(i, 1);
     }

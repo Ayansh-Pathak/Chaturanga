@@ -3,8 +3,8 @@ import { useAuth } from '../../context/AuthContext';
 import { Crown, Swords, Puzzle, Trophy, Users, MessageSquare, Flame, LogIn, BookOpen } from 'lucide-react';
 
 interface NavbarProps {
-  activeTab: 'play' | 'puzzles' | 'tournaments' | 'clubs' | 'chat' | 'feedback' | 'profile';
-  setActiveTab: (tab: 'play' | 'puzzles' | 'tournaments' | 'clubs' | 'chat' | 'feedback' | 'profile') => void;
+  activeTab: 'play' | 'puzzles' | 'tournaments' | 'clubs' | 'chat' | 'feedback' | 'profile' | 'library';
+  setActiveTab: (tab: 'play' | 'puzzles' | 'tournaments' | 'clubs' | 'chat' | 'feedback' | 'profile' | 'library') => void;
   onOpenAuth: () => void;
 }
 

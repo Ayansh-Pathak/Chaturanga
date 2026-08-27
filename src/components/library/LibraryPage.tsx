@@ -11,7 +11,7 @@ export const LibraryPage: React.FC = () => {
     {
       title: 'My System by Aron Nimzowitsch',
       url: 'https://www.scribd.com/doc/207711696/My-system-by-Aron-Nimzowitsch',
-
+    },
     {
       title: 'Chess Fundamentals by José Raúl Capablanca',
       url: 'https://forwardchess.com/product/chess-fundamentals',

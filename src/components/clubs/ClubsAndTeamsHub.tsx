@@ -300,7 +300,7 @@ export const ClubsAndTeamsHub: React.FC = () => {
                           {club.name}
                         </h4>
                         {club.isPrivate && (
-                          <Lock size={12} className="text-amber-400" title="Password Protected" />
+                          <Lock size={12} className="text-amber-400" aria-label="Password Protected" />
                         )}
                       </div>
                       <p className="text-[11px] text-slate-400 truncate">{club.description}</p>
