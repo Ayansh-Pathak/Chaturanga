@@ -1,5 +1,7 @@
-id("com.google.gms.google-services") version "4.5.0" apply false
-import("google-services.json")
-id("com.android.application")
-id("com.google.gms.google-services")
-implementation(platform("com.google.firebase:firebase-bom:34.18.0"))
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+plugins {
+    id("com.android.application") version "8.5.2" apply false
+    id("com.android.library") version "8.5.2" apply false
+    id("org.jetbrains.kotlin.android") version "1.9.24" apply false
+    id("com.google.gms.google-services") version "4.4.2" apply false
+}
