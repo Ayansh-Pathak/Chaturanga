@@ -98,8 +98,8 @@ ${contextSnippet}`;
     const fullPrompt = `${conversationPrompt ? `${conversationPrompt}\n` : ""}User: ${message}\nChaturanga GM:`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-3.7-flash",
-      contents: fullPrompt,
+      model: "gemini-1.5-flash",
+      contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
       config: {
         systemInstruction,
         temperature: 0.7,
@@ -192,8 +192,8 @@ Provide a concise, highly insightful, and encouraging Grandmaster Game Review in
 3. **Key Takeaway for Improvement**: 1-2 actionable tips to elevate the player's Elo.`;
 
         const response = await ai.models.generateContent({
-          model: "gemini-3.7-flash",
-          contents: reviewPrompt,
+          model: "gemini-1.5-flash",
+          contents: [{ role: "user", parts: [{ text: reviewPrompt }] }],
           config: {
             systemInstruction: "You are the Chaturanga Master Coach explaining Stockfish 18 game analysis to a chess player.",
             temperature: 0.6,
