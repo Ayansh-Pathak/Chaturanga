@@ -12,8 +12,8 @@ android {
         applicationId = "com.ayanshcorp.chaturangathegrandchessarenabyayanshpathak"
         minSdk = 24
         targetSdk = 37
-        versionCode = 3
-        versionName = "1.2.3"
+        versionCode = 4
+        versionName = "1.2.4"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -60,4 +60,19 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+}
+
+tasks.register<Copy>("copyWebDistToAssets") {
+    description = "Copies the web build output to Android assets."
+    from(file("${project.rootDir}/dist"))
+    into(file("${project.projectDir}/src/main/assets"))
+    
+    // Optional: Only run if dist exists
+    onlyIf {
+        file("${project.rootDir}/dist").exists()
+    }
+}
+
+tasks.named("preBuild") {
+    dependsOn("copyWebDistToAssets")
 }

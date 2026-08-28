@@ -8,8 +8,8 @@ export default defineConfig(() => {
 
   return {
     // GitHub Pages serves from /Chaturanga/ sub-path.
-    // Keep base='/' for local dev / Express server.
-    base: isGHPages ? '/Chaturanga/' : '/',
+    // Use relative base path for Android WebView compatibility.
+    base: isGHPages ? '/Chaturanga/' : './',
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
