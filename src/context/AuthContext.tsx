@@ -11,12 +11,15 @@ interface AuthContextType {
   updateEmail: (newEmail: string, currentPasswordRequired: string) => { success: boolean; message: string };
   revertEmail: (currentPasswordRequired: string) => { success: boolean; message: string };
   updateProfile: (updatedData: Partial<UserProfile>) => { success: boolean; message: string };
+  grantAnnouncerStatus: () => void;
   updateRating: (category: 'rapid' | 'blitz' | 'bullet' | 'puzzle', delta: number) => void;
   awardTournamentMedal: (medal: Omit<TournamentMedalData, 'id' | 'awardedTo' | 'awardedAt'>) => void;
   addGameRecord: (record: Omit<GameRecord, 'id'>) => void;
   gameHistory: GameRecord[];
   allUsers: UserProfile[];
   directMessages: import('../types/chess').DirectMessage[];
+  chatHistory: { sender: string; text: string; time: string }[];
+  setChatHistory: React.Dispatch<React.SetStateAction<{ sender: string; text: string; time: string }[]>>;
   sendDirectMessage: (recipientName: string, text: string) => { success: boolean; message: string };
 }
 
@@ -163,7 +166,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(() => {
     const saved = localStorage.getItem('chaturanga_active_user');
-    return saved ? JSON.parse(saved) : defaultUser;
+    if (!saved) return defaultUser;
+    const parsed = JSON.parse(saved);
+    // Persist announcer status across sessions
+    if (localStorage.getItem(`chaturanga_announcer_${parsed.id}`) === 'true') {
+      parsed.isAnnouncer = true;
+    }
+    return parsed;
   });
 
   const [gameHistory, setGameHistory] = useState<GameRecord[]>(() => {
@@ -174,12 +183,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Keep all stored users
   const [allUsers, setAllUsers] = useState<UserProfile[]>([defaultUser]);
 
+  const [chatHistory, setChatHistory] = useState<{ sender: string; text: string; time: string }[]>(() => {
+    const saved = localStorage.getItem('chaturanga_chat_history');
+    return saved ? JSON.parse(saved) : [];
+  });
+
   // Persist user and passwords
   useEffect(() => {
     if (user) {
       localStorage.setItem('chaturanga_active_user', JSON.stringify(user));
     }
   }, [user]);
+
+  useEffect(() => {
+    localStorage.setItem('chaturanga_chat_history', JSON.stringify(chatHistory));
+  }, [chatHistory]);
 
   useEffect(() => {
     localStorage.setItem('chaturanga_game_history', JSON.stringify(gameHistory));
@@ -200,13 +218,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: true, message: 'Welcome back to Chaturanga!' };
     }
 
+    // Try to find if user exists in allUsers or storage
+    const normalizedId = btoa(emailOrUser.toLowerCase()).substring(0, 12);
+    const existingUser = allUsers.find(u => u.id === normalizedId || u.email.toLowerCase() === emailOrUser.toLowerCase() || u.username.toLowerCase() === emailOrUser.toLowerCase());
+
+    if (existingUser) {
+      setUser(existingUser);
+      return { success: true, message: 'Logged in successfully!' };
+    }
+
     const newUser: UserProfile = {
       ...defaultUser,
-      id: `user_${Date.now()}`,
+      id: normalizedId,
       username: emailOrUser.includes('@') ? emailOrUser.split('@')[0] : emailOrUser,
       email: emailOrUser.includes('@') ? emailOrUser : `${emailOrUser}@chaturanga.org`,
     };
     setUser(newUser);
+    setAllUsers((prev) => [...prev, newUser]);
     return { success: true, message: 'Logged in successfully!' };
   };
 
@@ -222,7 +250,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     localStorage.setItem(`chaturanga_pass_${email.toLowerCase()}`, pass);
 
     const newUser: UserProfile = {
-      id: `user_${Date.now()}`,
+      id: btoa(email.toLowerCase()).substring(0, 12),
       username,
       email,
       avatar: avatar || defaultUser.avatar,
@@ -508,6 +536,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return { success: true, message: 'Profile updated successfully!' };
   };
 
+  const grantAnnouncerStatus = () => {
+    if (!user) return;
+    const updated = { ...user, isAnnouncer: true };
+    setUser(updated);
+    setAllUsers((prev) => prev.map((u) => (u.id === user.id ? updated : u)));
+    localStorage.setItem(`chaturanga_announcer_${user.id}`, 'true');
+  };
+
   const sendDirectMessage = (recipientName: string, text: string) => {
     if (!user) return { success: false, message: 'Not logged in' };
     if (!text.trim() || !recipientName.trim()) return { success: false, message: 'Recipient and text are required' };
@@ -560,12 +596,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updateEmail,
         revertEmail,
         updateProfile,
+        grantAnnouncerStatus,
         updateRating,
         awardTournamentMedal,
         addGameRecord,
         gameHistory,
         allUsers,
         directMessages,
+        chatHistory,
+        setChatHistory,
         sendDirectMessage
       }}
     >

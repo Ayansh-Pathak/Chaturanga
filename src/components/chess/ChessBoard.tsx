@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Chess, Square } from 'chess.js';
 import { ChessPiece, PieceColor, PieceSymbol } from './ChessPiece';
 import { chessAudio } from '../../utils/chessAudio';
+import { antiCheat } from '../../utils/antiCheat';
 import { RotateCw, Volume2, VolumeX, ShieldAlert } from 'lucide-react';
 
 export type BoardTheme = 
@@ -56,10 +57,21 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
         setLastMove(lastMoveHighlight);
       }
       checkGameState(newGame);
+
+      // Anti-cheat: Start monitoring on new game
+      antiCheat.startGame();
+      antiCheat.onViolation((event) => {
+        console.warn('Anti-Cheat violation:', event);
+        // Optionally show a UI warning here if needed
+      });
     } catch {
       // Invalid FEN fallback
     }
-  }, [initialFen, lastMoveHighlight]);
+
+    return () => {
+      antiCheat.endGame();
+    };
+  }, [initialFen, lastMoveHighlight, checkGameState]);
 
   useEffect(() => {
     if (lastMoveHighlight !== undefined) {
@@ -160,6 +172,7 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
         }
 
         checkGameState(game);
+        antiCheat.recordMove();
       }
     } catch {
       chessAudio.playError();

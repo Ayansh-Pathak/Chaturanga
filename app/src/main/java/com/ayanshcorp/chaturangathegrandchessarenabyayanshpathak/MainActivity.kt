@@ -22,7 +22,7 @@ class MainActivity : ComponentActivity() {
             ChaturangaTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    color = MaterialTheme.colorScheme.background,
                 ) {
                     ChaturangaWebView("file:///android_asset/index.html")
                 }
@@ -41,11 +41,18 @@ fun ChaturangaWebView(url: String) {
                 settings.domStorageEnabled = true
                 settings.allowFileAccess = true
                 settings.allowContentAccess = true
+                settings.cacheMode = android.webkit.WebSettings.LOAD_DEFAULT
+                settings.setSupportZoom(false)
+                settings.builtInZoomControls = false
+                settings.displayZoomControls = false
+                
+                // Speed up loading
+                setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
                 
                 webViewClient = object : WebViewClient() {
                     override fun shouldOverrideUrlLoading(
                         view: WebView?,
-                        request: WebResourceRequest?
+                        request: WebResourceRequest?,
                     ): Boolean {
                         return false // Load inside WebView
                     }
@@ -54,6 +61,6 @@ fun ChaturangaWebView(url: String) {
                 loadUrl(url)
             }
         },
-        modifier = Modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
     )
 }

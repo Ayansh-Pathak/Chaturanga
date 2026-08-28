@@ -103,6 +103,7 @@ export interface UserProfile {
   clubsJoined: string[];
   teamsJoined: string[];
   previousEmail?: string;
+  isAnnouncer?: boolean;
 }
 
 export interface PuzzleData {
