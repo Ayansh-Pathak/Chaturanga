@@ -12,8 +12,8 @@ android {
         applicationId = "com.ayanshcorp.chaturangathegrandchessarenabyayanshpathak"
         minSdk = 24
         targetSdk = 37
-        versionCode = 9
-        versionName = "1.2.9"
+        versionCode = 10
+        versionName = "1.3.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -64,12 +64,22 @@ dependencies {
 
 tasks.register<Copy>("copyWebDistToAssets") {
     description = "Copies the web build output to Android assets."
-    from(file("${project.rootDir}/dist"))
-    into(file("${project.projectDir}/src/main/assets"))
+    val distDir = file("${project.rootDir}/dist")
+    val assetsDir = file("${project.projectDir}/src/main/assets")
     
-    // Optional: Only run if dist exists
+    from(distDir)
+    into(assetsDir)
+    
+    doFirst {
+        if (!distDir.exists() || distDir.listFiles()?.isEmpty() == true) {
+            logger.warn("WARNING: 'dist' folder is missing or empty! Build will only contain the placeholder loading page.")
+        } else {
+            logger.lifecycle("Copying web assets from ${distDir.absolutePath} to ${assetsDir.absolutePath}")
+        }
+    }
+    
     onlyIf {
-        file("${project.rootDir}/dist").exists()
+        distDir.exists()
     }
 }
 

@@ -8,7 +8,6 @@ import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -40,9 +39,15 @@ class MainActivity : ComponentActivity() {
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun ChaturangaWebView(url: String, backgroundColor: androidx.compose.ui.graphics.Color) {
+    // Keep a reference to the WebView to prevent it from being recreated on every recomposition
     AndroidView(
         factory = { context ->
             WebView(context).apply {
+                layoutParams = android.view.ViewGroup.LayoutParams(
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                    android.view.ViewGroup.LayoutParams.MATCH_PARENT
+                )
+                
                 // Set background color immediately to avoid white flash
                 setBackgroundColor(backgroundColor.toArgb())
                 
@@ -62,14 +67,16 @@ fun ChaturangaWebView(url: String, backgroundColor: androidx.compose.ui.graphics
                     builtInZoomControls = false
                     displayZoomControls = false
                     
-                    // Further optimizations for WebView performance
+                    // Essential for modern web apps
                     useWideViewPort = true
                     loadWithOverviewMode = true
                     textZoom = 100
                     
-                    // Some React apps might need these
                     databaseEnabled = true
                     mediaPlaybackRequiresUserGesture = false
+                    
+                    // Optimization: Standardize rendering
+                    setRenderPriority(android.webkit.WebSettings.RenderPriority.HIGH)
                 }
                 
                 // Speed up loading with hardware acceleration
@@ -97,9 +104,6 @@ fun ChaturangaWebView(url: String, backgroundColor: androidx.compose.ui.graphics
                     ) {
                         super.onReceivedError(view, request, error)
                         Log.e("ChaturangaWebView", "Error loading: ${error?.description}")
-                        if (request?.isForMainFrame == true) {
-                            Toast.makeText(context, "Error: ${error?.description}", Toast.LENGTH_LONG).show()
-                        }
                     }
                 }
                 
@@ -107,5 +111,9 @@ fun ChaturangaWebView(url: String, backgroundColor: androidx.compose.ui.graphics
             }
         },
         modifier = Modifier.fillMaxSize(),
+        update = { webView ->
+            // Ensure visibility on update/recomposition
+            webView.visibility = android.view.View.VISIBLE
+        }
     )
 }
