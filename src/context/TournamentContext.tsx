@@ -29,139 +29,7 @@ interface TournamentContextType {
   completeTournament: (tournamentId: string) => void;
 }
 
-const initialTournaments: Tournament[] = [
-  {
-    id: 'tour_royal_club_championship',
-    name: 'Royal Brotherhood Club Cup',
-    format: 'swiss',
-    timeControl: '10+0',
-    totalRounds: 4,
-    currentRound: 1,
-    status: 'upcoming',
-    createdAt: 'Aug 25, 2026',
-    scheduledTime: 'Aug 26, 2026 • 19:00',
-    hostId: 'user_master_1',
-    hostName: 'ArjunaWarrior',
-    isClubOnly: true,
-    clubId: 'club_1',
-    clubName: 'Royal Chess Brotherhood',
-    participants: [
-      { id: 'user_master_1', username: 'ArjunaWarrior', rating: 1650, avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0 },
-      { id: 'bot_1', username: 'Grandmaster Vishy', rating: 1720, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0, isBot: true },
-      { id: 'bot_2', username: 'Sage Chanakya', rating: 1610, avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0, isBot: true },
-    ],
-    matches: []
-  },
-  {
-    id: 'tour_swiss_championship',
-    name: 'Vedic Masters Swiss Cup',
-    format: 'swiss',
-    timeControl: '5+0',
-    totalRounds: 5,
-    currentRound: 3,
-    status: 'ongoing',
-    createdAt: 'Aug 24, 2026',
-    scheduledTime: 'Aug 25, 2026 • 18:00',
-    hostId: 'user_master_1',
-    hostName: 'ArjunaWarrior',
-    isClubOnly: false,
-    participants: [
-      { id: 'user_master_1', username: 'ArjunaWarrior', rating: 1650, avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80', score: 2.5, wins: 2, draws: 1, losses: 0, streak: 2 },
-      { id: 'bot_1', username: 'Grandmaster Vishy', rating: 1720, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80', score: 3.0, wins: 3, draws: 0, losses: 0, streak: 3, isBot: true },
-      { id: 'bot_2', username: 'Sage Chanakya', rating: 1610, avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80', score: 2.0, wins: 2, draws: 0, losses: 1, streak: 1, isBot: true },
-      { id: 'bot_3', username: 'Grand Tactician', rating: 1540, avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=200&q=80', score: 1.5, wins: 1, draws: 1, losses: 1, streak: 0, isBot: true },
-      { id: 'bot_4', username: 'Bhisma Defender', rating: 1480, avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=200&q=80', score: 1.0, wins: 1, draws: 0, losses: 2, streak: 0, isBot: true },
-      { id: 'bot_5', username: 'Karna The Archer', rating: 1590, avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=200&q=80', score: 1.0, wins: 1, draws: 0, losses: 2, streak: 0, isBot: true },
-      { id: 'bot_6', username: 'Drona Strategist', rating: 1680, avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&q=80', score: 0.5, wins: 0, draws: 1, losses: 2, streak: 0, isBot: true },
-      { id: 'bot_7', username: 'Yudhishthira', rating: 1450, avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80', score: 0.5, wins: 0, draws: 1, losses: 2, streak: 0, isBot: true }
-    ],
-    matches: []
-  },
-  {
-    id: 'tour_arena_blitz',
-    name: 'Grand Elephant Arena',
-    format: 'arena',
-    timeControl: '3+0',
-    totalRounds: 10,
-    currentRound: 1,
-    status: 'ongoing',
-    createdAt: 'Aug 25, 2026',
-    scheduledTime: 'Aug 25, 2026 • 20:00',
-    hostId: 'bot_1',
-    hostName: 'Grandmaster Vishy',
-    isClubOnly: false,
-    participants: [
-      { id: 'bot_1', username: 'Grandmaster Vishy', rating: 1720, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80', score: 12, wins: 4, draws: 0, losses: 0, streak: 4, isBot: true },
-      { id: 'user_master_1', username: 'ArjunaWarrior', rating: 1650, avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80', score: 9, wins: 3, draws: 0, losses: 1, streak: 2 },
-      { id: 'bot_2', username: 'Sage Chanakya', rating: 1610, avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80', score: 6, wins: 2, draws: 0, losses: 2, streak: 0, isBot: true },
-      { id: 'bot_5', username: 'Karna The Archer', rating: 1590, avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=200&q=80', score: 4, wins: 1, draws: 1, losses: 2, streak: 0, isBot: true },
-    ],
-    matches: []
-  },
-  {
-    id: 'tour_knockout_cup',
-    name: 'Imperial Crown Knockout Cup',
-    format: 'knockout',
-    timeControl: '10+0',
-    totalRounds: 3,
-    currentRound: 1,
-    status: 'upcoming',
-    createdAt: 'Aug 25, 2026',
-    scheduledTime: 'Aug 26, 2026 • 15:30',
-    hostId: 'user_master_1',
-    hostName: 'ArjunaWarrior',
-    isClubOnly: false,
-    participants: [
-      { id: 'user_master_1', username: 'ArjunaWarrior', rating: 1650, avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0 },
-      { id: 'bot_1', username: 'Grandmaster Vishy', rating: 1720, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0, isBot: true },
-      { id: 'bot_2', username: 'Sage Chanakya', rating: 1610, avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0, isBot: true },
-      { id: 'bot_3', username: 'Grand Tactician', rating: 1540, avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0, isBot: true }
-    ],
-    matches: []
-  },
-  {
-    id: 'tour_round_robin',
-    name: 'Sanskrit Elite Round Robin',
-    format: 'round_robin',
-    timeControl: '3+2',
-    totalRounds: 4,
-    currentRound: 4,
-    status: 'completed',
-    createdAt: 'Aug 15, 2026',
-    scheduledTime: 'Aug 16, 2026 • 15:00',
-    hostId: 'user_master_1',
-    hostName: 'ArjunaWarrior',
-    isClubOnly: false,
-    participants: [
-      { id: 'bot_1', username: 'Grandmaster Vishy', rating: 1720, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80', score: 3.5, wins: 3, draws: 1, losses: 0, streak: 3, isBot: true },
-      { id: 'user_master_1', username: 'ArjunaWarrior', rating: 1650, avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80', score: 3.0, wins: 3, draws: 0, losses: 1, streak: 2 },
-      { id: 'bot_2', username: 'Sage Chanakya', rating: 1610, avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80', score: 2.0, wins: 2, draws: 0, losses: 2, streak: 0, isBot: true },
-      { id: 'bot_6', username: 'Drona Strategist', rating: 1680, avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&q=80', score: 1.0, wins: 1, draws: 0, losses: 3, streak: 0, isBot: true },
-    ],
-    matches: []
-  },
-  {
-    id: 'tour_double_robin',
-    name: 'Mahabharata Double Round Robin',
-    format: 'double_round_robin',
-    timeControl: '15+10',
-    totalRounds: 6,
-    currentRound: 1,
-    status: 'upcoming',
-    createdAt: 'Aug 25, 2026',
-    scheduledTime: 'Aug 27, 2026 • 17:00',
-    hostId: 'user_master_1',
-    hostName: 'ArjunaWarrior',
-    isClubOnly: false,
-    participants: [
-      { id: 'user_master_1', username: 'ArjunaWarrior', rating: 1650, avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0 },
-      { id: 'bot_1', username: 'Grandmaster Vishy', rating: 1720, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0, isBot: true },
-      { id: 'bot_5', username: 'Karna The Archer', rating: 1590, avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0, isBot: true },
-      { id: 'bot_6', username: 'Drona Strategist', rating: 1680, avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0, isBot: true },
-    ],
-    matches: []
-  }
-];
+const initialTournaments: Tournament[] = [];
 
 const TournamentContext = createContext<TournamentContextType | undefined>(undefined);
 
@@ -199,32 +67,7 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const dateFormatted = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     const timeFormatted = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 
-    let clubMemberIds: string[] = [];
-    if (isClubOnly && clubId) {
-      try {
-        const savedClubs = localStorage.getItem('chaturanga_clubs');
-        if (savedClubs) {
-          const parsedClubs = JSON.parse(savedClubs);
-          const club = parsedClubs.find((c: any) => c.id === clubId);
-          if (club && club.members) {
-            clubMemberIds = club.members.map((m: any) => m.userId);
-          }
-        }
-      } catch (e) {
-        console.error('Could not fetch club members for tournament', e);
-      }
-    }
-
-    // Seed with realistic participants
-    const botParticipants: TournamentParticipant[] = [
-      { id: 'bot_1', username: 'Grandmaster Vishy', rating: 1720, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0, isBot: true },
-      { id: 'bot_2', username: 'Sage Chanakya', rating: 1610, avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0, isBot: true },
-      { id: 'bot_3', username: 'Grand Tactician', rating: 1540, avatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0, isBot: true },
-      { id: 'bot_4', username: 'Bhisma Defender', rating: 1480, avatar: 'https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0, isBot: true },
-      { id: 'bot_5', username: 'Karna The Archer', rating: 1590, avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0, isBot: true },
-      { id: 'bot_6', username: 'Drona Strategist', rating: 1680, avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0, isBot: true },
-      { id: 'bot_7', username: 'Yudhishthira', rating: 1450, avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80', score: 0, wins: 0, draws: 0, losses: 0, streak: 0, isBot: true },
-    ];
+    const botParticipants: TournamentParticipant[] = [];
 
     const hostParticipant: TournamentParticipant = user ? {
       id: user.id,
@@ -263,12 +106,7 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       isClubOnly: !!isClubOnly,
       clubId,
       clubName,
-      participants: [
-        hostParticipant,
-        ...botParticipants
-          .filter(bot => !isClubOnly || clubMemberIds.includes(bot.id))
-          .slice(0, format === 'knockout' ? 7 : 7)
-      ],
+      participants: [hostParticipant],
       matches: []
     };
 
@@ -512,4 +350,3 @@ export const useTournaments = () => {
   if (!ctx) throw new Error('useTournaments must be used within a TournamentProvider');
   return ctx;
 };
-

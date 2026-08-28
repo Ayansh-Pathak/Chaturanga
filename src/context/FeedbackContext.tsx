@@ -9,76 +9,7 @@ interface FeedbackContextType {
   addComment: (postId: string, text: string) => void;
 }
 
-const initialFeedback: FeedbackPost[] = [
-  {
-    id: 'fb_1',
-    authorId: 'user_master_1',
-    authorName: 'ArjunaWarrior',
-    authorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
-    category: 'Features',
-    title: 'Support for Berserk mode in Arena tournaments and custom Elephant piece themes',
-    content: 'The custom Elephant head Bishop and Royal Crown King look incredible! Could we also get special sound themes for the Elephant moves in blitz games?',
-    votes: 24,
-    upvotedBy: ['user_master_1', 'bot_1', 'bot_2'],
-    createdAt: 'Aug 24, 2026',
-    status: 'Implemented',
-    comments: [
-      {
-        id: 'c1',
-        authorId: 'bot_1',
-        authorName: 'Grandmaster Vishy',
-        authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
-        text: 'The elephant bishop illustration captures the true essence of ancient Indian Chaturanga warfare.',
-        createdAt: 'Aug 24, 18:20'
-      },
-      {
-        id: 'c2',
-        authorId: 'bot_2',
-        authorName: 'Sage Chanakya',
-        authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80',
-        text: 'Agreed! The crown king is visually distinct and fully FIDE compliant.',
-        createdAt: 'Aug 25, 08:45'
-      }
-    ]
-  },
-  {
-    id: 'fb_2',
-    authorId: 'bot_3',
-    authorName: 'Grand Tactician',
-    authorAvatar: 'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?auto=format&fit=crop&w=200&q=80',
-    category: 'Tournaments',
-    title: 'Double Round Robin Swiss tiebreak calculations using Sonneborn-Berger',
-    content: 'Requesting to show Buchholz cut-1 and Sonneborn-Berger tiebreaks on the live standings table for Swiss and Round Robin events.',
-    votes: 18,
-    upvotedBy: ['bot_3', 'user_master_1'],
-    createdAt: 'Aug 23, 2026',
-    status: 'Planned',
-    comments: [
-      {
-        id: 'c3',
-        authorId: 'user_master_1',
-        authorName: 'ArjunaWarrior',
-        authorAvatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
-        text: 'Very important for 5-round Swiss tournaments with tight scores.',
-        createdAt: 'Aug 23, 21:10'
-      }
-    ]
-  },
-  {
-    id: 'fb_3',
-    authorId: 'bot_6',
-    authorName: 'Drona Strategist',
-    authorAvatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=200&q=80',
-    category: 'Chess Rules',
-    title: 'Verify 50-move rule and threefold repetition claims on FIDE clocks',
-    content: 'The engine handles en passant and castling flawlessly. Testing automated draw offering when insufficient material remains on board.',
-    votes: 15,
-    upvotedBy: ['bot_6'],
-    createdAt: 'Aug 22, 2026',
-    status: 'Implemented',
-    comments: []
-  }
-];
+const initialFeedback: FeedbackPost[] = [];
 
 const FeedbackContext = createContext<FeedbackContextType | undefined>(undefined);
 
@@ -97,7 +28,7 @@ export const FeedbackProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const newPost: FeedbackPost = {
       id: `fb_${Date.now()}`,
       authorId: user ? user.id : 'guest',
-      authorName: user ? user.username : 'ArjunaWarrior',
+      authorName: user ? user.username : 'Guest Player',
       authorAvatar: user ? user.avatar : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
       category,
       title,
@@ -136,7 +67,7 @@ export const FeedbackProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const newComment: FeedbackComment = {
       id: `c_${Date.now()}`,
       authorId: user ? user.id : 'guest',
-      authorName: user ? user.username : 'ArjunaWarrior',
+      authorName: user ? user.username : 'Guest Player',
       authorAvatar: user ? user.avatar : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
       text: text.trim(),
       createdAt: 'Just now'
