@@ -8,10 +8,10 @@ import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.viewinterop.AndroidView
 import com.ayanshcorp.chaturangathegrandchessarenabyayanshpathak.ui.theme.ChaturangaTheme
 
@@ -20,11 +20,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             ChaturangaTheme {
+                // Using the exact background color from your dark theme (#0e1015)
+                val backgroundColor = androidx.compose.ui.graphics.Color(0xFF0E1015)
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background,
+                    color = backgroundColor,
                 ) {
-                    ChaturangaWebView("file:///android_asset/index.html")
+                    ChaturangaWebView("file:///android_asset/index.html", backgroundColor)
                 }
             }
         }
@@ -33,20 +35,30 @@ class MainActivity : ComponentActivity() {
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-fun ChaturangaWebView(url: String) {
+fun ChaturangaWebView(url: String, backgroundColor: androidx.compose.ui.graphics.Color) {
     AndroidView(
         factory = { context ->
             WebView(context).apply {
-                settings.javaScriptEnabled = true
-                settings.domStorageEnabled = true
-                settings.allowFileAccess = true
-                settings.allowContentAccess = true
-                settings.cacheMode = android.webkit.WebSettings.LOAD_DEFAULT
-                settings.setSupportZoom(false)
-                settings.builtInZoomControls = false
-                settings.displayZoomControls = false
+                // Set background color immediately to avoid white flash
+                setBackgroundColor(backgroundColor.toArgb())
                 
-                // Speed up loading
+                settings.apply {
+                    javaScriptEnabled = true
+                    domStorageEnabled = true
+                    allowFileAccess = true
+                    allowContentAccess = true
+                    cacheMode = android.webkit.WebSettings.LOAD_DEFAULT
+                    setSupportZoom(false)
+                    builtInZoomControls = false
+                    displayZoomControls = false
+                    
+                    // Further optimizations for WebView performance
+                    useWideViewPort = true
+                    loadWithOverviewMode = true
+                    textZoom = 100
+                }
+                
+                // Speed up loading with hardware acceleration
                 setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
                 
                 webViewClient = object : WebViewClient() {

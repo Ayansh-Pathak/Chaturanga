@@ -19,31 +19,16 @@ export default defineConfig(() => {
     build: {
       target: 'esnext',
       sourcemap: false,
-      // Minify with esbuild (fast) but keep output clean
       minify: 'esbuild',
       cssMinify: true,
-      chunkSizeWarningLimit: 600,
+      cssCodeSplit: false, // Combine CSS for faster loading in WebView
+      chunkSizeWarningLimit: 1000,
       rollupOptions: {
         output: {
-          // Fine-grained manual chunks so each tab lazy-loads only what it needs
           manualChunks(id) {
-            if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
-              return 'react-vendor';
-            }
-            if (id.includes('node_modules/recharts') || id.includes('node_modules/d3-') || id.includes('node_modules/victory-')) {
-              return 'recharts-vendor';
-            }
-            if (id.includes('node_modules/framer-motion') || id.includes('node_modules/motion')) {
-              return 'motion-vendor';
-            }
-            if (id.includes('node_modules/lucide-react')) {
-              return 'icons-vendor';
-            }
-            if (id.includes('node_modules/chess.js')) {
-              return 'chess-core';
-            }
-            if (id.includes('node_modules/canvas-confetti')) {
-              return 'confetti';
+            if (id.includes('node_modules')) {
+              // Group all vendors into one for fewer file reads in Android Assets
+              return 'vendor';
             }
           },
         },
