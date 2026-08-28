@@ -2,9 +2,13 @@ package com.ayanshcorp.chaturangathegrandchessarenabyayanshpathak
 
 import android.annotation.SuppressLint
 import android.os.Bundle
+import android.util.Log
+import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,11 +46,17 @@ fun ChaturangaWebView(url: String, backgroundColor: androidx.compose.ui.graphics
                 // Set background color immediately to avoid white flash
                 setBackgroundColor(backgroundColor.toArgb())
                 
+                @Suppress("DEPRECATION")
                 settings.apply {
                     javaScriptEnabled = true
                     domStorageEnabled = true
                     allowFileAccess = true
                     allowContentAccess = true
+                    
+                    // Security settings for local file access
+                    allowFileAccessFromFileURLs = true
+                    allowUniversalAccessFromFileURLs = true
+                    
                     cacheMode = android.webkit.WebSettings.LOAD_DEFAULT
                     setSupportZoom(false)
                     builtInZoomControls = false
@@ -56,10 +66,21 @@ fun ChaturangaWebView(url: String, backgroundColor: androidx.compose.ui.graphics
                     useWideViewPort = true
                     loadWithOverviewMode = true
                     textZoom = 100
+                    
+                    // Some React apps might need these
+                    databaseEnabled = true
+                    mediaPlaybackRequiresUserGesture = false
                 }
                 
                 // Speed up loading with hardware acceleration
                 setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
+                
+                webChromeClient = object : WebChromeClient() {
+                    override fun onConsoleMessage(consoleMessage: android.webkit.ConsoleMessage?): Boolean {
+                        Log.d("ChaturangaWebView", consoleMessage?.message() ?: "")
+                        return true
+                    }
+                }
                 
                 webViewClient = object : WebViewClient() {
                     override fun shouldOverrideUrlLoading(
@@ -67,6 +88,18 @@ fun ChaturangaWebView(url: String, backgroundColor: androidx.compose.ui.graphics
                         request: WebResourceRequest?,
                     ): Boolean {
                         return false // Load inside WebView
+                    }
+
+                    override fun onReceivedError(
+                        view: WebView?,
+                        request: WebResourceRequest?,
+                        error: WebResourceError?,
+                    ) {
+                        super.onReceivedError(view, request, error)
+                        Log.e("ChaturangaWebView", "Error loading: ${error?.description}")
+                        if (request?.isForMainFrame == true) {
+                            Toast.makeText(context, "Error: ${error?.description}", Toast.LENGTH_LONG).show()
+                        }
                     }
                 }
                 
