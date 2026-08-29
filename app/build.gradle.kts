@@ -14,8 +14,8 @@ android {
         applicationId = "com.ayanshcorp.chaturangathegrandchessarenabyayanshpathak"
         minSdk = 24
         targetSdk = 37
-        versionCode = 10
-        versionName = "1.3.1"
+        versionCode = 14
+        versionName = "1.3.5"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -77,7 +77,7 @@ tasks.register<Copy>("copyWebDistToAssets") {
     into(assetsDir)
     
     doFirst {
-        if (!distDir.exists() || distDir.listFiles()?.isEmpty() == true) {
+        if (!distDir.exists() || (distDir.listFiles()?.isEmpty() == true)) {
             logger.warn("WARNING: 'dist' folder is missing or empty! Build will only contain the placeholder loading page.")
         } else {
             logger.lifecycle("Copying web assets from ${distDir.absolutePath} to ${assetsDir.absolutePath}")

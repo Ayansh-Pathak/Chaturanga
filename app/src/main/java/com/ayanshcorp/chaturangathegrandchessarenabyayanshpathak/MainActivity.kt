@@ -13,6 +13,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
+import com.google.firebase.analytics.FirebaseAnalytics
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,8 +31,15 @@ import androidx.webkit.WebViewFeature
 import com.ayanshcorp.chaturangathegrandchessarenabyayanshpathak.ui.theme.ChaturangaTheme
 
 class MainActivity : ComponentActivity() {
+    private lateinit var firebaseAnalytics: FirebaseAnalytics
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Initialize Firebase Analytics and log app open
+        firebaseAnalytics = FirebaseAnalytics.getInstance(this)
+        firebaseAnalytics.logEvent(FirebaseAnalytics.Event.APP_OPEN, null)
+
         setContent {
             ChaturangaTheme {
                 val backgroundColor = Color(0xFF0E1015)
@@ -100,7 +108,7 @@ fun ChaturangaWebView(url: String, backgroundColor: Color) {
                 webViewClient = object : WebViewClientCompat() {
                     override fun shouldInterceptRequest(
                         view: WebView?,
-                        request: WebResourceRequest
+                        request: WebResourceRequest,
                     ): WebResourceResponse? {
                         return assetLoader.shouldInterceptRequest(request.url)
                     }
@@ -108,7 +116,7 @@ fun ChaturangaWebView(url: String, backgroundColor: Color) {
                     override fun onReceivedError(
                         view: WebView,
                         request: WebResourceRequest,
-                        error: WebResourceErrorCompat
+                        error: WebResourceErrorCompat,
                     ) {
                         if (WebViewFeature.isFeatureSupported(WebViewFeature.WEB_RESOURCE_ERROR_GET_DESCRIPTION)) {
                             Log.e("ChaturangaWebView", "Error loading: ${error.description} for URL: ${request.url}")
@@ -124,13 +132,9 @@ fun ChaturangaWebView(url: String, backgroundColor: Color) {
 
                     override fun onRenderProcessGone(
                         view: WebView?,
-                        detail: RenderProcessGoneDetail?
+                        detail: RenderProcessGoneDetail?,
                     ): Boolean {
-                        val crashed = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                            detail?.didCrash() == true
-                        } else {
-                            false
-                        }
+                        val crashed = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) && (detail?.didCrash() == true)
                         Log.e("ChaturangaWebView", "Render process gone. Crashed: $crashed")
                         return true
                     }
