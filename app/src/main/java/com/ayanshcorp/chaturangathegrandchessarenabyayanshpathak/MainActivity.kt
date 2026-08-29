@@ -1,21 +1,32 @@
 package com.ayanshcorp.chaturangathegrandchessarenabyayanshpathak
 
 import android.annotation.SuppressLint
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.view.View
+import android.view.ViewGroup
+import android.webkit.ConsoleMessage
+import android.webkit.RenderProcessGoneDetail
 import android.webkit.WebChromeClient
-import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
+import android.webkit.WebSettings
 import android.webkit.WebView
-import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.webkit.WebResourceErrorCompat
+import androidx.webkit.WebViewAssetLoader
+import androidx.webkit.WebViewAssetLoader.AssetsPathHandler
+import androidx.webkit.WebViewClientCompat
+import androidx.webkit.WebViewFeature
 import com.ayanshcorp.chaturangathegrandchessarenabyayanshpathak.ui.theme.ChaturangaTheme
 
 class MainActivity : ComponentActivity() {
@@ -23,13 +34,15 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             ChaturangaTheme {
-                // Using the exact background color from your dark theme (#0e1015)
-                val backgroundColor = androidx.compose.ui.graphics.Color(0xFF0E1015)
+                val backgroundColor = Color(0xFF0E1015)
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = backgroundColor,
                 ) {
-                    ChaturangaWebView("file:///android_asset/index.html", backgroundColor)
+                    ChaturangaWebView(
+                        url = "https://appassets.androidplatform.net/assets/index.html",
+                        backgroundColor = backgroundColor,
+                    )
                 }
             }
         }
@@ -38,17 +51,19 @@ class MainActivity : ComponentActivity() {
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-fun ChaturangaWebView(url: String, backgroundColor: androidx.compose.ui.graphics.Color) {
-    // Keep a reference to the WebView to prevent it from being recreated on every recomposition
+fun ChaturangaWebView(url: String, backgroundColor: Color) {
     AndroidView(
         factory = { context ->
+            val assetLoader = WebViewAssetLoader.Builder()
+                .addPathHandler("/assets/", AssetsPathHandler(context))
+                .build()
+
             WebView(context).apply {
-                layoutParams = android.view.ViewGroup.LayoutParams(
-                    android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                    android.view.ViewGroup.LayoutParams.MATCH_PARENT
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT,
                 )
                 
-                // Set background color immediately to avoid white flash
                 setBackgroundColor(backgroundColor.toArgb())
                 
                 @Suppress("DEPRECATION")
@@ -58,52 +73,66 @@ fun ChaturangaWebView(url: String, backgroundColor: androidx.compose.ui.graphics
                     allowFileAccess = true
                     allowContentAccess = true
                     
-                    // Security settings for local file access
-                    allowFileAccessFromFileURLs = true
-                    allowUniversalAccessFromFileURLs = true
-                    
-                    cacheMode = android.webkit.WebSettings.LOAD_DEFAULT
+                    cacheMode = WebSettings.LOAD_DEFAULT
                     setSupportZoom(false)
-                    builtInZoomControls = false
-                    displayZoomControls = false
                     
-                    // Essential for modern web apps
                     useWideViewPort = true
                     loadWithOverviewMode = true
-                    textZoom = 100
                     
                     databaseEnabled = true
                     mediaPlaybackRequiresUserGesture = false
-                    
-                    // Optimization: Standardize rendering
-                    setRenderPriority(android.webkit.WebSettings.RenderPriority.HIGH)
                 }
                 
-                // Speed up loading with hardware acceleration
-                setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
+                setLayerType(View.LAYER_TYPE_HARDWARE, null)
                 
                 webChromeClient = object : WebChromeClient() {
-                    override fun onConsoleMessage(consoleMessage: android.webkit.ConsoleMessage?): Boolean {
-                        Log.d("ChaturangaWebView", consoleMessage?.message() ?: "")
+                    override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
+                        Log.d("ChaturangaWebView", "[JS] ${consoleMessage?.message()} -- From line ${consoleMessage?.lineNumber()} of ${consoleMessage?.sourceId()}")
                         return true
+                    }
+
+                    override fun onProgressChanged(view: WebView?, newProgress: Int) {
+                        super.onProgressChanged(view, newProgress)
+                        Log.d("ChaturangaWebView", "Loading progress: $newProgress%")
                     }
                 }
                 
-                webViewClient = object : WebViewClient() {
-                    override fun shouldOverrideUrlLoading(
+                webViewClient = object : WebViewClientCompat() {
+                    override fun shouldInterceptRequest(
                         view: WebView?,
-                        request: WebResourceRequest?,
-                    ): Boolean {
-                        return false // Load inside WebView
+                        request: WebResourceRequest
+                    ): WebResourceResponse? {
+                        return assetLoader.shouldInterceptRequest(request.url)
                     }
 
                     override fun onReceivedError(
-                        view: WebView?,
-                        request: WebResourceRequest?,
-                        error: WebResourceError?,
+                        view: WebView,
+                        request: WebResourceRequest,
+                        error: WebResourceErrorCompat
                     ) {
-                        super.onReceivedError(view, request, error)
-                        Log.e("ChaturangaWebView", "Error loading: ${error?.description}")
+                        if (WebViewFeature.isFeatureSupported(WebViewFeature.WEB_RESOURCE_ERROR_GET_DESCRIPTION)) {
+                            Log.e("ChaturangaWebView", "Error loading: ${error.description} for URL: ${request.url}")
+                        } else {
+                            Log.e("ChaturangaWebView", "Error loading URL: ${request.url}")
+                        }
+                    }
+                    
+                    override fun onPageFinished(view: WebView?, url: String?) {
+                        super.onPageFinished(view, url)
+                        Log.d("ChaturangaWebView", "Finished loading: $url")
+                    }
+
+                    override fun onRenderProcessGone(
+                        view: WebView?,
+                        detail: RenderProcessGoneDetail?
+                    ): Boolean {
+                        val crashed = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            detail?.didCrash() == true
+                        } else {
+                            false
+                        }
+                        Log.e("ChaturangaWebView", "Render process gone. Crashed: $crashed")
+                        return true
                     }
                 }
                 
@@ -111,9 +140,7 @@ fun ChaturangaWebView(url: String, backgroundColor: androidx.compose.ui.graphics
             }
         },
         modifier = Modifier.fillMaxSize(),
-        update = { webView ->
-            // Ensure visibility on update/recomposition
-            webView.visibility = android.view.View.VISIBLE
-        }
-    )
+    ) { webView ->
+        webView.visibility = View.VISIBLE
+    }
 }

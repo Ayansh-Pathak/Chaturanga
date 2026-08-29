@@ -2,10 +2,43 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Chaturanga</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chaturanga Loading</title>
+    <style>
+        body {
+            background-color: #0e1015;
+            color: #f0f2f5;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            text-align: center;
+        }
+        .loader {
+            border: 4px solid #1e293b;
+            border-top: 4px solid #f59e0b;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
-    <h1>Chaturanga is loading...</h1>
-    <p>Please ensure you have built the web project and copied the files to the assets folder.</p>
+    <div class="loader"></div>
+    <h1>Chaturanga</h1>
+    <p>Loading the arena...</p>
+    <div id="debug" style="margin-top: 20px; font-size: 12px; color: #64748b;">
+        Waiting for web assets bundle...<br>
+        Current Path: <script>document.write(window.location.href)</script>
+    </div>
 </body>
 </html>
