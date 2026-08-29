@@ -13,7 +13,6 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
-import com.google.firebase.analytics.FirebaseAnalytics
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +27,10 @@ import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewAssetLoader.AssetsPathHandler
 import androidx.webkit.WebViewClientCompat
 import androidx.webkit.WebViewFeature
+import com.google.firebase.FirebaseApp
+import com.google.firebase.analytics.FirebaseAnalytics
+import com.google.firebase.crashlytics.FirebaseCrashlytics
+import com.google.firebase.perf.FirebasePerformance
 import com.ayanshcorp.chaturangathegrandchessarenabyayanshpathak.ui.theme.ChaturangaTheme
 
 class MainActivity : ComponentActivity() {
@@ -37,11 +40,13 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         
         try {
-            // Initialize Firebase Analytics and log app open
+            FirebaseApp.initializeApp(this)
             firebaseAnalytics = FirebaseAnalytics.getInstance(this)
             firebaseAnalytics.logEvent(FirebaseAnalytics.Event.APP_OPEN, null)
+            FirebaseCrashlytics.getInstance().isCrashlyticsCollectionEnabled = true
+            FirebasePerformance.getInstance().isPerformanceCollectionEnabled = true
         } catch (e: Exception) {
-            Log.e("MainActivity", "Firebase Analytics init failed: ${e.message}")
+            Log.e("MainActivity", "Firebase init failed: ${e.message}")
         }
 
         setContent {

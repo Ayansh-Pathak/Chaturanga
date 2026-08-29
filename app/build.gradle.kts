@@ -14,8 +14,8 @@ android {
         applicationId = "com.ayanshcorp.chaturangathegrandchessarenabyayanshpathak"
         minSdk = 24
         targetSdk = 37
-        versionCode = 17
-        versionName = "1.3.8"
+        versionCode = 19
+        versionName = "1.4.0"
         multiDexEnabled = true
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
