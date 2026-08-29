@@ -36,9 +36,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Initialize Firebase Analytics and log app open
-        firebaseAnalytics = FirebaseAnalytics.getInstance(this)
-        firebaseAnalytics.logEvent(FirebaseAnalytics.Event.APP_OPEN, null)
+        try {
+            // Initialize Firebase Analytics and log app open
+            firebaseAnalytics = FirebaseAnalytics.getInstance(this)
+            firebaseAnalytics.logEvent(FirebaseAnalytics.Event.APP_OPEN, null)
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Firebase Analytics init failed: ${e.message}")
+        }
 
         setContent {
             ChaturangaTheme {
