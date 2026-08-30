@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserProfile, TournamentMedalData, GameRecord } from '../types/chess';
 import confetti from 'canvas-confetti';
-import { auth, db } from '../utils/arena-internal';
+import { auth, db } from '@/src/utils/arena-firebase';
 import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
