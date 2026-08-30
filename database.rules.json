@@ -1,0 +1,36 @@
+{
+  "rules": {
+    "users": {
+      "$userId": {
+        ".read": "auth != null && auth.uid === $userId",
+        ".write": "auth != null && auth.uid === $userId",
+        "gemini_history": {
+          ".read": "auth != null && auth.uid === $userId",
+          ".write": "auth != null && auth.uid === $userId"
+        }
+      }
+    },
+    "games": {
+      ".read": true,
+      "$gameId": {
+        ".write": "auth != null || (auth.token.email === '21ks2638@21kschool.school' || auth.token.email === '21ke22i4873@21kschool.school')"
+      }
+    },
+    "clubs": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "feedback": {
+      ".read": true,
+      ".write": "auth != null"
+    },
+    "announcements": {
+      ".read": true,
+      ".write": "auth != null && (auth.token.email === '21ks2638@21kschool.school' || auth.token.email === '21ke22i4873@21kschool.school')"
+    },
+    "$other": {
+      ".read": "auth != null && (auth.token.email === '21ks2638@21kschool.school' || auth.token.email === '21ke22i4873@21kschool.school')",
+      ".write": "auth != null && (auth.token.email === '21ks2638@21kschool.school' || auth.token.email === '21ke22i4873@21kschool.school')"
+    }
+  }
+}

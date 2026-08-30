@@ -1,0 +1,77 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper: check if requester is one of the two allowed editors
+    function isAllowedEditor(auth) {
+      return auth != null &&
+             (auth.token.email == "21ks2638@21kschool.school" ||
+              auth.token.email == "21ke22i4873@21kschool.school");
+    }
+
+    // -------------------------
+    // User profiles & Preferences
+    // -------------------------
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      // Gemini history is private to the user
+      match /gemini_history/{msgId} {
+        allow read, write: if request.auth != null && request.auth.uid == userId;
+      }
+    }
+
+    // -------------------------
+    // Game History: Publicly readable for link-sharing and Anti-Cheating AI
+    // -------------------------
+    match /games/{gameId} {
+      // Anyone can read a game if they have the ID (the "link")
+      allow read: if true;
+      // Only authenticated users can write their games, or editors
+      allow create, update: if request.auth != null || isAllowedEditor(request.auth);
+    }
+
+    // -------------------------
+    // Feedback, Announcements, Clubs, etc.
+    // -------------------------
+    match /feedback/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /announcements/{docId} {
+      allow read: if true;
+      allow write: if isAllowedEditor(request.auth);
+    }
+
+    match /clubs/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    match /messages/{docId} {
+       // Direct messages: only participants can read/write
+       allow read, write: if request.auth != null && request.auth.uid in resource.data.participants;
+       allow create: if request.auth != null;
+    }
+
+    match /puzzles/{docId} {
+      allow read: if true;
+      allow write: if isAllowedEditor(request.auth);
+    }
+
+    match /global_chat/{docId} {
+      allow read: if true;
+      allow create: if request.auth != null;
+      allow update, delete: if isAllowedEditor(request.auth);
+    }
+
+    // -------------------------
+    // Default fallback
+    // -------------------------
+    match /{document=**} {
+      allow read: if isAllowedEditor(request.auth);
+      allow write: if isAllowedEditor(request.auth);
+    }
+  }
+}
