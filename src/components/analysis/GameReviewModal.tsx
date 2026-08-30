@@ -14,6 +14,8 @@ import {
   Copy
 } from 'lucide-react';
 
+import { logger } from '../../utils/logger';
+
 interface GameReviewModalProps {
   isOpen: boolean;
   onClose: () => void;

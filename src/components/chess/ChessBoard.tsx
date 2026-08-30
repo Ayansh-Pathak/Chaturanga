@@ -3,6 +3,7 @@ import { Chess, Square } from 'chess.js';
 import { ChessPiece, PieceColor, PieceSymbol } from './ChessPiece';
 import { chessAudio } from '../../utils/chessAudio';
 import { antiCheat } from '../../utils/antiCheat';
+import { logger } from '../../utils/logger';
 import { RotateCw, Volume2, VolumeX, ShieldAlert } from 'lucide-react';
 
 export type BoardTheme = 
@@ -45,43 +46,6 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
   const [lastMove, setLastMove] = useState<{ from: Square; to: Square } | null>(lastMoveHighlight || null);
   const [inCheckSquare, setInCheckSquare] = useState<Square | null>(null);
   const [soundOn, setSoundOn] = useState<boolean>(true);
-
-  // Sync with initialFen if changed
-  useEffect(() => {
-    try {
-      const newGame = new Chess(initialFen);
-      setGame(newGame);
-      setSelectedSquare(null);
-      setLegalMoves([]);
-      if (lastMoveHighlight !== undefined) {
-        setLastMove(lastMoveHighlight);
-      }
-      checkGameState(newGame);
-
-      // Anti-cheat: Start monitoring on new game
-      antiCheat.startGame();
-      antiCheat.onViolation((event) => {
-        console.warn('Anti-Cheat violation:', event);
-        // Optionally show a UI warning here if needed
-      });
-    } catch {
-      // Invalid FEN fallback
-    }
-
-    return () => {
-      antiCheat.endGame();
-    };
-  }, [initialFen, lastMoveHighlight, checkGameState]);
-
-  useEffect(() => {
-    if (lastMoveHighlight !== undefined) {
-      setLastMove(lastMoveHighlight);
-    }
-  }, [lastMoveHighlight]);
-
-  useEffect(() => {
-    setBoardOrientation(orientation);
-  }, [orientation]);
 
   // Check state: check, checkmate, stalemate, draw
   const checkGameState = useCallback((currentGame: Chess) => {
@@ -133,6 +97,33 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
       }
     }
   }, [onGameOver]);
+
+  // Sync with initialFen if changed
+  useEffect(() => {
+    try {
+      const newGame = new Chess(initialFen);
+      setGame(newGame);
+      setSelectedSquare(null);
+      setLegalMoves([]);
+      if (lastMoveHighlight !== undefined) {
+        setLastMove(lastMoveHighlight);
+      }
+      checkGameState(newGame);
+
+      // Anti-cheat: Start monitoring on new game
+      antiCheat.startGame();
+      antiCheat.onViolation((event) => {
+        logger.warn('Anti-Cheat violation:', event);
+        // Optionally show a UI warning here if needed
+      });
+    } catch {
+      // Invalid FEN fallback
+    }
+
+    return () => {
+      antiCheat.endGame();
+    };
+  }, [initialFen, lastMoveHighlight, checkGameState]);
 
   const executeMove = (from: Square, to: Square, promotion?: string) => {
     try {

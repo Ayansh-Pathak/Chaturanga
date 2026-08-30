@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { FeedbackPost, FeedbackComment } from '../types/chess';
 import { useAuth } from './AuthContext';
-import { db } from '../utils/firebaseApp';
+import { db } from '../utils/arena-internal';
 import {
   collection,
   addDoc,

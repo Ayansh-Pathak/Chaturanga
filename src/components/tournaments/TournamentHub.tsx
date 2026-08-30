@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { Chess } from 'chess.js';
+import { Chess, Square } from 'chess.js';
 import { useTournaments } from '../../context/TournamentContext';
 import { useAuth } from '../../context/AuthContext';
 import { useClubs } from '../../context/ClubContext';
@@ -26,6 +26,7 @@ import {
   Globe
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { logger } from '../../utils/logger';
 
 export const TournamentHub: React.FC = () => {
   const { user } = useAuth();
@@ -49,7 +50,7 @@ const [membershipError, setMembershipError] = useState<string | null>(null);
   const [opponentBot, setOpponentBot] = useState<{ name: string; rating: number; avatar: string } | null>(null);
   const [activeMatchGameMoves, setActiveMatchGameMoves] = useState<number>(0);
   const [matchFen, setMatchFen] = useState<string>('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
-  const [matchLastMove, setMatchLastMove] = useState<{ from: string; to: string } | null>(null);
+  const [matchLastMove, setMatchLastMove] = useState<{ from: Square; to: Square } | null>(null);
   const [isOpponentThinking, setIsOpponentThinking] = useState<boolean>(false);
   const matchChessRef = useRef<Chess>(new Chess());
   const [filterTab, setFilterTab] = useState<'all' | 'public' | 'club'>('all');
@@ -159,7 +160,7 @@ const isParticipant = selectedTournament?.participants?.some(
       });
       if (res) {
         setMatchFen(matchChessRef.current.fen());
-        setMatchLastMove({ from: move.from, to: move.to });
+        setMatchLastMove({ from: move.from as Square, to: move.to as Square });
         setActiveMatchGameMoves((prev) => prev + 1);
 
         if (matchChessRef.current.isGameOver()) {
@@ -200,7 +201,7 @@ const isParticipant = selectedTournament?.participants?.some(
             const botRes = matchChessRef.current.move(selectedMove);
             if (botRes) {
               setMatchFen(matchChessRef.current.fen());
-              setMatchLastMove({ from: botRes.from, to: botRes.to });
+              setMatchLastMove({ from: botRes.from as Square, to: botRes.to as Square });
               setActiveMatchGameMoves((prev) => prev + 1);
 
               if (matchChessRef.current.isGameOver()) {
@@ -212,14 +213,14 @@ const isParticipant = selectedTournament?.participants?.some(
               }
             }
           } catch (e) {
-            console.error('Tournament bot move error:', e);
+            logger.error('Tournament bot move error:', e);
           } finally {
             setIsOpponentThinking(false);
           }
         }, thinkTime);
       }
     } catch (e) {
-      console.error('Tournament move error:', e);
+      logger.error('Tournament move error:', e);
     }
   };
 

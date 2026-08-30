@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Chess } from 'chess.js';
+import { Chess, Square } from 'chess.js';
 import { ChessBoard, BoardTheme } from '../chess/ChessBoard';
 import { PUZZLES_DATABASE, getDailyPuzzle, getPuzzleById } from '../../data/puzzleDatabase';
 import { PuzzleData } from '../../types/chess';
@@ -22,6 +22,7 @@ import {
   Eye,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { logger } from '../../utils/logger';
 
 export const PuzzleTrainer: React.FC = () => {
   const { user, updateRating, completeDailyPuzzle } = useAuth();
@@ -38,7 +39,7 @@ export const PuzzleTrainer: React.FC = () => {
 
   // Active puzzle game instance & board FEN
   const [puzzleFen, setPuzzleFen] = useState<string>(currentPuzzle.fen);
-  const [puzzleLastMove, setPuzzleLastMove] = useState<{ from: string; to: string } | null>(null);
+  const [puzzleLastMove, setPuzzleLastMove] = useState<{ from: Square; to: Square } | null>(null);
   const [puzzleKey, setPuzzleKey] = useState<number>(1);
   const [moveIndex, setMoveIndex] = useState<number>(0);
   const [status, setStatus] = useState<'solving' | 'correct' | 'failed' | 'skipped'>('solving');
@@ -159,7 +160,7 @@ export const PuzzleTrainer: React.FC = () => {
       chessRef.current = tempChess;
       setPuzzleFen(tempChess.fen());
     } catch (e) {
-      console.error('Error revealing solution moves:', e);
+      logger.error('Error revealing solution moves:', e);
     }
   };
 
@@ -224,10 +225,10 @@ export const PuzzleTrainer: React.FC = () => {
         });
         if (moveRes) {
           setPuzzleFen(chessRef.current.fen());
-          setPuzzleLastMove({ from: move.from, to: move.to });
+          setPuzzleLastMove({ from: move.from as Square, to: move.to as Square });
         }
       } catch (err) {
-        console.error('Chess move error:', err);
+        logger.error('Chess move error:', err);
       }
 
       const nextPlayerIdx = moveIndex + 1;
@@ -440,7 +441,7 @@ export const PuzzleTrainer: React.FC = () => {
             Daily Puzzle
           </button>
           <button
-            onClick={handleNextPuzzle}
+            onClick={() => handleNextPuzzle()}
             className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-gradient-to-r from-blue-600 to-red-600 hover:from-blue-500 hover:to-red-500 text-white text-xs font-bold transition-all shadow-lg active:scale-95 border border-blue-400/40"
           >
             <Shuffle size={14} />
@@ -601,7 +602,7 @@ export const PuzzleTrainer: React.FC = () => {
                     <span>Try Again</span>
                   </button>
                   <button
-                    onClick={handleNextPuzzle}
+                    onClick={() => handleNextPuzzle()}
                     className="flex-1 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-red-600 hover:from-blue-500 hover:to-red-500 text-white text-xs font-black transition-all shadow-lg active:scale-95 border border-blue-400/40 flex items-center justify-center gap-1.5"
                   >
                     <span>Next Puzzle</span>

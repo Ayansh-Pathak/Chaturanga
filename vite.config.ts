@@ -22,12 +22,14 @@ export default defineConfig(() => {
       minify: 'esbuild',
       cssMinify: true,
       cssCodeSplit: false, // Combine CSS for faster loading in WebView
-      chunkSizeWarningLimit: 1000,
+      chunkSizeWarningLimit: 1500,
       rollupOptions: {
         output: {
           manualChunks(id) {
             if (id.includes('node_modules')) {
-              // Group all vendors into one for fewer file reads in Android Assets
+              if (id.includes('firebase')) return 'firebase';
+              if (id.includes('lucide-react')) return 'icons';
+              if (id.includes('react') || id.includes('scheduler') || id.includes('object-assign')) return 'react-core';
               return 'vendor';
             }
           },

@@ -88,9 +88,9 @@ export const ProfilePage: React.FC = () => {
     );
   }
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfile({
+    await updateProfile({
       username: editUsername.trim() || user.username,
       avatar: editAvatar.trim() || user.avatar,
       country: editCountry,
@@ -101,9 +101,9 @@ export const ProfilePage: React.FC = () => {
     setIsEditingProfile(false);
   };
 
-  const handleEmailUpdate = (e: React.FormEvent) => {
+  const handleEmailUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = updateEmail(newEmail, oldEmailPassword);
+    const res = await updateEmail(newEmail, oldEmailPassword);
     if (res.success) {
       setSettingsMessage({ text: res.message, type: 'success' });
       setNewEmail('');
@@ -113,9 +113,9 @@ export const ProfilePage: React.FC = () => {
     }
   };
 
-  const handleEmailRevert = (e: React.FormEvent) => {
+  const handleEmailRevert = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = revertEmail(revertPassword);
+    const res = await revertEmail(revertPassword);
     if (res.success) {
       setSettingsMessage({ text: res.message, type: 'success' });
       setRevertPassword('');

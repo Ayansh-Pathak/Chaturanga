@@ -18,9 +18,11 @@ import {
   X,
   Search,
   Zap,
-  Loader2
+  Loader2,
+  Flame
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
+import { logger } from '../../utils/logger';
 
 // Chaturanga Logo SVG data URI for Computer Bot avatar
 const CHATURANGA_LOGO_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%232563eb'/%3E%3Cstop offset='50%25' stop-color='%236366f1'/%3E%3Cstop offset='100%25' stop-color='%23dc2626'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='22' fill='%230b1021' stroke='url(%23g)' stroke-width='4'/%3E%3Ccircle cx='50' cy='50' r='36' fill='%23131a33'/%3E%3Cpath d='M25 65 L75 65 L70 42 L58 54 L50 30 L42 54 L30 42 Z' fill='%23fbbf24' stroke='%23f59e0b' stroke-width='2' stroke-linejoin='round'/%3E%3Ccircle cx='50' cy='28' r='4' fill='%23fbbf24'/%3E%3Ccircle cx='29' cy='40' r='3.5' fill='%23fbbf24'/%3E%3Ccircle cx='71' cy='40' r='3.5' fill='%23fbbf24'/%3E%3Ccircle cx='50' cy='58' r='3' fill='%230b1021'/%3E%3C/svg%3E";
@@ -39,7 +41,7 @@ export const PlayHub: React.FC = () => {
   const [gameResult, setGameResult] = useState<'1-0' | '0-1' | '1/2-1/2' | '*'>('*');
   const [myColor, setMyColor] = useState<'w' | 'b'>('w');
   const [currentFen, setCurrentFen] = useState<string>('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
-  const [lastMoveHighlight, setLastMoveHighlight] = useState<{ from: string; to: string } | null>(null);
+  const [lastMoveHighlight, setLastMoveHighlight] = useState<{ from: Square; to: Square } | null>(null);
   const [lastPgn, setLastPgn] = useState<string>('');
   const [showReviewModal, setShowReviewModal] = useState<boolean>(false);
   const [isBotThinking, setIsBotThinking] = useState<boolean>(false);
@@ -240,7 +242,7 @@ export const PlayHub: React.FC = () => {
           }
         } catch (e: any) {
           if (e.name !== 'AbortError') {
-            console.error('Matchmaking error:', e);
+            logger.error('Matchmaking error:', e);
             setIsMatchmaking(false);
           }
         }
@@ -351,7 +353,7 @@ export const PlayHub: React.FC = () => {
           }
         }
       } catch (err) {
-        console.error('Bot move calculation error:', err);
+        logger.error('Bot move calculation error:', err);
       } finally {
         setIsBotThinking(false);
       }
@@ -370,7 +372,7 @@ export const PlayHub: React.FC = () => {
       if (res) {
         successfulMove = true;
         setCurrentFen(chessRef.current.fen());
-        setLastMoveHighlight({ from: move.from, to: move.to });
+        setLastMoveHighlight({ from: move.from as Square, to: move.to as Square });
       }
     } catch {}
 

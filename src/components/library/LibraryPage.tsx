@@ -1,4 +1,5 @@
 import React from 'react';
+import { BookOpen, Users } from 'lucide-react';
 
 // Simple static library page showing a few chess e‑books and popular YouTube channels.
 // The UI follows the Tailwind styling used throughout the app.

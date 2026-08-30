@@ -5,6 +5,7 @@ import { Send, Sparkles, X, Minimize2, Maximize2, RotateCcw, Loader2 } from 'luc
 import { useAuth } from '../../context/AuthContext';
 import { apiUrl } from '../../utils/apiBase';
 import { parseBasicMarkdown } from '../../utils/markdown';
+import { logger } from '../../utils/logger';
 
 interface ChatMessage {
   id: string;
@@ -152,7 +153,7 @@ I am aware of your live chessboard, active tactical puzzles, and match moves. As
 
       setMessages((prev) => [...prev, botMsg]);
     } catch (err: any) {
-      console.error('Chat error:', err);
+      logger.error('Chat error:', err);
       const errorMsg: ChatMessage = {
         id: `gemini_err_${Date.now()}`,
         sender: 'gemini',

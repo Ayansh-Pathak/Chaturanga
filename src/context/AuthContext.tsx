@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserProfile, TournamentMedalData, GameRecord } from '../types/chess';
 import confetti from 'canvas-confetti';
-import { auth, db } from '../utils/firebaseApp';
+import { auth, db } from '../utils/arena-internal';
 import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
@@ -16,6 +16,7 @@ import {
   updateDoc,
   serverTimestamp
 } from 'firebase/firestore';
+import { logger } from '@/src/utils/logger';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -109,7 +110,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await signInWithEmailAndPassword(auth, email, pass);
       return { success: true, message: 'Welcome back to Chaturanga!' };
     } catch (error: any) {
-      console.error('Login error:', error);
+      logger.error('Login error:', error);
       return { success: false, message: error.message || 'Login failed.' };
     }
   };
@@ -159,7 +160,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await setDoc(doc(db, 'users', userCredential.user.uid), newUser);
       return { success: true, message: 'Account created! Welcome to Chaturanga.' };
     } catch (error: any) {
-      console.error('Signup error:', error);
+      logger.error('Signup error:', error);
       return { success: false, message: error.message || 'Signup failed.' };
     }
   };
