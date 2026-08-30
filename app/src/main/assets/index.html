@@ -1,44 +1,31 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chaturanga Loading</title>
-    <style>
-        body {
-            background-color: #0e1015;
-            color: #f0f2f5;
-            font-family: sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            text-align: center;
-        }
-        .loader {
-            border: 4px solid #1e293b;
-            border-top: 4px solid #f59e0b;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin-bottom: 20px;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-    </style>
-</head>
-<body>
-    <div class="loader"></div>
-    <h1>Chaturanga</h1>
-    <p>Loading the arena...</p>
-    <div id="debug" style="margin-top: 20px; font-size: 12px; color: #64748b;">
-        Waiting for web assets bundle...<br>
-        Current Path: <script>document.write(window.location.href)</script>
-    </div>
-</body>
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <!-- Google tag (gtag.js) - Website Data Collection -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-VXE6Z8S5PS"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-VXE6Z8S5PS', {
+        'send_page_view': true,
+        'cookie_flags': 'SameSite=None;Secure'
+      });
+    </script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chaturanga • चतुरङ्ग — The Grand Chess Arena</title>
+    <meta name="description" content="FIDE-compliant chess practice platform with tournaments, clubs, thousands of puzzles, custom elephant-head bishops and crown kings, Elo progression, medals, Game Review and Analysis Powered by Stockfish 18 and Context aware Gemini Chatbot." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Rozha+One&family=Yatra+One&display=swap" rel="stylesheet">
+    <script type="module" crossorigin src="./assets/index-BhW3e3WW.js"></script>
+    <link rel="modulepreload" crossorigin href="./assets/vendor-sWoEJCzH.js">
+    <link rel="stylesheet" crossorigin href="./assets/style-Bt06JMih.css">
+  </head>
+  <body class="bg-[#0e1015] text-[#f0f2f5] antialiased selection:bg-amber-500/30 selection:text-amber-200">
+    <div id="root"></div>
+  </body>
 </html>
+

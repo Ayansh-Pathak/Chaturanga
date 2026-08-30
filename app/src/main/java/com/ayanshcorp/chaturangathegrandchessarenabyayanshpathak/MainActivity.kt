@@ -127,10 +127,16 @@ fun ChaturangaWebView(url: String, backgroundColor: Color) {
                         request: WebResourceRequest,
                         error: WebResourceErrorCompat,
                     ) {
+                        var description = "Error"
                         if (WebViewFeature.isFeatureSupported(WebViewFeature.WEB_RESOURCE_ERROR_GET_DESCRIPTION)) {
-                            Log.e("ChaturangaWebView", "Error loading: ${error.description} for URL: ${request.url}")
-                        } else {
-                            Log.e("ChaturangaWebView", "Error loading URL: ${request.url}")
+                            description = error.description.toString()
+                        }
+                        
+                        Log.e("ChaturangaWebView", "Error loading: $description for URL: ${request.url}")
+                        
+                        // If the local load fails for the main page, attempt to load from production URL
+                        if (request.url.toString().contains("index.html")) {
+                             view.post { view.loadUrl("https://ayansh-pathak.github.io/Chaturanga/") }
                         }
                     }
                     
