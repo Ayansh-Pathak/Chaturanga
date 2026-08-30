@@ -40,9 +40,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = login(email || username, password);
+    const res = await login(email || username, password);
     if (res.success) {
       setMessage({ text: res.message, type: 'success' });
       setTimeout(onClose, 900);
@@ -51,9 +51,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = signup(username, email, password, selectedAvatar);
+    const res = await signup(username, email, password, selectedAvatar);
     if (res.success) {
       setMessage({ text: res.message, type: 'success' });
       setTimeout(onClose, 900);
@@ -62,9 +62,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  const handleUpdateEmail = (e: React.FormEvent) => {
+  const handleUpdateEmail = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = updateEmail(newEmail, oldEmailPassword);
+    const res = await updateEmail(newEmail, oldEmailPassword);
     if (res.success) {
       setMessage({ text: res.message, type: 'success' });
       setNewEmail('');
@@ -74,9 +74,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   };
 
-  const handleRevertEmail = (e: React.FormEvent) => {
+  const handleRevertEmail = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = revertEmail(revertPassword);
+    const res = await revertEmail(revertPassword);
     if (res.success) {
       setMessage({ text: res.message, type: 'success' });
       setRevertPassword('');

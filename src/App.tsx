@@ -5,6 +5,7 @@ import { ClubProvider } from './context/ClubContext';
 import { FeedbackProvider } from './context/FeedbackContext';
 import { Navbar } from './components/layout/Navbar';
 import { AuthModal } from './components/auth/AuthModal';
+import { useAuth } from './context/AuthContext';
 import { Crown } from 'lucide-react';
 
 const PlayHub = lazy(() => import('./components/play/PlayHub').then(module => ({ default: module.PlayHub })));
@@ -30,6 +31,7 @@ function getInitialTab(): TabId {
 }
 
 function ChaturangaApp() {
+  const { loading } = useAuth();
   const [activeTab, setActiveTab] = useState<TabId>(getInitialTab);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
 
@@ -37,6 +39,18 @@ function ChaturangaApp() {
   useEffect(() => {
     window.location.hash = activeTab;
   }, [activeTab]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0a0d14] flex flex-col items-center justify-center">
+        <div className="relative">
+          <div className="w-16 h-16 border-4 border-slate-800 rounded-full"></div>
+          <div className="absolute top-0 left-0 w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+        <span className="mt-6 text-xs font-black uppercase tracking-[0.2em] text-slate-500 animate-pulse">Authenticating...</span>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0d14] text-slate-100 flex flex-col selection:bg-amber-500 selection:text-black">
