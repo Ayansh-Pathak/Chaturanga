@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserProfile, TournamentMedalData, GameRecord } from '../types/chess';
 import confetti from 'canvas-confetti';
-import { auth, db } from '../utils/firebase';
+import { auth, db } from '../utils/firebase-config';
 import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
