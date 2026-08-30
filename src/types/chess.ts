@@ -69,6 +69,8 @@ export interface UserStats {
   puzzlesSolved: number;
   puzzleStreak: number;
   bestPuzzleStreak: number;
+  lastPuzzleDate?: string;
+  lastPuzzleId?: number;
 }
 
 export interface GameRecord {

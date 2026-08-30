@@ -478,6 +478,68 @@ export const PlayHub: React.FC = () => {
 
   return (
     <div className="w-full max-w-7xl mx-auto px-3 sm:px-6 py-6 space-y-6">
+      {/* Daily Puzzle & Quick Links Card */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="md:col-span-2 p-6 rounded-3xl bg-gradient-to-br from-[#0c1427] to-[#160d24] border border-blue-500/30 shadow-xl relative overflow-hidden group">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+            <Zap size={100} className="text-amber-400" />
+          </div>
+          <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-xs font-black text-amber-400 uppercase tracking-widest">
+                <Sparkles size={14} />
+                Daily Grandmaster Challenge
+              </div>
+              <h2 className="text-2xl font-black text-white font-cinzel">Daily Tactical Puzzle</h2>
+              <p className="text-sm text-slate-400 max-w-md">
+                Master today's curated position and build your solving streak. Gain +4 Elo for every success!
+              </p>
+              <div className="flex items-center gap-4 mt-4">
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-slate-500 uppercase font-bold">Today's Streak</span>
+                  <span className="text-lg font-black text-red-500 flex items-center gap-1">
+                    <Flame size={18} /> {user?.stats.puzzleStreak || 0}
+                  </span>
+                </div>
+                <div className="w-px h-8 bg-slate-800" />
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-slate-500 uppercase font-bold">Status</span>
+                  <span className={`text-xs font-black uppercase ${user?.stats.lastPuzzleDate === new Date().toLocaleDateString() ? 'text-emerald-400' : 'text-amber-400 animate-pulse'}`}>
+                    {user?.stats.lastPuzzleDate === new Date().toLocaleDateString() ? 'Completed ✓' : 'Unsolved • Play Now'}
+                  </span>
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                // In a real app we'd navigate to Puzzles tab, here we rely on User clicking Navbar or providing a prop
+                window.location.hash = 'puzzles';
+                window.location.reload();
+              }}
+              className="px-8 py-4 rounded-2xl bg-gradient-to-r from-blue-600 to-red-600 hover:from-blue-500 hover:to-red-500 text-white font-black text-sm shadow-2xl shadow-blue-600/25 transition-all active:scale-95 border border-blue-400/30"
+            >
+              Solve Daily Puzzle
+            </button>
+          </div>
+        </div>
+
+        <div className="p-6 rounded-3xl bg-gradient-to-br from-[#090e1c] to-[#0c1427] border border-slate-800 shadow-xl flex flex-col justify-between">
+          <div>
+            <h3 className="text-sm font-black text-slate-300 uppercase tracking-wider mb-3">Quick Navigation</h3>
+            <div className="grid grid-cols-2 gap-2">
+              <button onClick={() => { window.location.hash = 'puzzles'; window.location.reload(); }} className="p-3 rounded-xl bg-[#141926] hover:bg-[#1a2133] border border-slate-800 text-xs font-bold text-slate-400 hover:text-blue-400 transition-all text-center">Puzzles</button>
+              <button onClick={() => { window.location.hash = 'tournaments'; window.location.reload(); }} className="p-3 rounded-xl bg-[#141926] hover:bg-[#1a2133] border border-slate-800 text-xs font-bold text-slate-400 hover:text-red-400 transition-all text-center">Tournaments</button>
+              <button onClick={() => { window.location.hash = 'clubs'; window.location.reload(); }} className="p-3 rounded-xl bg-[#141926] hover:bg-[#1a2133] border border-slate-800 text-xs font-bold text-slate-400 hover:text-amber-400 transition-all text-center">Clubs</button>
+              <button onClick={() => { window.location.hash = 'library'; window.location.reload(); }} className="p-3 rounded-xl bg-[#141926] hover:bg-[#1a2133] border border-slate-800 text-xs font-bold text-slate-400 hover:text-emerald-400 transition-all text-center">Library</button>
+            </div>
+          </div>
+          <div className="mt-4 pt-4 border-t border-slate-800 flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase">
+             <span>v1.4.8 Official</span>
+             <span className="text-amber-500/60">FIDE Laws 2026</span>
+          </div>
+        </div>
+      </div>
+
       {/* Play Controls Topbar */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
         {/* Mode Selector (Bot vs Local) */}

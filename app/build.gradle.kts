@@ -14,8 +14,8 @@ android {
         applicationId = "com.ayanshcorp.chaturangathegrandchessarenabyayanshpathak"
         minSdk = 24
         targetSdk = 37
-        versionCode = 24
-        versionName = "1.4.5"
+        versionCode = 27
+        versionName = "1.4.8"
         multiDexEnabled = true
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -28,7 +28,10 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
     compileOptions {

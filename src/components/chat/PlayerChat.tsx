@@ -28,6 +28,23 @@ export const PlayerChat: React.FC = () => {
     e.preventDefault();
     if (!inputMessage.trim()) return;
 
+    // Handle @username command to switch chat
+    if (inputMessage.startsWith('@')) {
+      const parts = inputMessage.split(' ');
+      const username = parts[0].substring(1);
+      if (username) {
+        setTargetUsername(username);
+        setActiveChat(username);
+        setChatHistory((prev) => [...prev, {
+          sender: 'System',
+          text: `Switched chat to: ${username}`,
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }]);
+        setInputMessage('');
+        return;
+      }
+    }
+
     // Handle Secret Password Command
     if (inputMessage.trim() === '/password=GhasdoodhooghasdoodhooILoveghasdoodhoo') {
       grantAnnouncerStatus();

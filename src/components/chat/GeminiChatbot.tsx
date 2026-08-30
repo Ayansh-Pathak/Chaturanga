@@ -44,7 +44,32 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = ({
   const [isExpanded, setIsExpanded] = useState(false);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+  const [showCommands, setShowCommands] = useState(false);
+  const [selectedModel, setSelectedModel] = useState('Gemini 3.7 Flash');
+
+  const geminiModels = [
+    'Gemini 3.7 Flash',
+    'Gemini 3.6 Flash',
+    'Gemini 3.5 Flash',
+    'Gemini 3.5 Flash-Lite',
+    'Gemini 3.1 Flash-Lite',
+    'Gemini 2.5 Flash',
+    'Gemini 2.5 Flash-Lite',
+    'Gemini 2.5 Pro',
+    'Nano Banana 2 – gemini-3.1-flash-image',
+    'Nano Banana 2 Lite – gemini-3.1-flash-lite-image',
+    'Nano Banana – gemini-2.5-flash-image'
+  ];
+
+  const chatbotCommands = [
+    { cmd: '/analyze', desc: 'Analyze the current FEN position' },
+    { cmd: '/suggest', desc: 'Suggest the next best move' },
+    { cmd: '/opening', desc: 'Explain current opening theory' },
+    { cmd: '/clear', desc: 'Clear chat history' },
+    { cmd: '/model', desc: 'Change Gemini AI model' },
+    { cmd: '/help', desc: 'Show all available commands' }
+  ];
+
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: 'welcome_msg',
@@ -96,6 +121,7 @@ I am aware of your live chessboard, active tactical puzzles, and match moves. As
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: query,
+          model: selectedModel,
           history: messages.slice(-8).map((m) => ({ sender: m.sender, text: m.text })),
           context: {
             currentFen,
@@ -210,13 +236,22 @@ I am aware of your live chessboard, active tactical puzzles, and match moves. As
                   </div>
                   <p className="text-[11px] text-slate-400 flex items-center gap-1">
                     <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                    Drag header to move
+                    Model: {selectedModel} (Updated Weekly)
                   </p>
                 </div>
               )}
             </div>
 
             <div className="flex items-center gap-1 text-slate-400">
+              <div className="mr-2 hidden sm:block">
+                <select
+                  value={selectedModel}
+                  onChange={(e) => setSelectedModel(e.target.value)}
+                  className="bg-slate-900 border border-amber-500/30 rounded px-2 py-0.5 text-[10px] text-amber-300 outline-none"
+                >
+                  {geminiModels.map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
               <button
                 onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.stopPropagation();
@@ -306,23 +341,50 @@ I am aware of your live chessboard, active tactical puzzles, and match moves. As
                   e.preventDefault();
                   handleSendMessage();
                 }}
-                className="p-3 bg-[#171c2b] border-t border-slate-700/80 flex items-center gap-2"
+                className="p-3 bg-[#171c2b] border-t border-slate-700/80 flex flex-col gap-2 relative"
               >
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={inputMessage}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInputMessage(e.target.value)}
-                  placeholder="Ask Gemini about this game, moves, or tactics..."
-                  className="flex-1 bg-[#10141f] border border-slate-700 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 text-slate-100 text-xs px-3.5 py-2.5 rounded-xl outline-none placeholder:text-slate-500 transition-all"
-                />
-                <button
-                  type="submit"
-                  disabled={isLoading || !inputMessage.trim()}
-                  className="p-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md active:scale-95"
-                >
-                  <Send size={16} />
-                </button>
+                {showCommands && (
+                  <div className="absolute bottom-full left-0 w-full bg-[#141926] border-t border-slate-700 shadow-2xl z-50 p-2 max-h-48 overflow-y-auto">
+                    <div className="text-[10px] font-black text-amber-500 uppercase px-2 py-1 mb-1">Chatbot Commands</div>
+                    {chatbotCommands.map(c => (
+                      <button
+                        key={c.cmd}
+                        type="button"
+                        onClick={() => {
+                          setInputMessage(c.cmd);
+                          setShowCommands(false);
+                          inputRef.current?.focus();
+                        }}
+                        className="w-full text-left p-2 hover:bg-white/5 rounded-lg flex items-center justify-between group transition-colors"
+                      >
+                        <span className="text-xs font-bold text-slate-200 group-hover:text-amber-300">{c.cmd}</span>
+                        <span className="text-[10px] text-slate-500 italic">{c.desc}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <div className="flex items-center gap-2">
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    value={inputMessage}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                      const val = e.target.value;
+                      setInputMessage(val);
+                      if (val === '/') setShowCommands(true);
+                      else if (!val.startsWith('/')) setShowCommands(false);
+                    }}
+                    placeholder="Ask Gemini or type / for commands..."
+                    className="flex-1 bg-[#10141f] border border-slate-700 focus:border-amber-400 focus:ring-1 focus:ring-amber-400 text-slate-100 text-xs px-3.5 py-2.5 rounded-xl outline-none placeholder:text-slate-500 transition-all"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isLoading || !inputMessage.trim()}
+                    className="p-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-md active:scale-95"
+                  >
+                    <Send size={16} />
+                  </button>
+                </div>
               </form>
             </>
           )}

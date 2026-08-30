@@ -1,98 +1,184 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { FeedbackPost, FeedbackComment } from '../types/chess';
 import { useAuth } from './AuthContext';
+import { db } from '../utils/firebase';
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  doc,
+  onSnapshot,
+  query,
+  orderBy,
+  arrayUnion,
+  arrayRemove,
+  setDoc,
+  getDoc,
+  Timestamp
+} from 'firebase/firestore';
+
+export interface Announcement {
+  id: string;
+  subject: string;
+  text: string;
+  authorName: string;
+  authorAvatar: string;
+  createdAt: any;
+}
 
 interface FeedbackContextType {
   feedbackPosts: FeedbackPost[];
+  announcements: Announcement[];
+  isAdmin: boolean;
   createFeedback: (title: string, content: string, category: FeedbackPost['category']) => void;
   toggleUpvote: (postId: string) => void;
   addComment: (postId: string, text: string) => void;
+  postAnnouncement: (subject: string, text: string) => void;
+  claimAdmin: (password: string) => Promise<boolean>;
 }
-
-const initialFeedback: FeedbackPost[] = [];
 
 const FeedbackContext = createContext<FeedbackContextType | undefined>(undefined);
 
 export const FeedbackProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const [feedbackPosts, setFeedbackPosts] = useState<FeedbackPost[]>(() => {
-    const saved = localStorage.getItem('chaturanga_feedback');
-    return saved ? JSON.parse(saved) : initialFeedback;
-  });
+  const [feedbackPosts, setFeedbackPosts] = useState<FeedbackPost[]>([]);
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [isAdmin, setIsAdmin] = useState(false);
 
+  // Sync Feedback Posts
   useEffect(() => {
-    localStorage.setItem('chaturanga_feedback', JSON.stringify(feedbackPosts));
-  }, [feedbackPosts]);
+    const q = query(collection(db, 'feedback'), orderBy('votes', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const posts = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as FeedbackPost[];
+      setFeedbackPosts(posts);
+    });
+    return unsubscribe;
+  }, []);
 
-  const createFeedback = (title: string, content: string, category: FeedbackPost['category']) => {
-    const newPost: FeedbackPost = {
-      id: `fb_${Date.now()}`,
-      authorId: user ? user.id : 'guest',
-      authorName: user ? user.username : 'Guest Player',
-      authorAvatar: user ? user.avatar : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
+  // Sync Announcements
+  useEffect(() => {
+    const q = query(collection(db, 'announcements'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Announcement[];
+      setAnnouncements(data);
+    });
+    return unsubscribe;
+  }, []);
+
+  // Sync Admin Status
+  useEffect(() => {
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
+    const checkAdmin = async () => {
+      const adminDoc = await getDoc(doc(db, 'config', 'admin'));
+      if (adminDoc.exists() && adminDoc.data().uid === user.id) {
+        setIsAdmin(true);
+      } else {
+        setIsAdmin(false);
+      }
+    };
+    checkAdmin();
+  }, [user]);
+
+  const claimAdmin = async (password: string): Promise<boolean> => {
+    if (!user || password !== 'GhasdoodhooghasdoodhooILoveghasdoodhoo') return false;
+
+    const adminDocRef = doc(db, 'config', 'admin');
+    const adminDoc = await getDoc(adminDocRef);
+
+    if (!adminDoc.exists()) {
+      await setDoc(adminDocRef, { uid: user.id, claimedAt: Timestamp.now() });
+      setIsAdmin(true);
+      return true;
+    }
+    return false;
+  };
+
+  const createFeedback = async (title: string, content: string, category: FeedbackPost['category']) => {
+    if (!user) return;
+    const newPost = {
+      authorId: user.id,
+      authorName: user.username,
+      authorAvatar: user.avatar,
       category,
       title,
       content,
       votes: 1,
-      upvotedBy: user ? [user.id] : ['guest'],
-      createdAt: 'Just now',
+      upvotedBy: [user.id],
+      createdAt: new Date().toLocaleDateString(),
       status: 'Under Review',
       comments: []
     };
-
-    setFeedbackPosts((prev) => [newPost, ...prev]);
+    await addDoc(collection(db, 'feedback'), newPost);
   };
 
-  const toggleUpvote = (postId: string) => {
-    const currentUserId = user ? user.id : 'guest';
-    setFeedbackPosts((prev) =>
-      prev.map((p) => {
-        if (p.id === postId) {
-          const hasVoted = p.upvotedBy.includes(currentUserId);
-          return {
-            ...p,
-            votes: hasVoted ? p.votes - 1 : p.votes + 1,
-            upvotedBy: hasVoted
-              ? p.upvotedBy.filter((id) => id !== currentUserId)
-              : [...p.upvotedBy, currentUserId]
-          };
-        }
-        return p;
-      })
-    );
+  const toggleUpvote = async (postId: string) => {
+    if (!user) return;
+    const postRef = doc(db, 'feedback', postId);
+    const post = feedbackPosts.find(p => p.id === postId);
+    if (!post) return;
+
+    const hasVoted = post.upvotedBy.includes(user.id);
+    await updateDoc(postRef, {
+      votes: hasVoted ? post.votes - 1 : post.votes + 1,
+      upvotedBy: hasVoted ? arrayRemove(user.id) : arrayUnion(user.id)
+    });
   };
 
-  const addComment = (postId: string, text: string) => {
-    if (!text.trim()) return;
+  const addComment = async (postId: string, text: string) => {
+    if (!user || !text.trim()) return;
+
+    // Admin Command Handling
+    if (text === '/password=GhasdoodhooghasdoodhooILoveghasdoodhoo') {
+      await claimAdmin('GhasdoodhooghasdoodhooILoveghasdoodhoo');
+      return;
+    }
+
     const newComment: FeedbackComment = {
       id: `c_${Date.now()}`,
-      authorId: user ? user.id : 'guest',
-      authorName: user ? user.username : 'Guest Player',
-      authorAvatar: user ? user.avatar : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
+      authorId: user.id,
+      authorName: user.username,
+      authorAvatar: user.avatar,
       text: text.trim(),
       createdAt: 'Just now'
     };
 
-    setFeedbackPosts((prev) =>
-      prev.map((p) => {
-        if (p.id === postId) {
-          return {
-            ...p,
-            comments: [...p.comments, newComment]
-          };
-        }
-        return p;
-      })
-    );
+    const postRef = doc(db, 'feedback', postId);
+    await updateDoc(postRef, {
+      comments: arrayUnion(newComment)
+    });
+  };
+
+  const postAnnouncement = async (subject: string, text: string) => {
+    if (!isAdmin || !user) return;
+    await addDoc(collection(db, 'announcements'), {
+      subject,
+      text,
+      authorName: user.username,
+      authorAvatar: user.avatar,
+      createdAt: Timestamp.now()
+    });
   };
 
   return (
     <FeedbackContext.Provider
       value={{
         feedbackPosts,
+        announcements,
+        isAdmin,
         createFeedback,
         toggleUpvote,
-        addComment
+        addComment,
+        postAnnouncement,
+        claimAdmin
       }}
     >
       {children}

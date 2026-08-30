@@ -49,8 +49,17 @@ function ChaturangaApp() {
       />
 
       {/* Main View Area */}
-      <main className="flex-1 pb-16">
-        <Suspense fallback={<div className="flex-1 h-full flex flex-col items-center justify-center py-20 text-slate-400"><span className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></span><span className="mt-4 text-sm">Loading module...</span></div>}>
+      <main className="flex-1 pb-16 relative">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 via-red-600 to-amber-500 opacity-20" />
+        <Suspense fallback={
+          <div className="flex-1 h-[70vh] flex flex-col items-center justify-center py-20 animate-in fade-in duration-500">
+            <div className="relative">
+              <div className="w-16 h-16 border-4 border-slate-800 rounded-full"></div>
+              <div className="absolute top-0 left-0 w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+            </div>
+            <span className="mt-6 text-xs font-black uppercase tracking-[0.2em] text-slate-500 animate-pulse">Initializing Arena...</span>
+          </div>
+        }>
           {activeTab === 'play' && <PlayHub />}
           {activeTab === 'puzzles' && <PuzzleTrainer />}
           {activeTab === 'tournaments' && <TournamentHub />}

@@ -15,6 +15,7 @@ interface AuthContextType {
   updateRating: (category: 'rapid' | 'blitz' | 'bullet' | 'puzzle', delta: number) => void;
   awardTournamentMedal: (medal: Omit<TournamentMedalData, 'id' | 'awardedTo' | 'awardedAt'>) => void;
   addGameRecord: (record: Omit<GameRecord, 'id'>) => void;
+  completeDailyPuzzle: (puzzleId: number) => void;
   gameHistory: GameRecord[];
   allUsers: UserProfile[];
   directMessages: import('../types/chess').DirectMessage[];
@@ -357,6 +358,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const completeDailyPuzzle = (puzzleId: number) => {
+    if (!user) return;
+    const today = new Date().toLocaleDateString();
+
+    // Check if already completed today
+    if (user.stats.lastPuzzleDate === today) return;
+
+    const newStreak = user.stats.puzzleStreak + 1;
+    const newBestStreak = Math.max(user.stats.bestPuzzleStreak, newStreak);
+
+    const updatedUser = {
+      ...user,
+      stats: {
+        ...user.stats,
+        puzzlesSolved: user.stats.puzzlesSolved + 1,
+        puzzleStreak: newStreak,
+        bestPuzzleStreak: newBestStreak,
+        lastPuzzleDate: today,
+        lastPuzzleId: puzzleId
+      }
+    };
+
+    setUser(updatedUser);
+    setAllUsers(prev => prev.map(u => u.id === user.id ? updatedUser : u));
+
+    try {
+      confetti({
+        particleCount: 150,
+        spread: 90,
+        origin: { y: 0.5 }
+      });
+    } catch {}
+  };
+
   const [directMessages, setDirectMessages] = useState<import('../types/chess').DirectMessage[]>(() => {
     const saved = localStorage.getItem('chaturanga_direct_msgs');
     if (saved) {
@@ -425,6 +460,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updateRating,
         awardTournamentMedal,
         addGameRecord,
+        completeDailyPuzzle,
         gameHistory,
         allUsers,
         directMessages,

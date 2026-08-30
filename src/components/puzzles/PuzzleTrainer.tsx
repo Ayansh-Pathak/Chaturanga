@@ -24,7 +24,7 @@ import {
 import confetti from 'canvas-confetti';
 
 export const PuzzleTrainer: React.FC = () => {
-  const { user, updateRating } = useAuth();
+  const { user, updateRating, completeDailyPuzzle } = useAuth();
   const [currentPuzzle, setCurrentPuzzle] = useState<PuzzleData>(() => getDailyPuzzle());
   const [searchId, setSearchId] = useState<string>('');
   const [selectedTheme, setSelectedTheme] = useState<string>('All');
@@ -304,15 +304,22 @@ export const PuzzleTrainer: React.FC = () => {
     // User requested: puzzle difficulty should increase by 4 elo every time you get one right
     updateRating('puzzle', +4);
 
+    // Track Daily Puzzle Completion
+    const daily = getDailyPuzzle();
+    if (currentPuzzle.id === daily.id) {
+      completeDailyPuzzle(currentPuzzle.id);
+    }
+
     if (isRushActive) {
       setRushScore((s) => s + 1);
     }
 
     try {
       confetti({
-        particleCount: 70,
-        spread: 60,
-        origin: { y: 0.7 },
+        particleCount: 150,
+        spread: 80,
+        origin: { y: 0.6 },
+        colors: ['#3b82f6', '#ef4444', '#fbbf24']
       });
     } catch {}
 
