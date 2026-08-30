@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { FeedbackPost, FeedbackComment } from '../types/chess';
 import { useAuth } from './AuthContext';
-import { db } from '../utils/firebase-config';
+import { db } from '../utils/firebase-service';
 import {
   collection,
   addDoc,
