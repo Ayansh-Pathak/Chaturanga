@@ -14,7 +14,7 @@ import {
   Copy
 } from 'lucide-react';
 
-import { logger } from '../../utils/logger';
+import { logger } from '../../context/arena-init';
 
 interface GameReviewModalProps {
   isOpen: boolean;
@@ -91,7 +91,7 @@ export const GameReviewModal: React.FC<GameReviewModalProps> = ({
       setMoveList(parsedMoves);
       setCurrentMoveIndex(parsedMoves.length - 1);
     } catch (e) {
-      console.error('PGN Parse error:', e);
+      logger.error('PGN Parse error:', e);
     }
 
     // Fetch Stockfish 18 + Gemini review from backend

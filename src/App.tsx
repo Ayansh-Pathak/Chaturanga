@@ -3,6 +3,7 @@ import { AuthProvider } from './context/AuthContext';
 import { TournamentProvider } from './context/TournamentContext';
 import { ClubProvider } from './context/ClubContext';
 import { FeedbackProvider } from './context/FeedbackContext';
+import { PuzzleProvider } from './context/PuzzleContext';
 import { Navbar } from './components/layout/Navbar';
 import { AuthModal } from './components/auth/AuthModal';
 import { useAuth } from './context/AuthContext';
@@ -118,13 +119,15 @@ function ChaturangaApp() {
 export default function App() {
   return (
     <AuthProvider>
-      <ClubProvider>
-        <TournamentProvider>
-          <FeedbackProvider>
-            <ChaturangaApp />
-          </FeedbackProvider>
-        </TournamentProvider>
-      </ClubProvider>
+      <PuzzleProvider>
+        <ClubProvider>
+          <TournamentProvider>
+            <FeedbackProvider>
+              <ChaturangaApp />
+            </FeedbackProvider>
+          </TournamentProvider>
+        </ClubProvider>
+      </PuzzleProvider>
     </AuthProvider>
   );
 }

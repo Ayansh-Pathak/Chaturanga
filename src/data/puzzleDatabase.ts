@@ -339,6 +339,258 @@ const templates: PuzzleTemplate[] = [
     toMove: "w",
     titleBase: "Triangulation & Space",
     descBase: "White to move. Hold the key squares with the royal king."
+  },
+  {
+    fenPattern: "r2q1rk1/pp2bppp/2n1pn2/3p4/3P4/2N1PN2/PP1BBPPP/R2Q1RK1 w - - 0 9",
+    solutionGen: () => ["Ne5", "Nxe5", "dxe5"],
+    theme: ["Positional Play", "Outpost"],
+    ratingBase: 1350,
+    toMove: "w",
+    titleBase: "Knight Outpost Seizure",
+    descBase: "White to move. Establish a powerful knight in the center."
+  },
+  {
+    fenPattern: "r1bq1rk1/1p2bppp/p1np1n2/2p1p3/4P3/2PP1N2/PPB2PPP/RNBQR1K1 w - - 0 9",
+    solutionGen: () => ["Nbd2", "Re8", "Nf1"],
+    theme: ["Ruy Lopez Setup", "Maneuvering"],
+    ratingBase: 1450,
+    toMove: "w",
+    titleBase: "Spanish Knight Maneuver",
+    descBase: "White to move. Redirect the knight towards the kingside."
+  },
+  {
+    fenPattern: "rnbqkb1r/pp3ppp/4pn2/2pp4/2PP4/2N2N2/PP2PPPP/R1BQKB1R w KQkq - 0 5",
+    solutionGen: () => ["cxd5", "exd5", "Bg5"],
+    theme: ["Queen's Gambit", "Exchange Variation"],
+    ratingBase: 1280,
+    toMove: "w",
+    titleBase: "Queenside Tension",
+    descBase: "White to move. Resolve the central tension in your favor."
+  },
+  {
+    fenPattern: "2kr3r/ppqbbppp/2n1pn2/2pp4/3P4/2PBPN2/PP1NBPPP/R1BQ1RK1 w - - 0 9",
+    solutionGen: () => ["dxc5", "Bxc5", "b4"],
+    theme: ["Counter Attack", "Queenside Storm"],
+    ratingBase: 1580,
+    toMove: "w",
+    titleBase: "Minority Attack Spark",
+    descBase: "White to move. Launch a pawn storm against the castled king."
+  },
+  {
+    fenPattern: "r1b2rk1/ppq1bppp/2n1pn2/3p4/3P4/2N1PN2/PP1BBPPP/R2Q1RK1 b - - 0 9",
+    solutionGen: () => ["a6", "a3", "b5"],
+    theme: ["Expansion", "Queen's Indian Defense"],
+    ratingBase: 1420,
+    toMove: "b",
+    titleBase: "Queenside Expansion",
+    descBase: "Black to move. Prepare b5 and develop the light-squared bishop."
+  },
+  {
+    fenPattern: "rnbqk2r/pp2bppp/4pn2/2pp4/2PP4/2N2N2/PP2PPPP/R1BQKB1R w KQkq - 0 6",
+    solutionGen: () => ["e3", "O-O", "Bd3"],
+    theme: ["Solid Development", "Colle System"],
+    ratingBase: 1150,
+    toMove: "w",
+    titleBase: "Fortified Center",
+    descBase: "White to move. Build a rock-solid pyramid in the center."
+  },
+  {
+    fenPattern: "r1bqkb1r/pp1n1ppp/4pn2/2pp4/2PP4/2N1PN2/PP3PPP/R1BQKB1R w KQkq - 0 6",
+    solutionGen: () => ["Bd3", "Be7", "O-O"],
+    theme: ["Classical Setup", "Kingside Castling"],
+    ratingBase: 1100,
+    toMove: "w",
+    titleBase: "Standard Development",
+    descBase: "White to move. Develop the bishop and prepare for safety."
+  },
+  {
+    fenPattern: "r1b2rk1/pp1nbppp/1q2pn2/2pp4/2PP4/2N1PN2/PPQ1BPPP/R1B2RK1 w - - 0 9",
+    solutionGen: () => ["Na4", "Qc7", "cxd5"],
+    theme: ["Pressuring the Queen", "Tactics"],
+    ratingBase: 1520,
+    toMove: "w",
+    titleBase: "Queen Dislocation",
+    descBase: "White to move. Force the black queen into an awkward square."
+  },
+  {
+    fenPattern: "r2q1rk1/1p1nbppp/p1np4/2p1p3/P3P1b1/2PP1N2/1P1NBPPP/R1BQR1K1 w - - 0 11",
+    solutionGen: () => ["h3", "Bh5", "Nc4"],
+    theme: ["Probing", "Weak Square"],
+    ratingBase: 1480,
+    toMove: "w",
+    titleBase: "Kingside Provocation",
+    descBase: "White to move. Challenge the bishop and eye the d6 weakness."
+  },
+  {
+    fenPattern: "r2qkb1r/pp1n1ppp/2p1pn2/3p4/2PP4/2N1PN2/PP3PPP/R1BQKB1R b KQkq - 0 7",
+    solutionGen: () => ["Bd6", "Bd3", "O-O"],
+    theme: ["Symmetry", "Opening"],
+    ratingBase: 1080,
+    toMove: "b",
+    titleBase: "The Orthodox Wall",
+    descBase: "Black to move. Develop the dark-squared bishop to its best diagonal."
+  },
+  {
+    fenPattern: "r1bqk2r/pp2bppp/2n1pn2/2pp4/2PP4/2N1PN2/PP1B1PPP/R1BQKB1R w KQkq - 0 7",
+    solutionGen: () => ["dxc5", "Bxc5", "a3"],
+    theme: ["Simplification", "Positional Play"],
+    ratingBase: 1310,
+    toMove: "w",
+    titleBase: "Exchange and Expand",
+    descBase: "White to move. Liquidate the center and prepare queenside play."
+  },
+  {
+    fenPattern: "2rr2k1/1p2bppp/p1np1n2/2p1p3/4P3/PP1P1N1P/1BP1BPP1/R2QR1K1 w - - 0 14",
+    solutionGen: () => ["c4", "b5", "cxb5"],
+    theme: ["Pawn Break", "Center Control"],
+    ratingBase: 1620,
+    toMove: "w",
+    titleBase: "Central Constriction",
+    descBase: "White to move. Restrict black's center with a well-timed c4."
+  },
+  {
+    fenPattern: "r1b2rk1/1pq1bppp/p1np1n2/4p3/3NP3/P1N1B2P/1PP1BPP1/R2Q1RK1 w - - 0 11",
+    solutionGen: () => ["Nf5", "Bxf5", "exf5"],
+    theme: ["Knight Outpost", "Structure"],
+    ratingBase: 1540,
+    toMove: "w",
+    titleBase: "F5 Outpost Spark",
+    descBase: "White to move. Seize the vital f5 square with your knight."
+  },
+  {
+    fenPattern: "r2q1rk1/1pp1bppp/p1np1n2/4p3/B3P1b1/2PP1N2/PP3PPP/RNBQR1K1 b - - 0 9",
+    solutionGen: () => ["b5", "Bb3", "Na5"],
+    theme: ["Spanish Defense", "Counterplay"],
+    ratingBase: 1380,
+    toMove: "b",
+    titleBase: "Chasing the Bishop",
+    descBase: "Black to move. Kick the light-squared bishop and claim space."
+  },
+  {
+    fenPattern: "r1bqk2r/1pp1bppp/p1np1n2/4p3/B3P3/2P2N2/PP1P1PPP/RNBQR1K1 w KQkq - 0 8",
+    solutionGen: () => ["d4", "exd4", "cxd4"],
+    theme: ["Italian Attack", "Central Strike"],
+    ratingBase: 1250,
+    toMove: "w",
+    titleBase: "The d4 Explosion",
+    descBase: "White to move. Unleash the center with a powerful d4 push."
+  },
+  {
+    fenPattern: "rnbqk2r/ppp2ppp/5n2/3pp3/1bPP4/2N1P3/PP3PPP/R1BQKBNR w KQkq - 0 5",
+    solutionGen: () => ["cxd5", "Nxd5", "Bd2"],
+    theme: ["Nimzo-Indian Style", "Pins"],
+    ratingBase: 1410,
+    toMove: "w",
+    titleBase: "Pinned Knight Defense",
+    descBase: "White to move. Defend the c3 pin and resolve the center."
+  },
+  {
+    fenPattern: "r2qk2r/1ppbbppp/p1np1n2/4p3/P3P3/2PP1N2/1P2BPPP/RNBQ1RK1 b kq - 0 8",
+    solutionGen: () => ["O-O", "a5", "Be6"],
+    theme: ["Quiet Development", "Safety"],
+    ratingBase: 1120,
+    toMove: "b",
+    titleBase: "Safe Haven",
+    descBase: "Black to move. Secure king safety and prepare development."
+  },
+  {
+    fenPattern: "r1bq1rk1/pp1nbppp/2p1pn2/3p4/2PP4/2N1PN2/PPQ1BPPP/R1B2RK1 w - - 0 8",
+    solutionGen: () => ["b3", "b6", "Bb2"],
+    theme: ["Solid Setup", "Queenside Development"],
+    ratingBase: 1340,
+    toMove: "w",
+    titleBase: "The b3 Build-up",
+    descBase: "White to move. Develop the queenside bishop along the long diagonal."
+  },
+  {
+    fenPattern: "r1bqr1k1/pp1nbppp/2p1pn2/3p2B1/2PP4/2N1PN2/PP2BPPP/R2Q1RK1 b - - 0 8",
+    solutionGen: () => ["h6", "Bh4", "Ne4"],
+    theme: ["Testing the Pin", "Tactics"],
+    ratingBase: 1470,
+    toMove: "b",
+    titleBase: "Questioning the Bishop",
+    descBase: "Black to move. Ask the g5 bishop its intentions."
+  },
+  {
+    fenPattern: "r1bqk2r/pp2bppp/2np1n2/2p1p3/4P3/P1PP1N2/1PB2PPP/RNBQ1RK1 b kq - 0 8",
+    solutionGen: () => ["O-O", "h3", "Be6"],
+    theme: ["Prophylaxis", "Safety"],
+    ratingBase: 1200,
+    toMove: "b",
+    titleBase: "Standard Castle",
+    descBase: "Black to move. Complete kingside development."
+  },
+  {
+    fenPattern: "rnbq1rk1/ppp1bppp/4pn2/3p4/2PP4/2N2N2/PP2PPPP/R1BQKB1R w KQ - 0 6",
+    solutionGen: () => ["Bg5", "c6", "e3"],
+    theme: ["Classical Opening", "Development"],
+    ratingBase: 1180,
+    toMove: "w",
+    titleBase: "Opening Thrust",
+    descBase: "White to move. Activate the dark-squared bishop."
+  },
+  {
+    fenPattern: "rnbqkb1r/ppp1bppp/4pn2/3p4/2PP4/2N2N2/PP2PPPP/R1BQKB1R b KQkq - 0 5",
+    solutionGen: () => ["O-O", "Bg5", "c6"],
+    theme: ["Opening", "King Safety"],
+    ratingBase: 1050,
+    toMove: "b",
+    titleBase: "Castling Choice",
+    descBase: "Black to move. Prioritize king safety over central action."
+  },
+  {
+    fenPattern: "r2q1rk1/pp1nbppp/2n1p3/2ppP3/3P1B2/2P2N2/PP1N1PPP/R2Q1RK1 w - - 0 10",
+    solutionGen: () => ["Nb3", "c4", "Nc1"],
+    theme: ["French Structure", "Maneuvering"],
+    ratingBase: 1560,
+    toMove: "w",
+    titleBase: "The French Lock",
+    descBase: "White to move. Reposition the knight to combat black's queenside push."
+  },
+  {
+    fenPattern: "r1b2rk1/pp1nbppp/2p1pn2/q2p2B1/2PP4/2N1PN2/PPQ1BPPP/R4RK1 w - - 0 9",
+    solutionGen: () => ["a3", "dxc4", "Bxc4"],
+    theme: ["Opening Trap", "Probing"],
+    ratingBase: 1430,
+    toMove: "w",
+    titleBase: "Probing the Queen",
+    descBase: "White to move. Create threats against the active black queen."
+  },
+  {
+    fenPattern: "r2qk2r/1pp1bppp/p1np1n2/4p3/P3P1b1/2PP1N2/1P1NBPPP/R1BQ1RK1 b kq - 0 8",
+    solutionGen: () => ["O-O", "Nc4", "Be6"],
+    theme: ["Symmetry", "Quiet Play"],
+    ratingBase: 1100,
+    toMove: "b",
+    titleBase: "Symmetric Haven",
+    descBase: "Black to move. Maintain the balance and castle."
+  },
+  {
+    fenPattern: "rnbqk2r/pp2bppp/4pn2/2pp4/2PP4/2N2N2/PP2PPPP/R1BQKB1R w KQkq - 0 6",
+    solutionGen: () => ["cxd5", "Nxd5", "e4"],
+    theme: ["Central Exchange", "Space"],
+    ratingBase: 1390,
+    toMove: "w",
+    titleBase: "The E4 Strike",
+    descBase: "White to move. Clear the center and seize space with e4."
+  },
+  {
+    fenPattern: "rnbq1rk1/pp3ppp/4pn2/2pp4/2PP4/2N2N2/PP2PPPP/R1BQKB1R w KQ - 0 7",
+    solutionGen: () => ["dxc5", "Bxc5", "e3"],
+    theme: ["Opening", "Liquidation"],
+    ratingBase: 1150,
+    toMove: "w",
+    titleBase: "Center Liquidation",
+    descBase: "White to move. Resolve the tension on d5."
+  },
+  {
+    fenPattern: "r1bqk2r/pp1n1ppp/2p1pn2/3p4/2PP4/2N1PN2/PP1B1PPP/R2QKB1R b KQkq - 0 7",
+    solutionGen: () => ["O-O", "Be2", "b6"],
+    theme: ["Classical Development", "Solid"],
+    ratingBase: 1070,
+    toMove: "b",
+    titleBase: "Solid Walls",
+    descBase: "Black to move. Build a solid structure and prepare development."
   }
 ];
 

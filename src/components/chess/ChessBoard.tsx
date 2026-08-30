@@ -3,7 +3,7 @@ import { Chess, Square } from 'chess.js';
 import { ChessPiece, PieceColor, PieceSymbol } from './ChessPiece';
 import { chessAudio } from '../../utils/chessAudio';
 import { antiCheat } from '../../utils/antiCheat';
-import { logger } from '../../utils/logger';
+import { logger } from '../../context/arena-init';
 import { RotateCw, Volume2, VolumeX, ShieldAlert } from 'lucide-react';
 
 export type BoardTheme = 

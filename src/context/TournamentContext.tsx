@@ -1,6 +1,21 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Tournament, TournamentFormat, TimeControl, TournamentParticipant } from '../types/chess';
 import { useAuth } from './AuthContext';
+import { db } from './arena-init';
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  doc,
+  onSnapshot,
+  query,
+  orderBy,
+  arrayUnion,
+  arrayRemove,
+  getDoc,
+  Timestamp,
+  deleteDoc
+} from 'firebase/firestore';
 
 export interface JoinTournamentResult {
   success: boolean;
@@ -19,14 +34,14 @@ interface TournamentContextType {
     isClubOnly?: boolean;
     clubId?: string;
     clubName?: string;
-  }) => Tournament;
-  joinTournament: (tournamentId: string, userClubIds?: string[]) => JoinTournamentResult;
-  leaveTournament: (tournamentId: string) => { success: boolean; message: string };
-  withdrawTournament: (tournamentId: string) => { success: boolean; message: string };
-  rejoinTournament: (tournamentId: string) => { success: boolean; message: string };
-  startTournament: (tournamentId: string) => void;
-  simulateNextRound: (tournamentId: string) => void;
-  completeTournament: (tournamentId: string) => void;
+  }) => Promise<Tournament>;
+  joinTournament: (tournamentId: string, userClubIds?: string[]) => Promise<JoinTournamentResult>;
+  leaveTournament: (tournamentId: string) => Promise<{ success: boolean; message: string }>;
+  withdrawTournament: (tournamentId: string) => Promise<{ success: boolean; message: string }>;
+  rejoinTournament: (tournamentId: string) => Promise<{ success: boolean; message: string }>;
+  startTournament: (tournamentId: string) => Promise<void>;
+  simulateNextRound: (tournamentId: string) => Promise<void>;
+  completeTournament: (tournamentId: string) => Promise<void>;
 }
 
 const initialTournaments: Tournament[] = [];
@@ -35,18 +50,24 @@ const TournamentContext = createContext<TournamentContextType | undefined>(undef
 
 export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, awardTournamentMedal } = useAuth();
-  const [tournaments, setTournaments] = useState<Tournament[]>(() => {
-    const saved = localStorage.getItem('chaturanga_tournaments');
-    return saved ? JSON.parse(saved) : initialTournaments;
-  });
+  const [tournaments, setTournaments] = useState<Tournament[]>([]);
 
   const [activeTournament, setActiveTournament] = useState<Tournament | null>(null);
 
+  // Sync Tournaments from Firestore
   useEffect(() => {
-    localStorage.setItem('chaturanga_tournaments', JSON.stringify(tournaments));
-  }, [tournaments]);
+    const q = query(collection(db, 'tournaments'), orderBy('createdAt', 'desc'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Tournament[];
+      setTournaments(data);
+    });
+    return unsubscribe;
+  }, []);
 
-  const createTournament = ({
+  const createTournament = async ({
     name,
     format,
     timeControl,
@@ -66,8 +87,6 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const now = new Date();
     const dateFormatted = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     const timeFormatted = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-
-    const botParticipants: TournamentParticipant[] = [];
 
     const hostParticipant: TournamentParticipant = user ? {
       id: user.id,
@@ -91,8 +110,7 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       streak: 0,
     };
 
-    const newTour: Tournament = {
-      id: `tour_${Date.now()}`,
+    const newTourData: Omit<Tournament, 'id'> = {
       name,
       format,
       timeControl,
@@ -110,11 +128,11 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       matches: []
     };
 
-    setTournaments((prev) => [newTour, ...prev]);
-    return newTour;
+    const docRef = await addDoc(collection(db, 'tournaments'), newTourData);
+    return { id: docRef.id, ...newTourData } as Tournament;
   };
 
-  const joinTournament = (tournamentId: string, userClubIds?: string[]): JoinTournamentResult => {
+  const joinTournament = async (tournamentId: string, userClubIds?: string[]): Promise<JoinTournamentResult> => {
     if (!user) {
       return { success: false, message: 'Please sign in to join tournaments.' };
     }
@@ -143,35 +161,26 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       }
     }
 
-    setTournaments((prev) =>
-      prev.map((t) => {
-        if (t.id === tournamentId) {
-          return {
-            ...t,
-            participants: [
-              ...t.participants,
-              {
-                id: user.id,
-                username: user.username,
-                avatar: user.avatar,
-                rating: user.stats.rapid,
-                score: 0,
-                wins: 0,
-                draws: 0,
-                losses: 0,
-                streak: 0
-              }
-            ]
-          };
-        }
-        return t;
-      })
-    );
+    const newParticipant: TournamentParticipant = {
+      id: user.id,
+      username: user.username,
+      avatar: user.avatar,
+      rating: user.stats.rapid,
+      score: 0,
+      wins: 0,
+      draws: 0,
+      losses: 0,
+      streak: 0
+    };
+
+    await updateDoc(doc(db, 'tournaments', tournamentId), {
+      participants: arrayUnion(newParticipant)
+    });
 
     return { success: true, message: `Successfully registered for "${targetTour.name}"!` };
   };
 
-  const withdrawTournament = (tournamentId: string): { success: boolean; message: string } => {
+  const withdrawTournament = async (tournamentId: string): Promise<{ success: boolean; message: string }> => {
     if (!user) {
       return { success: false, message: 'Please sign in to manage tournament registrations.' };
     }
@@ -185,143 +194,122 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       return { success: false, message: 'This tournament has already ended.' };
     }
 
-    setTournaments((prev) =>
-      prev.map((t) => {
-        if (t.id === tournamentId) {
-          if (t.status === 'upcoming') {
-            return {
-              ...t,
-              participants: t.participants.filter((p) => p.id !== user.id)
-            };
-          } else {
-            // Ongoing: mark user as withdrawn
-            return {
-              ...t,
-              participants: t.participants.map((p) =>
-                p.id === user.id ? { ...p, withdrawn: true } : p
-              )
-            };
-          }
-        }
-        return t;
-      })
-    );
+    if (targetTour.status === 'upcoming') {
+      const participantToRemove = targetTour.participants.find(p => p.id === user.id);
+      if (participantToRemove) {
+        await updateDoc(doc(db, 'tournaments', tournamentId), {
+          participants: arrayRemove(participantToRemove)
+        });
+      }
+    } else {
+      // Ongoing: mark user as withdrawn
+      const updatedParticipants = targetTour.participants.map((p) =>
+        p.id === user.id ? { ...p, withdrawn: true } : p
+      );
+      await updateDoc(doc(db, 'tournaments', tournamentId), {
+        participants: updatedParticipants
+      });
+    }
 
     return { success: true, message: `Successfully withdrawn from "${targetTour.name}".` };
   };
 
-  const rejoinTournament = (tournamentId: string): { success: boolean; message: string } => {
+  const rejoinTournament = async (tournamentId: string): Promise<{ success: boolean; message: string }> => {
     if (!user) {
       return { success: false, message: 'Please sign in to manage tournament registrations.' };
     }
-    setTournaments((prev) =>
-      prev.map((t) => {
-        if (t.id === tournamentId) {
-          return {
-            ...t,
-            participants: t.participants.map((p) =>
-              p.id === user.id ? { ...p, withdrawn: false } : p
-            )
-          };
-        }
-        return t;
-      })
+    const targetTour = tournaments.find(t => t.id === tournamentId);
+    if (!targetTour) return { success: false, message: 'Tournament not found' };
+
+    const updatedParticipants = targetTour.participants.map((p) =>
+      p.id === user.id ? { ...p, withdrawn: false } : p
     );
+
+    await updateDoc(doc(db, 'tournaments', tournamentId), {
+      participants: updatedParticipants
+    });
+
     return { success: true, message: 'Successfully rejoined tournament.' };
   };
 
   const leaveTournament = withdrawTournament;
 
-  const startTournament = (tournamentId: string) => {
-    setTournaments((prev) =>
-      prev.map((t) => {
-        if (t.id === tournamentId) {
-          return {
-            ...t,
-            status: 'ongoing',
-            currentRound: 1,
-          };
-        }
-        return t;
-      })
-    );
+  const startTournament = async (tournamentId: string) => {
+    await updateDoc(doc(db, 'tournaments', tournamentId), {
+      status: 'ongoing',
+      currentRound: 1,
+    });
   };
 
-  const simulateNextRound = (tournamentId: string) => {
-    setTournaments((prev) =>
-      prev.map((t) => {
-        if (t.id === tournamentId) {
-          const nextRound = t.currentRound + 1;
-          const isFinal = nextRound > t.totalRounds;
+  const simulateNextRound = async (tournamentId: string) => {
+    const t = tournaments.find(tour => tour.id === tournamentId);
+    if (!t) return;
 
-          // Update scores procedurally
-          const updatedParticipants = t.participants.map((p) => {
-            if (p.isBot) {
-              const outcome = Math.random();
-              const scoreInc = outcome > 0.4 ? 1 : outcome > 0.2 ? 0.5 : 0;
-              return {
-                ...p,
-                score: p.score + scoreInc,
-                wins: p.wins + (scoreInc === 1 ? 1 : 0),
-                draws: p.draws + (scoreInc === 0.5 ? 1 : 0),
-                losses: p.losses + (scoreInc === 0 ? 1 : 0),
-                streak: scoreInc === 1 ? p.streak + 1 : 0
-              };
-            }
-            return p;
+    const nextRound = t.currentRound + 1;
+    const isFinal = nextRound > t.totalRounds;
+
+    // Update scores procedurally
+    const updatedParticipants = t.participants.map((p) => {
+      if (p.isBot) {
+        const outcome = Math.random();
+        const scoreInc = outcome > 0.4 ? 1 : outcome > 0.2 ? 0.5 : 0;
+        return {
+          ...p,
+          score: p.score + scoreInc,
+          wins: p.wins + (scoreInc === 1 ? 1 : 0),
+          draws: p.draws + (scoreInc === 0.5 ? 1 : 0),
+          losses: p.losses + (scoreInc === 0 ? 1 : 0),
+          streak: scoreInc === 1 ? p.streak + 1 : 0
+        };
+      }
+      return p;
+    });
+
+    // Sort by score desc
+    updatedParticipants.sort((a, b) => b.score - a.score || b.rating - a.rating);
+
+    if (isFinal) {
+      const hasMedals = updatedParticipants.length > 2;
+      const [gold, silver, bronze, brass] = updatedParticipants;
+
+      // Medals are strictly awarded only if there are MORE than 2 participants (no medals for 2-player tournaments)
+      if (user && hasMedals) {
+        const userIdx = updatedParticipants.findIndex((p) => p.id === user.id);
+        if (userIdx >= 0 && userIdx < 4) {
+          const tierMap: ('gold' | 'silver' | 'bronze' | 'brass')[] = ['gold', 'silver', 'bronze', 'brass'];
+          const place = (userIdx + 1) as (1 | 2 | 3 | 4);
+          awardTournamentMedal({
+            tournamentId: t.id,
+            tournamentName: t.name,
+            format: t.format,
+            tier: tierMap[userIdx],
+            placement: place,
+            dateTimeStr: t.scheduledTime
           });
-
-          // Sort by score desc
-          updatedParticipants.sort((a, b) => b.score - a.score || b.rating - a.rating);
-
-          if (isFinal) {
-            const hasMedals = updatedParticipants.length > 2;
-            const [gold, silver, bronze, brass] = updatedParticipants;
-            
-            // Medals are strictly awarded only if there are MORE than 2 participants (no medals for 2-player tournaments)
-            if (user && hasMedals) {
-              const userIdx = updatedParticipants.findIndex((p) => p.id === user.id);
-              if (userIdx >= 0 && userIdx < 4) {
-                const tierMap: ('gold' | 'silver' | 'bronze' | 'brass')[] = ['gold', 'silver', 'bronze', 'brass'];
-                const place = (userIdx + 1) as (1 | 2 | 3 | 4);
-                awardTournamentMedal({
-                  tournamentId: t.id,
-                  tournamentName: t.name,
-                  format: t.format,
-                  tier: tierMap[userIdx],
-                  placement: place,
-                  dateTimeStr: t.scheduledTime
-                });
-              }
-            }
-
-            return {
-              ...t,
-              status: 'completed',
-              currentRound: t.totalRounds,
-              participants: updatedParticipants,
-              winners: hasMedals ? {
-                gold: gold || updatedParticipants[0],
-                silver: silver || updatedParticipants[1],
-                bronze: bronze || updatedParticipants[2],
-                brass: brass || updatedParticipants[3],
-              } : undefined
-            };
-          }
-
-          return {
-            ...t,
-            currentRound: nextRound,
-            participants: updatedParticipants
-          };
         }
-        return t;
-      })
-    );
+      }
+
+      await updateDoc(doc(db, 'tournaments', tournamentId), {
+        status: 'completed',
+        currentRound: t.totalRounds,
+        participants: updatedParticipants,
+        winners: hasMedals ? {
+          gold: gold || updatedParticipants[0],
+          silver: silver || updatedParticipants[1],
+          bronze: bronze || updatedParticipants[2],
+          brass: brass || updatedParticipants[3],
+        } : undefined
+      });
+    } else {
+      await updateDoc(doc(db, 'tournaments', tournamentId), {
+        currentRound: nextRound,
+        participants: updatedParticipants
+      });
+    }
   };
 
-  const completeTournament = (tournamentId: string) => {
-    simulateNextRound(tournamentId);
+  const completeTournament = async (tournamentId: string) => {
+    await simulateNextRound(tournamentId);
   };
 
   return (

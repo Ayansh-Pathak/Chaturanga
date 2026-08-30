@@ -1,6 +1,20 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Club, ClubMember, ClubMessage } from '../types/chess';
 import { useAuth } from './AuthContext';
+import { db } from './arena-init';
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  doc,
+  onSnapshot,
+  query,
+  arrayUnion,
+  arrayRemove,
+  getDoc,
+  Timestamp,
+  deleteDoc
+} from 'firebase/firestore';
 
 interface JoinClubResult {
   success: boolean;
@@ -18,14 +32,14 @@ interface ClubContextType {
     isPrivate?: boolean,
     password?: string,
     icon?: string
-  ) => Club;
-  joinClub: (clubId: string, password?: string) => JoinClubResult;
-  leaveClub: (clubId: string) => void;
-  deleteClub: (clubId: string) => void;
-  updateClubIcon: (clubId: string, icon: string) => void;
-  updateClubBanner: (clubId: string, banner: string) => void;
-  updateMemberAvatar: (clubId: string, userId: string, newAvatar: string) => void;
-  postMessage: (clubId: string, text: string) => void;
+  ) => Promise<Club>;
+  joinClub: (clubId: string, password?: string) => Promise<JoinClubResult>;
+  leaveClub: (clubId: string) => Promise<void>;
+  deleteClub: (clubId: string) => Promise<void>;
+  updateClubIcon: (clubId: string, icon: string) => Promise<void>;
+  updateClubBanner: (clubId: string, banner: string) => Promise<void>;
+  updateMemberAvatar: (clubId: string, userId: string, newAvatar: string) => Promise<void>;
+  postMessage: (clubId: string, text: string) => Promise<void>;
   getClubById: (clubId: string) => Club | undefined;
 }
 
@@ -35,16 +49,22 @@ const ClubContext = createContext<ClubContextType | undefined>(undefined);
 
 export const ClubProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
-  const [clubs, setClubs] = useState<Club[]>(() => {
-    const saved = localStorage.getItem('chaturanga_clubs');
-    return saved ? JSON.parse(saved) : initialClubs;
-  });
+  const [clubs, setClubs] = useState<Club[]>([]);
 
+  // Sync Clubs from Firestore
   useEffect(() => {
-    localStorage.setItem('chaturanga_clubs', JSON.stringify(clubs));
-  }, [clubs]);
+    const q = query(collection(db, 'clubs'));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const clubsData = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Club[];
+      setClubs(clubsData);
+    });
+    return unsubscribe;
+  }, []);
 
-  const createClub = (
+  const createClub = async (
     name: string,
     tag: string,
     description: string,
@@ -60,8 +80,7 @@ export const ClubProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const defaultIcon = isTeam ? '🛡️' : '👑';
 
-    const newClub: Club = {
-      id: `${isTeam ? 'team' : 'club'}_${Date.now()}`,
+    const newClubData: Omit<Club, 'id'> = {
       name,
       tag: tag.toUpperCase(),
       description,
@@ -97,11 +116,11 @@ export const ClubProvider: React.FC<{ children: React.ReactNode }> = ({ children
       totalTournaments: 0
     };
 
-    setClubs((prev) => [newClub, ...prev]);
-    return newClub;
+    const docRef = await addDoc(collection(db, 'clubs'), newClubData);
+    return { id: docRef.id, ...newClubData } as Club;
   };
 
-  const joinClub = (clubId: string, enteredPassword?: string): JoinClubResult => {
+  const joinClub = async (clubId: string, enteredPassword?: string): Promise<JoinClubResult> => {
     if (!user) {
       return { success: false, message: 'Please sign in to join clubs or teams.' };
     }
@@ -121,45 +140,36 @@ export const ClubProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     }
 
-    setClubs((prev) =>
-      prev.map((c) => {
-        if (c.id === clubId) {
-          const newMember: ClubMember = {
-            userId: user.id,
-            username: user.username,
-            avatar: user.avatar,
-            rating: user.stats.rapid,
-            role: 'member',
-            joinedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
-          };
-          return {
-            ...c,
-            members: [...c.members, newMember]
-          };
-        }
-        return c;
-      })
-    );
+    const newMember: ClubMember = {
+      userId: user.id,
+      username: user.username,
+      avatar: user.avatar,
+      rating: user.stats.rapid,
+      role: 'member',
+      joinedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+    };
+
+    await updateDoc(doc(db, 'clubs', clubId), {
+      members: arrayUnion(newMember)
+    });
 
     return { success: true, message: `Successfully joined ${targetClub.name}!` };
   };
 
-  const leaveClub = (clubId: string) => {
+  const leaveClub = async (clubId: string) => {
     if (!user) return;
-    setClubs((prev) =>
-      prev.map((c) => {
-        if (c.id === clubId) {
-          return {
-            ...c,
-            members: c.members.filter((m) => m.userId !== user.id)
-          };
-        }
-        return c;
-      })
-    );
+    const targetClub = clubs.find(c => c.id === clubId);
+    if (!targetClub) return;
+
+    const memberToRemove = targetClub.members.find(m => m.userId === user.id);
+    if (!memberToRemove) return;
+
+    await updateDoc(doc(db, 'clubs', clubId), {
+      members: arrayRemove(memberToRemove)
+    });
   };
 
-  const postMessage = (clubId: string, text: string) => {
+  const postMessage = async (clubId: string, text: string) => {
     if (!user || !text.trim()) return;
     const newMsg: ClubMessage = {
       id: `msg_${Date.now()}`,
@@ -170,56 +180,38 @@ export const ClubProvider: React.FC<{ children: React.ReactNode }> = ({ children
       createdAt: 'Just now'
     };
 
-    setClubs((prev) =>
-      prev.map((c) => {
-        if (c.id === clubId) {
-          return {
-            ...c,
-            messages: [...c.messages, newMsg]
-          };
-        }
-        return c;
-      })
-    );
+    await updateDoc(doc(db, 'clubs', clubId), {
+      messages: arrayUnion(newMsg)
+    });
   };
 
   const getClubById = (clubId: string) => {
     return clubs.find((c) => c.id === clubId);
   };
 
-  const deleteClub = (clubId: string) => {
-    setClubs((prev) => prev.filter((c) => c.id !== clubId));
+  const deleteClub = async (clubId: string) => {
+    await deleteDoc(doc(db, 'clubs', clubId));
   };
 
-  const updateClubBanner = (clubId: string, banner: string) => {
-    setClubs((prev) =>
-      prev.map((c) => {
-        if (c.id === clubId) {
-          return { ...c, banner };
-        }
-        return c;
-      })
-    );
+  const updateClubBanner = async (clubId: string, banner: string) => {
+    await updateDoc(doc(db, 'clubs', clubId), { banner });
   };
 
-  const updateClubIcon = (clubId: string, icon: string) => {
-    setClubs((prev) =>
-      prev.map((c) => (c.id === clubId ? { ...c, icon } : c))
-    );
+  const updateClubIcon = async (clubId: string, icon: string) => {
+    await updateDoc(doc(db, 'clubs', clubId), { icon });
   };
 
-  const updateMemberAvatar = (clubId: string, userId: string, newAvatar: string) => {
-    setClubs((prev) =>
-      prev.map((c) => {
-        if (c.id === clubId) {
-          return {
-            ...c,
-            members: c.members.map((m) => (m.userId === userId ? { ...m, avatar: newAvatar } : m))
-          };
-        }
-        return c;
-      })
+  const updateMemberAvatar = async (clubId: string, userId: string, newAvatar: string) => {
+    const targetClub = clubs.find(c => c.id === clubId);
+    if (!targetClub) return;
+
+    const updatedMembers = targetClub.members.map(m =>
+      m.userId === userId ? { ...m, avatar: newAvatar } : m
     );
+
+    await updateDoc(doc(db, 'clubs', clubId), {
+      members: updatedMembers
+    });
   };
 
   return (

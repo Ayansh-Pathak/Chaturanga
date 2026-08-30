@@ -101,11 +101,11 @@ export const ClubsAndTeamsHub: React.FC = () => {
     reader.readAsDataURL(file);
   };
 
-  const handleCreate = (e: React.FormEvent) => {
+  const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !tag.trim()) return;
 
-    const newClub = createClub(
+    const newClub = await createClub(
       name.trim(),
       tag.trim(),
       description.trim(),
@@ -145,25 +145,25 @@ export const ClubsAndTeamsHub: React.FC = () => {
     setShowChangeAvatarModal(true);
   };
 
-  const handleSaveAvatar = () => {
+  const handleSaveAvatar = async () => {
     if (!selectedClub) return;
     const finalIcon = avatarPreview || avatarInputUrl || (selectedClub.isTeam ? '🛡️' : '👑');
-    
+
     if (avatarModalTarget === 'club') {
-      updateClubIcon(selectedClub.id, finalIcon);
+      await updateClubIcon(selectedClub.id, finalIcon);
     } else if (user) {
-      updateMemberAvatar(selectedClub.id, user.id, finalIcon);
+      await updateMemberAvatar(selectedClub.id, user.id, finalIcon);
     }
     setShowChangeAvatarModal(false);
   };
 
-  const handleJoinClick = (club: Club) => {
+  const handleJoinClick = async (club: Club) => {
     if (club.isPrivate && club.password) {
       setPasswordModalClub(club);
       setEnteredJoinPassword('');
       setJoinError(null);
     } else {
-      const res = joinClub(club.id);
+      const res = await joinClub(club.id);
       if (res.success) {
         setJoinSuccess(res.message);
         setTimeout(() => setJoinSuccess(null), 3000);
@@ -173,11 +173,11 @@ export const ClubsAndTeamsHub: React.FC = () => {
     }
   };
 
-  const handlePasswordSubmit = (e: React.FormEvent) => {
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!passwordModalClub) return;
 
-    const res = joinClub(passwordModalClub.id, enteredJoinPassword);
+    const res = await joinClub(passwordModalClub.id, enteredJoinPassword);
     if (res.success) {
       setJoinSuccess(res.message);
       setPasswordModalClub(null);
@@ -189,10 +189,10 @@ export const ClubsAndTeamsHub: React.FC = () => {
     }
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!chatInput.trim() || !selectedClub) return;
-    postMessage(selectedClub.id, chatInput);
+    await postMessage(selectedClub.id, chatInput);
     setChatInput('');
   };
 
@@ -336,9 +336,9 @@ export const ClubsAndTeamsHub: React.FC = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0c1427] via-transparent to-transparent" />
                 {isMember && (
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       const url = prompt('Enter new banner URL:', selectedClub.banner);
-                      if (url) updateClubBanner(selectedClub.id, url);
+                      if (url) await updateClubBanner(selectedClub.id, url);
                     }}
                     className="absolute top-4 right-4 bg-black/60 p-2 rounded-xl text-white opacity-0 group-hover:opacity-100 transition-opacity backdrop-blur-sm border border-slate-700 hover:bg-slate-800 text-xs flex items-center gap-2"
                   >
@@ -399,9 +399,9 @@ export const ClubsAndTeamsHub: React.FC = () => {
                 <div className="flex items-center gap-2">
                   {isOwner && (
                     <button
-                      onClick={() => {
+                      onClick={async () => {
                         if (confirm(`Are you sure you want to delete this ${selectedClub.isTeam ? 'team' : 'club'}?`)) {
-                          deleteClub(selectedClub.id);
+                          await deleteClub(selectedClub.id);
                           setSelectedClubId(clubs[0]?.id || null);
                         }
                       }}
@@ -412,14 +412,14 @@ export const ClubsAndTeamsHub: React.FC = () => {
                   )}
                   {isMember ? (
                     <button
-                      onClick={() => leaveClub(selectedClub.id)}
+                      onClick={async () => await leaveClub(selectedClub.id)}
                       className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-800 hover:bg-red-950/80 border border-slate-700 hover:border-red-500/60 text-slate-300 hover:text-red-300 text-xs font-bold transition-all"
                     >
                       <LogOut size={14} /> Leave
                     </button>
                   ) : (
                     <button
-                      onClick={() => handleJoinClick(selectedClub)}
+                      onClick={async () => await handleJoinClick(selectedClub)}
                       className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-black text-xs shadow-lg transition-all active:scale-95 border border-blue-400/50"
                     >
                       <UserPlus size={16} /> Join {selectedClub.isTeam ? 'Team' : 'Club'}

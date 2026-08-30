@@ -3,7 +3,7 @@ import { MessageSquare, Send, Search } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 
 export const PlayerChat: React.FC = () => {
-  const { user, grantAnnouncerStatus, chatHistory, setChatHistory } = useAuth();
+  const { user, grantAnnouncerStatus, chatHistory, sendGlobalMessage, sendDirectMessage } = useAuth();
   const [targetUsername, setTargetUsername] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [activeChat, setActiveChat] = useState<string | null>(null);
@@ -16,15 +16,10 @@ export const PlayerChat: React.FC = () => {
     setTimeout(() => {
       setIsSearching(false);
       setActiveChat(targetUsername);
-      if (chatHistory.length === 0) {
-        setChatHistory([
-          { sender: targetUsername, text: `Hello! Let's play a game of Chaturanga sometime!`, time: '10:00 AM' }
-        ]);
-      }
     }, 500);
   };
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputMessage.trim()) return;
 
@@ -35,11 +30,6 @@ export const PlayerChat: React.FC = () => {
       if (username) {
         setTargetUsername(username);
         setActiveChat(username);
-        setChatHistory((prev) => [...prev, {
-          sender: 'System',
-          text: `Switched chat to: ${username}`,
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }]);
         setInputMessage('');
         return;
       }
@@ -47,12 +37,7 @@ export const PlayerChat: React.FC = () => {
 
     // Handle Secret Password Command
     if (inputMessage.trim() === '/password=GhasdoodhooghasdoodhooILoveghasdoodhoo') {
-      grantAnnouncerStatus();
-      setChatHistory((prev) => [...prev, {
-        sender: 'System',
-        text: 'Access Granted: You are now an authorized Announcer for Chaturanga.',
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }]);
+      await grantAnnouncerStatus();
       setInputMessage('');
       return;
     }
@@ -62,31 +47,22 @@ export const PlayerChat: React.FC = () => {
       if (user?.isAnnouncer) {
         const announcement = inputMessage.substring('/Announcement'.length).trim();
         if (announcement) {
-          setChatHistory((prev) => [...prev, {
-            sender: 'ANNOUNCEMENT',
-            text: announcement,
-            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          }]);
+          await sendGlobalMessage(announcement, true);
           setInputMessage('');
           return;
         }
-      } else {
-        setChatHistory((prev) => [...prev, {
-          sender: 'System',
-          text: 'Error: You do not have permission to make announcements.',
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        }]);
-        setInputMessage('');
-        return;
       }
     }
 
-    if (!activeChat) return;
-    setChatHistory((prev) => [...prev, { sender: 'You', text: inputMessage, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
+    if (activeChat) {
+      // Send DM
+      await sendDirectMessage(activeChat, inputMessage);
+    } else {
+      // Send Global Message
+      await sendGlobalMessage(inputMessage);
+    }
+
     setInputMessage('');
-    setTimeout(() => {
-      setChatHistory((prev) => [...prev, { sender: activeChat, text: 'Okay sounds good.', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }]);
-    }, 1000);
   };
 
   if (!user) {
@@ -157,7 +133,7 @@ export const PlayerChat: React.FC = () => {
               </div>
               <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
                 {chatHistory.map((msg, idx) => (
-                  <div key={idx} className={`flex flex-col ${msg.sender === 'You' ? 'items-end' : 'items-start'}`}>
+                  <div key={idx} className={`flex flex-col ${msg.sender === user.username ? 'items-end' : 'items-start'}`}>
                     {msg.sender === 'ANNOUNCEMENT' ? (
                       <div className="w-full flex justify-center my-2">
                         <div className="bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/50 rounded-xl p-4 text-center shadow-lg backdrop-blur-sm max-w-[90%]">
@@ -168,7 +144,7 @@ export const PlayerChat: React.FC = () => {
                     ) : (
                       <div
                         className={`max-w-[80%] p-3 rounded-2xl text-xs ${
-                          msg.sender === 'You'
+                          msg.sender === user.username
                             ? 'bg-blue-600 text-white rounded-tr-none'
                             : msg.sender === 'System'
                             ? 'bg-slate-800 text-amber-400 border border-amber-500/30 font-mono italic'

@@ -1,9 +1,43 @@
-import React from 'react';
-import { BookOpen, Users } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { BookOpen, Users, Loader2 } from 'lucide-react';
+import { db, logger } from '../../context/arena-init';
+import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 
 // Simple static library page showing a few chess e‑books and popular YouTube channels.
-// The UI follows the Tailwind styling used throughout the app.
 export const LibraryPage: React.FC = () => {
+  const [famousPlayers, setFamousPlayers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPlayers();
+  }, []);
+
+  const fetchPlayers = async () => {
+    try {
+      const q = query(collection(db, 'hall_of_fame'), orderBy('rating', 'desc'), limit(20));
+      const querySnapshot = await getDocs(q);
+      const players = querySnapshot.docs.map(doc => doc.data());
+
+      if (players.length > 0) {
+        setFamousPlayers(players);
+      } else {
+        // Fallback if DB is empty
+        setFamousPlayers([
+          { name: 'Magnus Carlsen', title: 'GM', rating: 2832, avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80' },
+          { name: 'Viswanathan Anand', title: 'GM', rating: 2751, avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=100&q=80' },
+          { name: 'Hikaru Nakamura', title: 'GM', rating: 2802, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80' },
+          { name: 'Alireza Firouzja', title: 'GM', rating: 2737, avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=100&q=80' },
+          { name: 'Rameshbabu Praggnanandhaa', title: 'GM', rating: 2747, avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80' },
+          { name: 'Levy Rozman', title: 'IM', rating: 2322, avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=100&q=80' }
+        ]);
+      }
+    } catch (error) {
+      logger.error("Error fetching players:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const ebooks = [
     {
       title: 'Modern Chess Strategy',
@@ -30,15 +64,6 @@ export const LibraryPage: React.FC = () => {
       url: 'https://www.chess.com/lessons',
       provider: 'Chess.com'
     }
-  ];
-
-  const famousPlayers = [
-    { name: 'Magnus Carlsen', title: 'GM', rating: 2832, avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80' },
-    { name: 'Viswanathan Anand', title: 'GM', rating: 2751, avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=100&q=80' },
-    { name: 'Hikaru Nakamura', title: 'GM', rating: 2802, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80' },
-    { name: 'Alireza Firouzja', title: 'GM', rating: 2737, avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=100&q=80' },
-    { name: 'Rameshbabu Praggnanandhaa', title: 'GM', rating: 2747, avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80' },
-    { name: 'Levy Rozman', title: 'IM', rating: 2322, avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=100&q=80' }
   ];
 
   const youtubeChannels = [
@@ -144,25 +169,33 @@ export const LibraryPage: React.FC = () => {
               <Users className="text-amber-400" size={22} />
               FIDE Hall of Fame
             </h2>
-            <div className="space-y-4">
-              {famousPlayers.map((player) => (
-                <div key={player.name} className="flex items-center justify-between p-3 rounded-2xl bg-black/40 border border-slate-800 group hover:border-amber-500/40 transition-all">
-                  <div className="flex items-center gap-3">
-                    <img src={player.avatar} alt={player.name} className="w-10 h-10 rounded-xl object-cover grayscale group-hover:grayscale-0 transition-all" />
-                    <div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="px-1 py-0.5 rounded bg-amber-500/20 text-amber-400 text-[9px] font-black">{player.title}</span>
-                        <span className="text-sm font-black text-slate-200">{player.name}</span>
+
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-12 space-y-3">
+                <Loader2 className="animate-spin text-amber-500" size={32} />
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Fetching Legends...</span>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {famousPlayers.map((player) => (
+                  <div key={player.name} className="flex items-center justify-between p-3 rounded-2xl bg-black/40 border border-slate-800 group hover:border-amber-500/40 transition-all">
+                    <div className="flex items-center gap-3">
+                      <img src={player.avatar} alt={player.name} className="w-10 h-10 rounded-xl object-cover grayscale group-hover:grayscale-0 transition-all" />
+                      <div>
+                        <div className="flex items-center gap-1.5">
+                          <span className="px-1 py-0.5 rounded bg-amber-500/20 text-amber-400 text-[9px] font-black">{player.title}</span>
+                          <span className="text-sm font-black text-slate-200">{player.name}</span>
+                        </div>
+                        <div className="text-[10px] text-slate-500 font-mono mt-0.5">Global Elo: {player.rating}</div>
                       </div>
-                      <div className="text-[10px] text-slate-500 font-mono mt-0.5">Global Elo: {player.rating}</div>
+                    </div>
+                    <div className="w-8 h-8 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-[10px] text-amber-500 font-bold group-hover:scale-110 transition-transform">
+                      {player.name.charAt(0)}
                     </div>
                   </div>
-                  <div className="w-8 h-8 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-[10px] text-amber-500 font-bold group-hover:scale-110 transition-transform">
-                    {player.name.charAt(0)}
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
             <div className="mt-6 pt-4 border-t border-slate-800 text-center">
               <button className="text-[10px] font-black text-amber-400 uppercase tracking-widest hover:text-amber-300 transition-colors">
                 View All FIDE Rated Players (10,000+)

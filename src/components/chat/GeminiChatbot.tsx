@@ -5,7 +5,7 @@ import { Send, Sparkles, X, Minimize2, Maximize2, RotateCcw, Loader2 } from 'luc
 import { useAuth } from '../../context/AuthContext';
 import { apiUrl } from '../../utils/apiBase';
 import { parseBasicMarkdown } from '../../utils/markdown';
-import { logger } from '../../utils/logger';
+import { logger } from '../../context/arena-init';
 
 interface ChatMessage {
   id: string;
@@ -38,7 +38,7 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = ({
   whitePlayer,
   blackPlayer,
 }) => {
-  const { user } = useAuth();
+  const { user, geminiHistory, saveGeminiMessage, clearGeminiHistory } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const dragControls = useDragControls();
@@ -71,16 +71,30 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = ({
     { cmd: '/help', desc: 'Show all available commands' }
   ];
 
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 'welcome_msg',
-      sender: 'gemini',
-      text: `Namaste! ♟️ I am your **Chaturanga Grandmaster AI mentor**, powered by **Gemini**.
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+
+  useEffect(() => {
+    if (geminiHistory.length > 0) {
+      const formatted = geminiHistory.map(h => ({
+        id: h.id,
+        sender: h.sender,
+        text: h.text,
+        timestamp: h.timestamp?.toDate ? h.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'
+      }));
+      setMessages(formatted);
+    } else {
+      setMessages([
+        {
+          id: 'welcome_msg',
+          sender: 'gemini',
+          text: `Namaste! ♟️ I am your **Chaturanga Grandmaster AI mentor**, powered by **Gemini**.
 
 I am aware of your live chessboard, active tactical puzzles, and match moves. Ask me anything about opening theory, best moves in the current position, elephant bishop tactics, or game reviews!`,
-      timestamp: 'Just now',
-    },
-  ]);
+          timestamp: 'Just now',
+        },
+      ]);
+    }
+  }, [geminiHistory]);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -101,14 +115,19 @@ I am aware of your live chessboard, active tactical puzzles, and match moves. As
     const query = (textToSend || inputMessage).trim();
     if (!query || isLoading) return;
 
-    const userMsg: ChatMessage = {
-      id: `msg_${Date.now()}`,
-      sender: 'user',
-      text: query,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
+    const userMsgText = query;
+    if (user) {
+      saveGeminiMessage({ sender: 'user', text: userMsgText });
+    } else {
+      const userMsg: ChatMessage = {
+        id: `msg_${Date.now()}`,
+        sender: 'user',
+        text: query,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      setMessages((prev) => [...prev, userMsg]);
+    }
 
-    setMessages((prev) => [...prev, userMsg]);
     if (!textToSend) setInputMessage('');
     setIsLoading(true);
 
@@ -123,7 +142,7 @@ I am aware of your live chessboard, active tactical puzzles, and match moves. As
         body: JSON.stringify({
           message: query,
           model: selectedModel,
-          history: messages.slice(-8).map((m) => ({ sender: m.sender, text: m.text })),
+          history: messages.slice(-10).map((m) => ({ sender: m.sender, text: m.text })),
           context: {
             currentFen,
             lastMoves,
@@ -144,23 +163,33 @@ I am aware of your live chessboard, active tactical puzzles, and match moves. As
       }
 
       const data = await response.json();
-      const botMsg: ChatMessage = {
-        id: `gemini_${Date.now()}`,
-        sender: 'gemini',
-        text: data.reply || 'I evaluated the position. Keep your king safe and control central outposts.',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
+      const botReply = data.reply || 'I evaluated the position. Keep your king safe and control central outposts.';
 
-      setMessages((prev) => [...prev, botMsg]);
+      if (user) {
+        saveGeminiMessage({ sender: 'gemini', text: botReply });
+      } else {
+        const botMsg: ChatMessage = {
+          id: `gemini_${Date.now()}`,
+          sender: 'gemini',
+          text: botReply,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        };
+        setMessages((prev) => [...prev, botMsg]);
+      }
     } catch (err: any) {
       logger.error('Chat error:', err);
-      const errorMsg: ChatMessage = {
-        id: `gemini_err_${Date.now()}`,
-        sender: 'gemini',
-        text: `In this position (\`${currentFen.split(' ')[0]}\`), maintain central control with pawns and activate your pieces. Keep an eye out for tactical skewers and royal pins!`,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      };
-      setMessages((prev) => [...prev, errorMsg]);
+      const botReply = `In this position (\`${currentFen.split(' ')[0]}\`), maintain central control with pawns and activate your pieces. Keep an eye out for tactical skewers and royal pins!`;
+      if (user) {
+        saveGeminiMessage({ sender: 'gemini', text: botReply });
+      } else {
+        const errorMsg: ChatMessage = {
+          id: `gemini_err_${Date.now()}`,
+          sender: 'gemini',
+          text: botReply,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        };
+        setMessages((prev) => [...prev, errorMsg]);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -256,7 +285,11 @@ I am aware of your live chessboard, active tactical puzzles, and match moves. As
               <button
                 onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                   e.stopPropagation();
-                  setMessages([{ id: 'reset', sender: 'gemini', text: 'Chat history cleared. How can I guide your chess strategy today?', timestamp: 'Just now' }]);
+                  if (user) {
+                    clearGeminiHistory();
+                  } else {
+                    setMessages([{ id: 'reset', sender: 'gemini', text: 'Chat history cleared. How can I guide your chess strategy today?', timestamp: 'Just now' }]);
+                  }
                 }}
                 className="p-1.5 hover:bg-white/10 rounded-lg text-slate-400 transition-colors"
                 title="Clear chat"

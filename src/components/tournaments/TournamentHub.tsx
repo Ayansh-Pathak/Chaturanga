@@ -26,7 +26,7 @@ import {
   Globe
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { logger } from '../../utils/logger';
+import { logger } from '../../context/arena-init';
 
 export const TournamentHub: React.FC = () => {
   const { user } = useAuth();
@@ -73,13 +73,13 @@ const isParticipant = selectedTournament?.participants?.some(
     }, 4000);
   };
 
-  const handleCreateTournament = (e: React.FormEvent) => {
+  const handleCreateTournament = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!tourName.trim()) return;
 
     const chosenClub = isClubOnly ? clubs.find((c) => c.id === selectedClubId) || userClubs[0] || clubs[0] : null;
 
-    const newTour = createTournament({
+    const newTour = await createTournament({
       name: tourName.trim(),
       format: tourFormat,
       timeControl,
@@ -107,8 +107,8 @@ const isParticipant = selectedTournament?.participants?.some(
     showToast(`Tournament "${newTour.name}" hosted successfully! Registration is open.`, 'success');
   };
 
-  const handleJoinTournament = (tourId: string) => {
-    const res = joinTournament(tourId, userClubIds);
+  const handleJoinTournament = async (tourId: string) => {
+    const res = await joinTournament(tourId, userClubIds);
     if (res.success) {
       try {
         confetti({
@@ -123,8 +123,8 @@ const isParticipant = selectedTournament?.participants?.some(
     }
   };
 
-  const handleLeaveTournament = (tourId: string) => {
-    const res = leaveTournament(tourId);
+  const handleLeaveTournament = async (tourId: string) => {
+    const res = await leaveTournament(tourId);
     if (res.success) {
       showToast(res.message, 'success');
     } else {
@@ -132,8 +132,8 @@ const isParticipant = selectedTournament?.participants?.some(
     }
   };
 
-  const handleRejoinTournament = (tourId: string) => {
-    const res = rejoinTournament(tourId);
+  const handleRejoinTournament = async (tourId: string) => {
+    const res = await rejoinTournament(tourId);
     if (res.success) {
       showToast(res.message, 'success');
     } else {

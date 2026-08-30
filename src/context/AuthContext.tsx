@@ -1,22 +1,33 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { UserProfile, TournamentMedalData, GameRecord } from '../types/chess';
 import confetti from 'canvas-confetti';
-import { auth, db } from './arena-init';
+import { auth, db, rtdb, logger } from './arena-init';
 import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut,
-  updateEmail as firebaseUpdateEmail
+  updateEmail as firebaseUpdateEmail,
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'firebase/auth';
 import {
   doc,
   getDoc,
+  getDocs,
   setDoc,
   updateDoc,
+  collection,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  addDoc,
+  deleteDoc,
+  limit,
   serverTimestamp
 } from 'firebase/firestore';
-import { logger } from '@/src/utils/logger';
+import { ref, set, push, onValue, remove, serverTimestamp as rtdbTimestamp } from 'firebase/database';
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -33,13 +44,27 @@ interface AuthContextType {
   awardTournamentMedal: (medal: Omit<TournamentMedalData, 'id' | 'awardedTo' | 'awardedAt'>) => Promise<void>;
   addGameRecord: (record: Omit<GameRecord, 'id'>) => Promise<void>;
   completeDailyPuzzle: (puzzleId: number) => Promise<void>;
+  updateStoragePreference: (pref: 'firestore' | 'rtdb') => Promise<void>;
   gameHistory: GameRecord[];
   allUsers: UserProfile[];
   directMessages: import('../types/chess').DirectMessage[];
   chatHistory: { sender: string; text: string; time: string }[];
   setChatHistory: React.Dispatch<React.SetStateAction<{ sender: string; text: string; time: string }[]>>;
-  sendDirectMessage: (recipientName: string, text: string) => { success: boolean; message: string };
+  sendDirectMessage: (recipientName: string, text: string) => Promise<{ success: boolean; message: string }>;
+  sendGlobalMessage: (text: string, asAnnouncement?: boolean) => Promise<void>;
+  geminiHistory: { id: string; sender: 'user' | 'gemini'; text: string; timestamp: any }[];
+  saveGeminiMessage: (msg: { sender: 'user' | 'gemini'; text: string }) => Promise<void>;
+  clearGeminiHistory: () => Promise<void>;
 }
+
+const AVATAR_OPTIONS = [
+  'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
+  'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=200&q=80',
+  'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&q=80',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80',
+  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80'
+];
 
 const initialGameHistory: GameRecord[] = [];
 
@@ -48,21 +73,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-
-  const [gameHistory, setGameHistory] = useState<GameRecord[]>(() => {
-    const saved = localStorage.getItem('chaturanga_game_history');
-    return saved ? JSON.parse(saved) : initialGameHistory;
-  });
-
-  // Keep all stored users
+  const [gameHistory, setGameHistory] = useState<GameRecord[]>([]);
   const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
+  const [directMessages, setDirectMessages] = useState<import('../types/chess').DirectMessage[]>([]);
+  const [geminiHistory, setGeminiHistory] = useState<{ id: string; sender: 'user' | 'gemini'; text: string; timestamp: any }[]>([]);
+  const [chatHistory, setChatHistory] = useState<{ sender: string; text: string; time: string }[]>([]);
 
-  const [chatHistory, setChatHistory] = useState<{ sender: string; text: string; time: string }[]>(() => {
-    const saved = localStorage.getItem('chaturanga_chat_history');
-    return saved ? JSON.parse(saved) : [];
-  });
-
-  // Sync with Firebase Auth
+  // Sync Data
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
@@ -70,10 +87,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
         if (userDoc.exists()) {
           const profile = userDoc.data() as UserProfile;
-          // Persist announcer status across sessions
-          if (localStorage.getItem(`chaturanga_announcer_${profile.id}`) === 'true') {
-            profile.isAnnouncer = true;
-          }
           setUser(profile);
         }
       } else {
@@ -84,20 +97,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return unsubscribe;
   }, []);
 
-  // Persist user and passwords
+  // Persist user
   useEffect(() => {
     if (user) {
       localStorage.setItem('chaturanga_active_user', JSON.stringify(user));
     }
   }, [user]);
-
-  useEffect(() => {
-    localStorage.setItem('chaturanga_chat_history', JSON.stringify(chatHistory));
-  }, [chatHistory]);
-
-  useEffect(() => {
-    localStorage.setItem('chaturanga_game_history', JSON.stringify(gameHistory));
-  }, [gameHistory]);
 
   const login = async (emailOrUser: string, pass: string) => {
     if (!emailOrUser || !pass) {
@@ -154,7 +159,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         tournamentMedals: [],
         ratingMedals: [],
         clubsJoined: [],
-        teamsJoined: []
+        teamsJoined: [],
+        storagePreference: 'firestore'
       };
 
       await setDoc(doc(db, 'users', userCredential.user.uid), newUser);
@@ -365,38 +371,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const addGameRecord = async (record: Omit<GameRecord, 'id'>) => {
-    const newRecord: GameRecord = {
+    if (!user) return;
+
+    const gameData = {
       ...record,
-      id: `game_${Date.now()}`
+      players: [record.white.id, record.black.id]
     };
-    setGameHistory((prev) => [newRecord, ...prev]);
 
-    if (user) {
-      const isWin = record.result === '1-0' && record.white.name === user.username || record.result === '0-1' && record.black.name === user.username;
-      const isLoss = record.result === '1-0' && record.black.name === user.username || record.result === '0-1' && record.white.name === user.username;
-      const isDraw = record.result === '1/2-1/2';
-
-      const updatedStreak = isWin ? user.stats.currentStreak + 1 : (isLoss ? 0 : user.stats.currentStreak);
-      const updatedBest = Math.max(user.stats.bestStreak, updatedStreak);
-
-      const updatedUser = {
-        ...user,
-        stats: {
-          ...user.stats,
-          gamesPlayed: user.stats.gamesPlayed + 1,
-          wins: user.stats.wins + (isWin ? 1 : 0),
-          losses: user.stats.losses + (isLoss ? 1 : 0),
-          draws: user.stats.draws + (isDraw ? 1 : 0),
-          currentStreak: updatedStreak,
-          bestStreak: updatedBest
-        }
-      };
-
-      setUser(updatedUser);
-      await updateDoc(doc(db, 'users', user.id), {
-        stats: updatedUser.stats
-      });
+    if (user.storagePreference === 'rtdb') {
+      const gamesRef = ref(rtdb, 'games');
+      const newGameRef = push(gamesRef);
+      await set(newGameRef, gameData);
+    } else {
+      await addDoc(collection(db, 'games'), gameData);
     }
+
+    const isWin = record.result === '1-0' && record.white.id === user.id || record.result === '0-1' && record.black.id === user.id;
+    const isLoss = record.result === '1-0' && record.black.id === user.id || record.result === '0-1' && record.white.id === user.id;
+    const isDraw = record.result === '1/2-1/2';
+
+    const updatedStreak = isWin ? user.stats.currentStreak + 1 : (isLoss ? 0 : user.stats.currentStreak);
+    const updatedBest = Math.max(user.stats.bestStreak, updatedStreak);
+
+    const updatedStats = {
+      ...user.stats,
+      gamesPlayed: user.stats.gamesPlayed + 1,
+      wins: user.stats.wins + (isWin ? 1 : 0),
+      losses: user.stats.losses + (isLoss ? 1 : 0),
+      draws: user.stats.draws + (isDraw ? 1 : 0),
+      currentStreak: updatedStreak,
+      bestStreak: updatedBest
+    };
+
+    await updateProfile({ stats: updatedStats });
   };
 
   const completeDailyPuzzle = async (puzzleId: number) => {
@@ -435,18 +442,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch {}
   };
 
-  const [directMessages, setDirectMessages] = useState<import('../types/chess').DirectMessage[]>(() => {
-    const saved = localStorage.getItem('chaturanga_direct_msgs');
-    if (saved) {
-      try { return JSON.parse(saved); } catch {}
-    }
-    return [];
-  });
-
-  useEffect(() => {
-    localStorage.setItem('chaturanga_direct_msgs', JSON.stringify(directMessages));
-  }, [directMessages]);
-
   const updateProfile = async (updatedData: Partial<UserProfile>) => {
     if (!user) return { success: false, message: 'Not authenticated.' };
     const updated = {
@@ -460,32 +455,86 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const grantAnnouncerStatus = async () => {
     if (!user) return;
-    const updated = { ...user, isAnnouncer: true };
-    setUser(updated);
-    await updateDoc(doc(db, 'users', user.id), { isAnnouncer: true });
-    localStorage.setItem(`chaturanga_announcer_${user.id}`, 'true');
+    await updateProfile({ isAnnouncer: true });
   };
 
-  const sendDirectMessage = (recipientName: string, text: string) => {
+  const sendDirectMessage = async (recipientName: string, text: string) => {
     if (!user) return { success: false, message: 'Not logged in' };
     if (!text.trim() || !recipientName.trim()) return { success: false, message: 'Recipient and text are required' };
 
-    const newMsg: import('../types/chess').DirectMessage = {
-      id: `dm_${Date.now()}`,
+    // Find recipient UID
+    const usersRef = collection(db, 'users');
+    const q = query(usersRef, where('username', '==', recipientName));
+    const querySnapshot = await getDocs(q);
+
+    if (querySnapshot.empty) {
+      return { success: false, message: `User "${recipientName}" not found.` };
+    }
+
+    const recipientId = querySnapshot.docs[0].id;
+
+    const newMsg = {
       senderId: user.id,
       senderName: user.username,
       senderAvatar: user.avatar,
       senderFlag: user.countryFlag || '🇮🇳',
-      recipientId: `recip_${recipientName.toLowerCase()}`,
+      recipientId,
       recipientName,
+      participants: [user.id, recipientId].sort(), // Sort for consistent query
       content: text.trim(),
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      read: true
+      timestamp: serverTimestamp(),
+      read: false
     };
 
-    setDirectMessages((prev) => [...prev, newMsg]);
+    await addDoc(collection(db, 'messages'), newMsg);
 
     return { success: true, message: 'Message sent!' };
+  };
+
+  const sendGlobalMessage = async (text: string, asAnnouncement = false) => {
+    if (!user) return;
+    await addDoc(collection(db, 'global_chat'), {
+      sender: asAnnouncement ? 'ANNOUNCEMENT' : user.username,
+      text,
+      timestamp: serverTimestamp()
+    });
+  };
+
+  const saveGeminiMessage = async (msg: { sender: 'user' | 'gemini'; text: string }) => {
+    if (!user) return;
+
+    if (user.storagePreference === 'rtdb') {
+      const historyRef = ref(rtdb, `users/${user.id}/gemini_history`);
+      const newMessageRef = push(historyRef);
+      await set(newMessageRef, {
+        ...msg,
+        timestamp: rtdbTimestamp()
+      });
+    } else {
+      await addDoc(collection(db, 'users', user.id, 'gemini_history'), {
+        ...msg,
+        timestamp: serverTimestamp()
+      });
+    }
+  };
+
+  const clearGeminiHistory = async () => {
+    if (!user) return;
+
+    if (user.storagePreference === 'rtdb') {
+      const historyRef = ref(rtdb, `users/${user.id}/gemini_history`);
+      await remove(historyRef);
+    } else {
+      const querySnapshot = await getDocs(collection(db, 'users', user.id, 'gemini_history'));
+      querySnapshot.forEach(async (document) => {
+        await deleteDoc(doc(db, 'users', user.id, 'gemini_history', document.id));
+      });
+    }
+  };
+
+  const updateStoragePreference = async (pref: 'firestore' | 'rtdb') => {
+    if (!user) return;
+    await updateProfile({ storagePreference: pref });
   };
 
   return (
@@ -510,7 +559,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         directMessages,
         chatHistory,
         setChatHistory,
-        sendDirectMessage
+        sendDirectMessage,
+        geminiHistory,
+        saveGeminiMessage,
+        clearGeminiHistory,
+        updateStoragePreference,
+        sendGlobalMessage
       }}
     >
       {children}

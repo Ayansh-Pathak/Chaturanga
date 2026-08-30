@@ -106,6 +106,7 @@ export interface UserProfile {
   teamsJoined: string[];
   previousEmail?: string;
   isAnnouncer?: boolean;
+  storagePreference?: 'firestore' | 'rtdb';
 }
 
 export interface PuzzleData {

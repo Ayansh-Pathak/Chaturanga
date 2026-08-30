@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Chess, Square } from 'chess.js';
 import { ChessBoard, BoardTheme } from '../chess/ChessBoard';
-import { PUZZLES_DATABASE, getDailyPuzzle, getPuzzleById } from '../../data/puzzleDatabase';
 import { PuzzleData } from '../../types/chess';
 import { useAuth } from '../../context/AuthContext';
+import { usePuzzles } from '../../context/PuzzleContext';
 import { chessAudio } from '../../utils/chessAudio';
 import {
   Flame,
@@ -22,11 +22,14 @@ import {
   Eye,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { logger } from '../../utils/logger';
+import { logger } from '../../context/arena-init';
 
 export const PuzzleTrainer: React.FC = () => {
   const { user, updateRating, completeDailyPuzzle } = useAuth();
-  const [currentPuzzle, setCurrentPuzzle] = useState<PuzzleData>(() => getDailyPuzzle());
+  const { getPuzzle, getDailyPuzzle, getRandomPuzzle } = usePuzzles();
+
+  const [currentPuzzle, setCurrentPuzzle] = useState<PuzzleData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [searchId, setSearchId] = useState<string>('');
   const [selectedTheme, setSelectedTheme] = useState<string>('All');
   const [selectedRatingRange, setSelectedRatingRange] = useState<string>('All');
@@ -77,6 +80,17 @@ export const PuzzleTrainer: React.FC = () => {
 
   // Rush countdown
   useEffect(() => {
+    loadDaily();
+  }, []);
+
+  const loadDaily = async () => {
+    setLoading(true);
+    const p = await getDailyPuzzle();
+    if (p) loadPuzzle(p);
+    setLoading(false);
+  };
+
+  useEffect(() => {
     let timer: any;
     if (isRushActive && rushTimeLeft > 0) {
       timer = setInterval(() => {
@@ -104,38 +118,15 @@ export const PuzzleTrainer: React.FC = () => {
     setIsBotResponding(false);
   };
 
-  const handleNextPuzzle = (targetDifficulty?: number) => {
-    let filtered = PUZZLES_DATABASE;
-    if (selectedTheme !== 'All') {
-      filtered = filtered.filter((p) =>
-        p.themes.some((t) => t.toLowerCase().includes(selectedTheme.toLowerCase()))
-      );
-    }
-    const rangeObj = ratingRanges.find((r) => r.label === selectedRatingRange);
-    if (rangeObj && selectedRatingRange !== 'All') {
-      filtered = filtered.filter((p) => p.rating >= rangeObj.min && p.rating <= rangeObj.max);
-    }
-
-    const pool = filtered.length > 0 ? filtered : PUZZLES_DATABASE;
-
-    if (targetDifficulty !== undefined) {
-      // Find candidate puzzles closest to target rating (+4 Elo progression)
-      const sortedByDelta = [...pool].sort((a, b) => {
-        const diffA = Math.abs(a.rating - targetDifficulty);
-        const diffB = Math.abs(b.rating - targetDifficulty);
-        return diffA - diffB;
-      });
-      // Pick randomly from top 8 closest
-      const topCandidates = sortedByDelta.slice(0, Math.min(8, sortedByDelta.length));
-      const chosen = topCandidates[Math.floor(Math.random() * topCandidates.length)] || pool[0];
-      loadPuzzle(chosen);
-    } else {
-      const randomIndex = Math.floor(Math.random() * pool.length);
-      loadPuzzle(pool[randomIndex]);
-    }
+  const handleNextPuzzle = async (targetDifficulty?: number) => {
+    setLoading(true);
+    const p = await getRandomPuzzle(targetDifficulty ? targetDifficulty - 100 : 800, targetDifficulty ? targetDifficulty + 100 : 2650);
+    if (p) loadPuzzle(p);
+    setLoading(false);
   };
 
   const handleSkipPuzzle = () => {
+    if (!currentPuzzle) return;
     setStatus('skipped');
     setStreak(0);
 
@@ -194,19 +185,21 @@ export const PuzzleTrainer: React.FC = () => {
     return moves;
   };
 
-  const handleSearchJump = (e: React.FormEvent) => {
+  const handleSearchJump = async (e: React.FormEvent) => {
     e.preventDefault();
     const idNum = parseInt(searchId, 10);
-    if (!isNaN(idNum) && idNum >= 1 && idNum <= PUZZLES_DATABASE.length) {
-      const found = getPuzzleById(idNum);
-      loadPuzzle(found);
+    if (!isNaN(idNum)) {
+      setLoading(true);
+      const found = await getPuzzle(idNum);
+      if (found) loadPuzzle(found);
       setSearchId('');
+      setLoading(false);
     }
   };
 
   // Player makes move
   const handlePlayerMove = (move: { san: string; from: string; to: string; promotion?: string }) => {
-    if (status !== 'solving' || isBotResponding) return;
+    if (!currentPuzzle || status !== 'solving' || isBotResponding) return;
 
     const expectedMove = currentPuzzle.solution[moveIndex];
     const uciMove = `${move.from}${move.to}`.toLowerCase();
@@ -297,7 +290,8 @@ export const PuzzleTrainer: React.FC = () => {
     }
   };
 
-  const finishPuzzleSuccess = () => {
+  const finishPuzzleSuccess = async () => {
+    if (!currentPuzzle) return;
     chessAudio.playVictory();
     setStatus('correct');
     const newStreak = streak + 1;
@@ -306,8 +300,8 @@ export const PuzzleTrainer: React.FC = () => {
     updateRating('puzzle', +4);
 
     // Track Daily Puzzle Completion
-    const daily = getDailyPuzzle();
-    if (currentPuzzle.id === daily.id) {
+    const daily = await getDailyPuzzle();
+    if (daily && currentPuzzle.id === daily.id) {
       completeDailyPuzzle(currentPuzzle.id);
     }
 
@@ -434,7 +428,7 @@ export const PuzzleTrainer: React.FC = () => {
         {/* Action Controls */}
         <div className="flex items-center gap-2">
           <button
-            onClick={() => loadPuzzle(getDailyPuzzle())}
+            onClick={loadDaily}
             className="flex-1 flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-[#111a30] hover:bg-[#162242] border border-blue-500/40 text-xs font-bold text-blue-300 transition-colors shadow-sm"
           >
             <Calendar size={14} className="text-blue-400" />
@@ -454,71 +448,86 @@ export const PuzzleTrainer: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Chessboard */}
         <div className="lg:col-span-7 flex flex-col items-center">
-          <ChessBoard
-            key={`puzzle-${puzzleKey}`}
-            initialFen={puzzleFen}
-            lastMoveHighlight={puzzleLastMove}
-            orientation={currentPuzzle.toMove}
-            playerColor={currentPuzzle.toMove}
-            customTheme={boardTheme}
-            onMove={handlePlayerMove}
-            interactive={status === 'solving' && !isBotResponding}
-          />
+          {loading ? (
+             <div className="w-full max-w-[540px] aspect-square rounded-2xl bg-[#0a0d14] border-4 border-slate-800 flex flex-col items-center justify-center space-y-4">
+                <div className="w-12 h-12 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Loading Tactical Position...</span>
+             </div>
+          ) : (
+            <ChessBoard
+              key={`puzzle-${puzzleKey}`}
+              initialFen={puzzleFen}
+              lastMoveHighlight={puzzleLastMove}
+              orientation={currentPuzzle?.toMove || 'w'}
+              playerColor={currentPuzzle?.toMove || 'w'}
+              customTheme={boardTheme}
+              onMove={handlePlayerMove}
+              interactive={status === 'solving' && !isBotResponding}
+            />
+          )}
         </div>
 
         {/* Puzzle Details & Controls Sidebar */}
         <div className="lg:col-span-5 space-y-4">
           <div className="p-6 rounded-3xl bg-gradient-to-b from-[#0c1427] to-[#120e1e] border border-blue-500/30 shadow-2xl space-y-4">
             {/* Header info */}
-            <div className="flex items-start justify-between">
-              <div>
-                <span className="text-[11px] font-bold text-blue-400 uppercase tracking-wider font-mono">
-                  Tactical Position #{currentPuzzle.id} / 5,120
-                </span>
-                <h2 className="text-lg font-extrabold text-white font-cinzel">
-                  {currentPuzzle.title}
-                </h2>
+            {!currentPuzzle ? (
+              <div className="h-48 flex items-center justify-center">
+                <span className="text-slate-500 text-xs italic">Syncing with Arena Cloud...</span>
               </div>
+            ) : (
+              <>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <span className="text-[11px] font-bold text-blue-400 uppercase tracking-wider font-mono">
+                      Tactical Position #{currentPuzzle.id} / 5,120
+                    </span>
+                    <h2 className="text-lg font-extrabold text-white font-cinzel">
+                      {currentPuzzle.title}
+                    </h2>
+                  </div>
 
-              <span className="px-3 py-1 rounded-xl text-xs font-black bg-gradient-to-r from-blue-900/60 to-red-950/60 border border-blue-400/40 text-blue-300 shadow-md">
-                ⭐ {currentPuzzle.rating} Elo
-              </span>
-            </div>
-
-            {/* Instruction */}
-            <div className="p-4 rounded-2xl bg-[#080d1a] border border-slate-800">
-              <div className="text-xs font-bold text-slate-200 mb-1 flex items-center gap-2">
-                <span
-                  className={`w-3.5 h-3.5 rounded-full border border-slate-400 ${
-                    currentPuzzle.toMove === 'w' ? 'bg-white' : 'bg-slate-950'
-                  }`}
-                />
-                <span className="text-blue-200">
-                  {currentPuzzle.toMove === 'w' ? 'White' : 'Black'} to move & strike
-                </span>
-                {isBotResponding && (
-                  <span className="ml-auto text-[10px] text-amber-400 font-mono animate-pulse">
-                    Opponent responding...
+                  <span className="px-3 py-1 rounded-xl text-xs font-black bg-gradient-to-r from-blue-900/60 to-red-950/60 border border-blue-400/40 text-blue-300 shadow-md">
+                    ⭐ {currentPuzzle.rating} Elo
                   </span>
-                )}
-              </div>
-              <p className="text-xs text-slate-300 leading-relaxed">{currentPuzzle.description}</p>
-            </div>
+                </div>
 
-            {/* Themes Badges */}
-            <div className="flex flex-wrap gap-1.5">
-              {currentPuzzle.themes.map((th, i) => (
-                <span
-                  key={i}
-                  className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-[#10172a] text-blue-200 border border-blue-500/30"
-                >
-                  {th}
-                </span>
-              ))}
-            </div>
+                {/* Instruction */}
+                <div className="p-4 rounded-2xl bg-[#080d1a] border border-slate-800">
+                  <div className="text-xs font-bold text-slate-200 mb-1 flex items-center gap-2">
+                    <span
+                      className={`w-3.5 h-3.5 rounded-full border border-slate-400 ${
+                        currentPuzzle.toMove === 'w' ? 'bg-white' : 'bg-slate-950'
+                      }`}
+                    />
+                    <span className="text-blue-200">
+                      {currentPuzzle.toMove === 'w' ? 'White' : 'Black'} to move & strike
+                    </span>
+                    {isBotResponding && (
+                      <span className="ml-auto text-[10px] text-amber-400 font-mono animate-pulse">
+                        Opponent responding...
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-slate-300 leading-relaxed">{currentPuzzle.description}</p>
+                </div>
+
+                {/* Themes Badges */}
+                <div className="flex flex-wrap gap-1.5">
+                  {currentPuzzle.themes.map((th, i) => (
+                    <span
+                      key={i}
+                      className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-[#10172a] text-blue-200 border border-blue-500/30"
+                    >
+                      {th}
+                    </span>
+                  ))}
+                </div>
+              </>
+            )}
 
             {/* Status Feedback */}
-            {status === 'correct' && (
+            {status === 'correct' && currentPuzzle && (
               <div className="p-4 rounded-2xl bg-gradient-to-r from-emerald-950/90 to-[#0b2818] border-2 border-emerald-500/80 text-center space-y-2 shadow-lg">
                 <div className="flex items-center justify-center gap-2 text-emerald-300 font-extrabold text-sm font-cinzel">
                   <CheckCircle size={20} /> Brilliant Move! Position Mastered.
@@ -536,7 +545,7 @@ export const PuzzleTrainer: React.FC = () => {
               </div>
             )}
 
-            {status === 'failed' && (
+            {status === 'failed' && currentPuzzle && (
               <div className="p-4 rounded-2xl bg-gradient-to-r from-red-950/90 to-[#2e0e18] border-2 border-red-500/80 text-center space-y-2 shadow-lg">
                 <div className="flex items-center justify-center gap-2 text-red-300 font-extrabold text-sm">
                   <XCircle size={20} /> Inaccurate Move

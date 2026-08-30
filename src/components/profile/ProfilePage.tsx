@@ -30,7 +30,9 @@ import {
   CheckCircle2,
   AlertCircle,
   Camera,
-  Globe
+  Globe,
+  Database,
+  Layers
 } from 'lucide-react';
 
 const PRESET_AVATARS = [
@@ -58,7 +60,7 @@ const COUNTRY_OPTIONS = [
 ];
 
 export const ProfilePage: React.FC = () => {
-  const { user, updateEmail, revertEmail, updateProfile, gameHistory } = useAuth();
+  const { user, updateEmail, revertEmail, updateProfile, gameHistory, updateStoragePreference } = useAuth();
 
   const [activeSubTab, setActiveSubTab] = useState<'trophies' | 'ratings' | 'graph' | 'history' | 'settings'>('trophies');
 
@@ -591,6 +593,40 @@ export const ProfilePage: React.FC = () => {
                 Confirm & Update Email with Current Password
               </button>
             </form>
+
+            {/* Storage Preference Section */}
+            <div className="pt-6 border-t border-slate-800 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-xs font-black uppercase tracking-wider text-amber-400 flex items-center gap-2">
+                    <Database size={14} /> Cloud Storage Provider
+                  </h4>
+                  <p className="text-[10px] text-slate-500 mt-0.5 italic">Choose where your game records and AI history are stored</p>
+                </div>
+                <div className="flex bg-[#0a0f1d] p-1 rounded-xl border border-slate-700">
+                   <button
+                     onClick={() => updateStoragePreference('firestore')}
+                     className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${user.storagePreference === 'firestore' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                   >
+                     Firestore
+                   </button>
+                   <button
+                     onClick={() => updateStoragePreference('rtdb')}
+                     className={`px-3 py-1.5 rounded-lg text-[10px] font-black transition-all ${user.storagePreference === 'rtdb' ? 'bg-red-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}
+                   >
+                     RT Database
+                   </button>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/20">
+                <p className="text-[10px] text-amber-200 leading-relaxed">
+                  <Layers size={10} className="inline mr-1 mb-0.5" />
+                  <strong>Firestore:</strong> Document-based, highly scalable, best for long-term records. <br/>
+                  <strong>Realtime DB:</strong> JSON-based, low latency, best for immediate sync and live matches.
+                </p>
+              </div>
+            </div>
 
             {/* Reversible Action */}
             {user.previousEmail && (

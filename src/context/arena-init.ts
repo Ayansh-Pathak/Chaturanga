@@ -10,7 +10,7 @@ const firebaseConfig = {
   projectId: "chaturanga-by-ayansh-pathak",
   storageBucket: "chaturanga-by-ayansh-pathak.firebasestorage.app",
   messagingSenderId: "1057979643450",
-  appId: "1:1057979643450:web:d25d19d69186e241e0e703", // Placeholder Web ID based on Android ID pattern
+  appId: "1:1057979643450:web:d25d19d69186e241e0e703",
   measurementId: "G-VXE6Z8S5PS"
 };
 
@@ -26,5 +26,27 @@ if ((import.meta as any).env?.DEV) {
   connectFirestoreEmulator(db, 'localhost', 8080);
   connectDatabaseEmulator(rtdb, 'localhost', 9000);
 }
+
+/**
+ * Arena Grandmaster Logger
+ */
+export const logger = {
+  log: (message: string, ...args: any[]) => {
+    if ((import.meta as any).env?.DEV) {
+      // eslint-disable-next-line no-console
+      console.log(`[Arena] ${message}`, ...args);
+    }
+  },
+  warn: (message: string, ...args: any[]) => {
+    if ((import.meta as any).env?.DEV) {
+      // eslint-disable-next-line no-console
+      console.warn(`[Arena Warning] ${message}`, ...args);
+    }
+  },
+  error: (message: string, ...args: any[]) => {
+    // eslint-disable-next-line no-console
+    console.error(`[Arena Error] ${message}`, ...args);
+  }
+};
 
 export default app;
