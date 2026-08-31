@@ -9,7 +9,9 @@ import {
   signOut,
   updateEmail as firebaseUpdateEmail,
   GoogleAuthProvider,
-  signInWithPopup
+  signInWithPopup,
+  sendEmailVerification,
+  sendPasswordResetEmail
 } from 'firebase/auth';
 import {
   doc,
@@ -52,6 +54,9 @@ interface AuthContextType {
   setChatHistory: React.Dispatch<React.SetStateAction<{ sender: string; text: string; time: string }[]>>;
   sendDirectMessage: (recipientName: string, text: string) => Promise<{ success: boolean; message: string }>;
   sendGlobalMessage: (text: string, asAnnouncement?: boolean) => Promise<void>;
+  loginWithGoogle: () => Promise<{ success: boolean; message: string }>;
+  sendPasswordReset: (email: string) => Promise<{ success: boolean; message: string }>;
+  sendVerification: () => Promise<{ success: boolean; message: string }>;
   geminiHistory: { id: string; sender: 'user' | 'gemini'; text: string; timestamp: any }[];
   saveGeminiMessage: (msg: { sender: 'user' | 'gemini'; text: string }) => Promise<void>;
   clearGeminiHistory: () => Promise<void>;
@@ -164,7 +169,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
 
       await setDoc(doc(db, 'users', userCredential.user.uid), newUser);
-      return { success: true, message: 'Account created! Welcome to Chaturanga.' };
+
+      // Send verification email
+      try {
+        await sendEmailVerification(userCredential.user);
+      } catch (verifyError) {
+        logger.warn('Email verification send failed:', verifyError);
+      }
+
+      return { success: true, message: 'Account created! Verification email sent.' };
     } catch (error: any) {
       logger.error('Signup error:', error);
       return { success: false, message: error.message || 'Signup failed.' };
@@ -537,6 +550,84 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await updateProfile({ storagePreference: pref });
   };
 
+  const loginWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      const firebaseUser = result.user;
+
+      // Check if profile exists in Firestore
+      const userDocRef = doc(db, 'users', firebaseUser.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (!userDoc.exists()) {
+        // Create new profile for Google user
+        const newUser: UserProfile = {
+          id: firebaseUser.uid,
+          username: firebaseUser.displayName || 'Grandmaster',
+          email: firebaseUser.email || '',
+          avatar: firebaseUser.photoURL || AVATAR_OPTIONS[0],
+          title: 'Novice of Chaturanga',
+          bio: 'Practicing tactical maneuvers and king defenses.',
+          joinedDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+          stats: {
+            rapid: 1200,
+            blitz: 1200,
+            bullet: 1200,
+            puzzle: 1200,
+            gamesPlayed: 0,
+            wins: 0,
+            losses: 0,
+            draws: 0,
+            currentStreak: 0,
+            bestStreak: 0,
+            puzzlesSolved: 0,
+            puzzleStreak: 0,
+            bestPuzzleStreak: 0
+          },
+          ratingHistory: [
+            { date: 'Today', rapid: 1200, blitz: 1200, bullet: 1200, puzzle: 1200 }
+          ],
+          tournamentMedals: [],
+          ratingMedals: [],
+          clubsJoined: [],
+          teamsJoined: [],
+          storagePreference: 'firestore'
+        };
+        await setDoc(userDocRef, newUser);
+        setUser(newUser);
+      } else {
+        setUser(userDoc.data() as UserProfile);
+      }
+
+      return { success: true, message: 'Signed in with Google!' };
+    } catch (error: any) {
+      logger.error('Google Sign-In error:', error);
+      return { success: false, message: error.message || 'Google Sign-In failed.' };
+    }
+  };
+
+  const sendPasswordReset = async (email: string) => {
+    try {
+      await sendPasswordResetEmail(auth, email);
+      return { success: true, message: 'Password reset link sent to your email!' };
+    } catch (error: any) {
+      logger.error('Password reset error:', error);
+      return { success: false, message: error.message || 'Failed to send password reset email.' };
+    }
+  };
+
+  const sendVerification = async () => {
+    if (!auth.currentUser) return { success: false, message: 'No user is currently signed in.' };
+    try {
+      await sendEmailVerification(auth.currentUser);
+      return { success: true, message: 'Verification email resent successfully!' };
+    } catch (error: any) {
+      logger.error('Verification resend error:', error);
+      return { success: false, message: error.message || 'Failed to resend verification email.' };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -564,7 +655,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         saveGeminiMessage,
         clearGeminiHistory,
         updateStoragePreference,
-        sendGlobalMessage
+        sendGlobalMessage,
+        loginWithGoogle,
+        sendPasswordReset,
+        sendVerification
       }}
     >
       {children}
