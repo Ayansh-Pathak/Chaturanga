@@ -38,16 +38,29 @@ export const PuzzleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const getDailyPuzzle = async (): Promise<PuzzleData | null> => {
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
     const docRef = doc(db, 'daily_puzzles', today);
-    const docSnap = await getDoc(docRef);
 
-    if (docSnap.exists()) {
-      const dailyData = docSnap.data();
-      return getPuzzle(dailyData.puzzleId);
-    } else {
-      // Fallback or pick one randomly and save as daily
-      const id = (new Date().getDate() + (new Date().getMonth() + 1) * 31) % 5000;
-      await setDoc(docRef, { puzzleId: id, date: today });
-      return getPuzzle(id);
+    // Deterministic ID for the day as fallback
+    const dateObj = new Date();
+    const fallbackId = (dateObj.getUTCDate() + (dateObj.getUTCMonth() + 1) * 31) % 5000 + 1;
+
+    try {
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const dailyData = docSnap.data();
+        return getPuzzle(dailyData.puzzleId);
+      } else {
+        // Attempt to set it for everyone else
+        try {
+          await setDoc(docRef, { puzzleId: fallbackId, date: today });
+        } catch (e) {
+          // If write fails (e.g. not logged in), just return the fallback
+          logger.warn("Could not sync daily puzzle to Firestore, using deterministic fallback.");
+        }
+        return getPuzzle(fallbackId);
+      }
+    } catch (err) {
+      logger.error("Error fetching daily puzzle from Firestore:", err);
+      return getPuzzle(fallbackId);
     }
   };
 

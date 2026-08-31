@@ -7,14 +7,15 @@ import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 export const LibraryPage: React.FC = () => {
   const [famousPlayers, setFamousPlayers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [viewLimit, setViewLimit] = useState(100);
 
   useEffect(() => {
-    fetchPlayers();
-  }, []);
+    fetchPlayers(viewLimit);
+  }, [viewLimit]);
 
-  const fetchPlayers = async () => {
+  const fetchPlayers = async (limitCount: number) => {
     try {
-      const q = query(collection(db, 'hall_of_fame'), orderBy('rating', 'desc'), limit(20));
+      const q = query(collection(db, 'hall_of_fame'), orderBy('rating', 'desc'), limit(limitCount));
       const querySnapshot = await getDocs(q);
       const players = querySnapshot.docs.map(doc => doc.data());
 
@@ -22,14 +23,15 @@ export const LibraryPage: React.FC = () => {
         setFamousPlayers(players);
       } else {
         // Fallback if DB is empty
-        setFamousPlayers([
+        const fallback = [
           { name: 'Magnus Carlsen', title: 'GM', rating: 2832, avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80' },
           { name: 'Viswanathan Anand', title: 'GM', rating: 2751, avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=100&q=80' },
           { name: 'Hikaru Nakamura', title: 'GM', rating: 2802, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80' },
           { name: 'Alireza Firouzja', title: 'GM', rating: 2737, avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=100&q=80' },
           { name: 'Rameshbabu Praggnanandhaa', title: 'GM', rating: 2747, avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80' },
           { name: 'Levy Rozman', title: 'IM', rating: 2322, avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=100&q=80' }
-        ]);
+        ];
+        setFamousPlayers(fallback);
       }
     } catch (error) {
       logger.error("Error fetching players:", error);
@@ -176,10 +178,11 @@ export const LibraryPage: React.FC = () => {
                 <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">Fetching Legends...</span>
               </div>
             ) : (
-              <div className="space-y-4">
-                {famousPlayers.map((player) => (
-                  <div key={player.name} className="flex items-center justify-between p-3 rounded-2xl bg-black/40 border border-slate-800 group hover:border-amber-500/40 transition-all">
+              <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                {famousPlayers.map((player, idx) => (
+                  <div key={`${player.name}-${idx}`} className="flex items-center justify-between p-3 rounded-2xl bg-black/40 border border-slate-800 group hover:border-amber-500/40 transition-all">
                     <div className="flex items-center gap-3">
+                      <div className="text-[10px] font-mono text-slate-500 w-6">#{idx + 1}</div>
                       <img src={player.avatar} alt={player.name} className="w-10 h-10 rounded-xl object-cover grayscale group-hover:grayscale-0 transition-all" />
                       <div>
                         <div className="flex items-center gap-1.5">
@@ -197,9 +200,21 @@ export const LibraryPage: React.FC = () => {
               </div>
             )}
             <div className="mt-6 pt-4 border-t border-slate-800 text-center">
-              <button className="text-[10px] font-black text-amber-400 uppercase tracking-widest hover:text-amber-300 transition-colors">
-                View All FIDE Rated Players (10,000+)
-              </button>
+              {viewLimit < 1000 ? (
+                <button
+                  onClick={() => {
+                    setLoading(true);
+                    setViewLimit(1000);
+                  }}
+                  className="text-[10px] font-black text-amber-400 uppercase tracking-widest hover:text-amber-300 transition-colors"
+                >
+                  View Top 1000 FIDE Rated Players
+                </button>
+              ) : (
+                <button className="text-[10px] font-black text-slate-500 uppercase tracking-widest cursor-default">
+                  Showing Top 1000 FIDE Rated Players
+                </button>
+              )}
             </div>
           </section>
 

@@ -60,6 +60,11 @@ service cloud.firestore {
       allow write: if isAllowedEditor(request.auth);
     }
 
+    match /daily_puzzles/{docId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
     match /global_chat/{docId} {
       allow read: if true;
       allow create: if request.auth != null;
