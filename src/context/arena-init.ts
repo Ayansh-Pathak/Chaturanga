@@ -1,4 +1,4 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApp, getApps } from 'firebase/app';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
 import { getAnalytics } from 'firebase/analytics';
@@ -14,17 +14,27 @@ const firebaseConfig = {
   measurementId: "G-VXE6Z8S5PS"
 };
 
-const app = initializeApp(firebaseConfig);
+// Initialize Firebase
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 export const db = getFirestore(app);
 export const auth = getAuth(app);
 export const rtdb = getDatabase(app);
 export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
 
-// Connect to emulators in development
-if ((import.meta as any).env?.DEV) {
-  connectAuthEmulator(auth, 'http://localhost:9099');
-  connectFirestoreEmulator(db, 'localhost', 8080);
-  connectDatabaseEmulator(rtdb, 'localhost', 9000);
+// Connect to emulators in development with additional safety
+if ((import.meta as any).env?.DEV && typeof window !== 'undefined') {
+  // Only connect if not already connected (prevents error on HMR)
+  if (!(auth as any)._emulatorConnected) {
+    try {
+      connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
+      connectFirestoreEmulator(db, '127.0.0.1', 8080);
+      connectDatabaseEmulator(rtdb, '127.0.0.1', 9000);
+      (auth as any)._emulatorConnected = true;
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.warn("Could not connect to Firebase Emulators. Using production instead.", e);
+    }
+  }
 }
 
 /**

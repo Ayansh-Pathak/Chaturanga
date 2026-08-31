@@ -76,7 +76,15 @@ const initialGameHistory: GameRecord[] = [];
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<UserProfile | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(() => {
+    // Immediate load from cache to eliminate initial black screen
+    try {
+      const saved = localStorage.getItem('chaturanga_active_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [loading, setLoading] = useState(true);
   const [gameHistory, setGameHistory] = useState<GameRecord[]>([]);
   const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
@@ -84,22 +92,46 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [geminiHistory, setGeminiHistory] = useState<{ id: string; sender: 'user' | 'gemini'; text: string; timestamp: any }[]>([]);
   const [chatHistory, setChatHistory] = useState<{ sender: string; text: string; time: string }[]>([]);
 
-  // Sync Data
+  // Safety timer: If Firebase takes too long, stop the loading screen
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (loading) {
+        setLoading(false);
+        logger.warn("Authentication sync took too long, proceeding with cached/guest state.");
+      }
+    }, 4500); // 4.5 seconds max for blocking loading screen
+    return () => clearTimeout(timer);
+  }, [loading]);
+
+  // Firebase Auth sync
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        // Fetch profile from Firestore
-        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-        if (userDoc.exists()) {
-          const profile = userDoc.data() as UserProfile;
-          setUser(profile);
+      try {
+        if (firebaseUser) {
+          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          if (userDoc.exists()) {
+            const profile = userDoc.data() as UserProfile;
+            setUser(profile);
+            localStorage.setItem('chaturanga_active_user', JSON.stringify(profile));
+          } else {
+            setUser(null);
+            localStorage.removeItem('chaturanga_active_user');
+          }
+        } else {
+          setUser(null);
+          localStorage.removeItem('chaturanga_active_user');
         }
-      } else {
-        setUser(null);
+      } catch (err) {
+        logger.error("Auth sync failed:", err);
+      } finally {
+        setLoading(false);
       }
+    }, (error) => {
+      logger.error("Auth state listener error:", error);
       setLoading(false);
     });
-    return unsubscribe;
+
+    return () => unsubscribe();
   }, []);
 
   // Persist user
@@ -114,7 +146,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: false, message: 'Please provide valid credentials.' };
     }
 
-    const email = emailOrUser.includes('@') ? emailOrUser : `${emailOrUser}@chaturanga.app`;
+    let email = emailOrUser.trim();
+
+    if (!email.includes('@')) {
+      // Query Firestore to see if this is a username with a custom email associated
+      try {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('username', '==', email));
+        const querySnapshot = await getDocs(q);
+        if (!querySnapshot.empty) {
+          const profile = querySnapshot.docs[0].data() as UserProfile;
+          email = profile.email;
+        } else {
+          // Fall back to original username@chaturanga.app strategy
+          email = `${email}@chaturanga.app`;
+        }
+      } catch (err) {
+        logger.warn('Failed to find user email by username, falling back to default mapping:', err);
+        email = `${email}@chaturanga.app`;
+      }
+    }
 
     try {
       await signInWithEmailAndPassword(auth, email, pass);

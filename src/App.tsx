@@ -43,12 +43,39 @@ function ChaturangaApp() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0a0d14] flex flex-col items-center justify-center">
-        <div className="relative">
-          <div className="w-16 h-16 border-4 border-slate-800 rounded-full"></div>
-          <div className="absolute top-0 left-0 w-16 h-16 border-4 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+      <div className="min-h-screen bg-[#070a14] flex flex-col items-center justify-center p-6 text-center">
+        <div className="relative mb-12">
+          {/* Animated Background Glow */}
+          <div className="absolute -inset-16 bg-gradient-to-tr from-blue-600/20 via-transparent to-red-600/20 blur-3xl animate-pulse rounded-full" />
+
+          <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-3xl bg-gradient-to-br from-[#10172a] to-[#1a0d24] border-2 border-blue-500/30 flex items-center justify-center shadow-2xl overflow-hidden">
+            <div className="absolute inset-0 bg-radial from-blue-500/10 to-red-500/5" />
+            <Crown size={56} className="text-amber-400 drop-shadow-[0_0_15px_rgba(245,158,11,0.5)] animate-bounce duration-[3000ms]" fill="#fbbf24" />
+          </div>
+
+          {/* Spinner Ring */}
+          <div className="absolute -top-3 -left-3 w-[calc(100%+24px)] h-[calc(100%+24px)] border-4 border-slate-800 rounded-[36px]"></div>
+          <div className="absolute -top-3 -left-3 w-[calc(100%+24px)] h-[calc(100%+24px)] border-4 border-blue-500 border-t-transparent border-r-transparent rounded-[36px] animate-spin"></div>
         </div>
-        <span className="mt-6 text-xs font-black uppercase tracking-[0.2em] text-slate-500 animate-pulse">Authenticating...</span>
+
+        <div className="space-y-4 relative">
+          <h1 className="text-2xl sm:text-3xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-100 to-red-400 font-cinzel">
+            CHATURANGA
+          </h1>
+          <div className="flex flex-col gap-1.5 items-center">
+             <span className="text-[10px] font-black uppercase tracking-[0.3em] text-blue-500/80 animate-pulse">Initializing Global Chess Arena</span>
+             <div className="flex items-center gap-1.5 py-1 px-3 rounded-full bg-slate-900/50 border border-slate-800">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                <span className="text-[9px] font-bold text-slate-400 uppercase">Synchronizing with Firebase</span>
+             </div>
+          </div>
+        </div>
+
+        <div className="absolute bottom-12 text-slate-600 text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
+           <span className="w-1 h-1 rounded-full bg-slate-700" />
+           Version 1.5.4 Powered by Gemini AI
+           <span className="w-1 h-1 rounded-full bg-slate-700" />
+        </div>
       </div>
     );
   }
