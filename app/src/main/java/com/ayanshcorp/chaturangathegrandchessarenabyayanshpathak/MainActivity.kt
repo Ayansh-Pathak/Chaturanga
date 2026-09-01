@@ -110,7 +110,7 @@ fun ChaturangaWebView(url: String) {
                 
                 webChromeClient = object : WebChromeClient() {}
                 
-                webViewClient = object : WebViewClient() {
+                webViewClient = @SuppressLint("WebViewClientOnRenderProcessGone") object : WebViewClient() {
                     override fun onRenderProcessGone(
                         view: WebView,
                         detail: RenderProcessGoneDetail,
