@@ -75,6 +75,7 @@ class MainActivity : ComponentActivity() {
 fun ChaturangaWebView(url: String) {
     AndroidView(
         factory = { context ->
+            @SuppressLint("WebViewClientOnRenderProcessGone")
             val assetLoader = WebViewAssetLoader.Builder()
                 .addPathHandler("/", AssetsPathHandler(context))
                 .build()
@@ -110,15 +111,16 @@ fun ChaturangaWebView(url: String) {
                 
                 webChromeClient = object : WebChromeClient() {}
                 
-                webViewClient = @SuppressLint("WebViewClientOnRenderProcessGone") object : WebViewClient() {
+                @SuppressLint("WebViewClientOnRenderProcessGone")
+                class ChaturangaWebViewClient : WebViewClient() {
                     override fun onRenderProcessGone(
-                        view: WebView,
-                        detail: RenderProcessGoneDetail,
+                        view: WebView?,
+                        detail: RenderProcessGoneDetail?,
                     ): Boolean {
                         // Crucial safety check: if the web engine crashes, reload it automatically
                         // to prevent the "app keeps stopping" popup.
                         Log.e("ChaturangaWebView", "Render process lost. Reloading...")
-                        view.loadUrl(url)
+                        view?.loadUrl(url)
                         return true // This tells Android we handled the crash ourselves
                     }
 
@@ -142,6 +144,8 @@ fun ChaturangaWebView(url: String) {
                         }
                     }
                 }
+                
+                webViewClient = ChaturangaWebViewClient()
                 
                 loadUrl(url)
             }

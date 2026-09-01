@@ -74,10 +74,10 @@
 
 /* Magic Cursor - Global Application */
 html, body, #root {
-  cursor: url('/Magic-Cursor.cur'), auto !important;
+  cursor: url('./assets/Magic-Cursor.cur'), auto !important;
 }
 
 /* Ensure interactive elements show the magic pointer */
 a, button, [role="button"], .cursor-pointer, input[type="submit"], select, [role="link"], area, summary, [tabindex], label {
-  cursor: url('/Magic-Cursor.cur'), pointer !important;
+  cursor: url('./assets/Magic-Cursor.cur'), pointer !important;
 }
