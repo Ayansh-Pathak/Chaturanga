@@ -73,7 +73,7 @@
 }
 
 /* Magic Cursor - Global Application */
-html, body, #root, * {
+html, body, #root {
   cursor: url('/Magic-Cursor.cur'), auto !important;
 }
 

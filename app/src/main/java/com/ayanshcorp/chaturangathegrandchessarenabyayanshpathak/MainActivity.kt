@@ -70,7 +70,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@SuppressLint("SetJavaScriptEnabled", "WebViewClientOnRenderProcessGone")
+@SuppressLint("SetJavaScriptEnabled")
 @Composable
 fun ChaturangaWebView(url: String) {
     AndroidView(
@@ -110,7 +110,7 @@ fun ChaturangaWebView(url: String) {
                 
                 webChromeClient = object : WebChromeClient() {}
                 
-                webViewClient = @SuppressLint("WebViewClientOnRenderProcessGone") object : WebViewClient() {
+                webViewClient = object : WebViewClient() {
                     override fun onRenderProcessGone(
                         view: WebView,
                         detail: RenderProcessGoneDetail,

@@ -8,7 +8,7 @@ import { Navbar } from './components/layout/Navbar';
 import { AuthModal } from './components/auth/AuthModal';
 import { useAuth } from './context/AuthContext';
 import { Crown } from 'lucide-react';
-import { PieceSpriteSheet } from './components/chess/ChessPieceSprite';
+import { PieceSpriteSheet } from './components/chess/PieceSpriteSheet';
 
 const PlayHub = lazy(() => import('./components/play/PlayHub').then(module => ({ default: module.PlayHub })));
 const PuzzleTrainer = lazy(() => import('./components/puzzles/PuzzleTrainer').then(module => ({ default: module.PuzzleTrainer })));
