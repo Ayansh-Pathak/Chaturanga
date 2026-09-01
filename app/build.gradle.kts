@@ -14,14 +14,10 @@ android {
         applicationId = "com.ayanshcorp.chaturangathegrandchessarenabyayanshpathak"
         minSdk = 24
         targetSdk = 37
-        versionCode = 29
-        versionName = "1.5.5"
-        multiDexEnabled = true
+        versionCode = 31
+        versionName = "1.6.9"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        vectorDrawables {
-            useSupportLibrary = true
-        }
     }
 
     buildTypes {
@@ -30,7 +26,7 @@ android {
             isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
+                "proguard-rules.pro",
             )
         }
     }
@@ -84,7 +80,9 @@ tasks.register<Copy>("copyWebDistToAssets") {
         if (!distDir.exists() || (distDir.listFiles()?.isEmpty() == true)) {
             logger.warn("WARNING: 'dist' folder is missing or empty! Build will only contain the placeholder loading page.")
         } else {
-            logger.lifecycle("Copying web assets from ${distDir.absolutePath} to ${assetsDir.absolutePath}")
+            logger.lifecycle("Cleaning old assets and copying new web assets from ${distDir.absolutePath} to ${assetsDir.absolutePath}")
+            delete(assetsDir)
+            assetsDir.mkdirs()
         }
     }
     

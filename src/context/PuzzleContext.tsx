@@ -71,7 +71,6 @@ export const PuzzleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   };
 
   const syncPuzzlesToFirestore = async () => {
-    logger.log("Starting puzzle sync...");
     // Split into batches of 500
     for (let i = 0; i < PUZZLES_DATABASE.length; i += 500) {
       const batch = writeBatch(db);
@@ -81,7 +80,6 @@ export const PuzzleProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         batch.set(docRef, p);
       });
       await batch.commit();
-      logger.log(`Synced ${i + chunk.length} puzzles...`);
     }
   };
 

@@ -4,6 +4,13 @@
     <!-- Google tag (gtag.js) - Website Data Collection -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-VXE6Z8S5PS"></script>
     <script>
+      window.onerror = function(msg, url, line, col, error) {
+        var extra = !col ? '' : '\ncolumn: ' + col;
+        extra += !error ? '' : '\nerror: ' + error;
+        console.error("Error: " + msg + "\nurl: " + url + "\nline: " + line + extra);
+        return false;
+      };
+
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
@@ -19,13 +26,44 @@
     <meta name="description" content="FIDE-compliant chess practice platform with tournaments, clubs, thousands of puzzles, custom elephant-head bishops and crown kings, Elo progression, medals, Game Review and Analysis Powered by Stockfish 18 and Context aware Gemini Chatbot." />
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://firebaselogging-pa.googleapis.com">
+    <link rel="preconnect" href="https://firestore.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Rozha+One&family=Yatra+One&display=swap" rel="stylesheet">
-    <script type="module" crossorigin src="./assets/index-BhW3e3WW.js"></script>
-    <link rel="modulepreload" crossorigin href="./assets/vendor-sWoEJCzH.js">
-    <link rel="stylesheet" crossorigin href="./assets/style-Bt06JMih.css">
+    <style>
+      @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; visibility: hidden; } }
+      .splash-fade-out { animation: fadeOut 0.4s forwards; }
+    </style>
+    <script>
+      // Emergency fallback: remove splash after 12 seconds if React fails to mount
+      setTimeout(function() {
+        var s = document.getElementById('initial-splash');
+        if (s) {
+          s.classList.add('splash-fade-out');
+          setTimeout(function() { if(s.parentNode) s.remove(); }, 400);
+        }
+      }, 12000);
+    </script>
+    <script type="module" crossorigin src="./assets/index-DRSNUgsm.js"></script>
+    <link rel="stylesheet" crossorigin href="./assets/style-BNq-VGLB.css">
   </head>
   <body class="bg-[#0e1015] text-[#f0f2f5] antialiased selection:bg-amber-500/30 selection:text-amber-200">
-    <div id="root"></div>
+    <div id="root">
+      <!-- Fast-loading Splash Screen -->
+      <div id="initial-splash" style="position: fixed; inset: 0; background: #070a14; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 9999; font-family: system-ui, -apple-system, sans-serif;">
+        <div style="position: relative; margin-bottom: 2rem;">
+          <div style="width: 80px; height: 80px; background: linear-gradient(135deg, #10172a, #1a0d24); border: 2px solid rgba(59, 130, 246, 0.3); border-radius: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px rgba(0,0,0,0.5);">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="#fbbf24" stroke="#fbbf24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 8px rgba(245,158,11,0.5));">
+              <path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14" />
+            </svg>
+          </div>
+          <div style="position: absolute; top: -10px; left: -10px; width: 100px; height: 100px; border: 3px solid #1e293b; border-radius: 26px; box-sizing: border-box;"></div>
+          <div style="position: absolute; top: -10px; left: -10px; width: 100px; height: 100px; border: 3px solid #3b82f6; border-top-color: transparent; border-right-color: transparent; border-radius: 26px; box-sizing: border-box; animation: spin 1s linear infinite;"></div>
+        </div>
+        <h1 style="color: white; letter-spacing: 0.3em; font-size: 1.25rem; margin: 0; font-weight: 900;">CHATURANGA</h1>
+        <p style="color: #3b82f6; font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.2em; margin-top: 0.5rem; opacity: 0.8;">Initializing Arena...</p>
+      </div>
+    </div>
   </body>
 </html>
 

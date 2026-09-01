@@ -23,7 +23,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   onClose,
   initialMode = 'login',
 }) => {
-  const { user, login, signup, updateEmail, revertEmail, loginWithGoogle, sendPasswordReset, sendVerification } = useAuth();
+  const { user, login, signup, updateEmail, revertEmail, loginWithGoogle, loginAsGuest, sendPasswordReset, sendVerification } = useAuth();
   const [mode, setMode] = useState<'login' | 'signup' | 'change_email' | 'forgot_password'>(initialMode);
 
   // Form states
@@ -95,6 +95,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     } else {
       setMessage({ text: res.message, type: 'error' });
     }
+  };
+
+  const handleGuestSignIn = async () => {
+    await loginAsGuest();
+    setMessage({ text: 'Welcome to the Arena, Guest!', type: 'success' });
+    setTimeout(onClose, 900);
   };
 
   const handlePasswordReset = async (e: React.FormEvent) => {
@@ -269,6 +275,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               </svg>
               Sign in with Google
             </button>
+
+            <button
+              type="button"
+              onClick={handleGuestSignIn}
+              className="w-full py-2.5 rounded-xl bg-[#161c2e] hover:bg-[#1e263d] text-blue-300 font-bold text-xs border border-blue-500/30 transition-all flex items-center justify-center gap-2 mt-3"
+            >
+              <User size={14} />
+              Continue as Guest
+            </button>
           </form>
         )}
 
@@ -345,6 +360,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               className="w-full py-3 rounded-xl bg-gradient-to-r from-blue-600 to-red-600 hover:from-blue-500 hover:to-red-500 text-white font-bold text-sm shadow-lg shadow-blue-600/20 transition-all active:scale-95 border border-blue-400/30"
             >
               Create Account & Enter Arena
+            </button>
+
+            <button
+              type="button"
+              onClick={handleGuestSignIn}
+              className="w-full py-2.5 rounded-xl bg-[#161c2e] hover:bg-[#1e263d] text-blue-300 font-bold text-xs border border-blue-500/30 transition-all flex items-center justify-center gap-2 mt-3"
+            >
+              <User size={14} />
+              Continue as Guest
             </button>
           </form>
         )}

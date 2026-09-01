@@ -107,6 +107,7 @@ export interface UserProfile {
   previousEmail?: string;
   isAnnouncer?: boolean;
   storagePreference?: 'firestore' | 'rtdb';
+  isGuest?: boolean;
 }
 
 export interface PuzzleData {

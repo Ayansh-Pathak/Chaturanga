@@ -43,11 +43,23 @@ export const Navbar: React.FC<NavbarProps> = ({
           <div className="relative w-11 h-11 rounded-xl bg-gradient-to-br from-blue-600 via-indigo-600 to-red-600 p-[2px] shadow-[0_0_20px_rgba(59,130,246,0.4)] transition-transform group-hover:scale-105">
             <div className="w-full h-full rounded-[10px] bg-[#0b1021] flex items-center justify-center relative overflow-hidden">
               <div className="absolute inset-0 bg-radial from-blue-500/20 to-red-500/10 opacity-70 pointer-events-none" />
-              <Crown size={22} className="text-amber-400 drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]" fill="#fbbf24" />
+              <img
+                src="/chaturanga logo.png"
+                alt="Crown"
+                className="w-7 h-7 object-contain drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                  const fallback = (e.target as HTMLImageElement).nextElementSibling;
+                  if (fallback) (fallback as HTMLElement).style.display = 'block';
+                }}
+              />
+              <div className="hidden">
+                <Crown size={22} className="text-amber-400" fill="#fbbf24" />
+              </div>
             </div>
           </div>
 
-          <div className="flex flex-col">
+          <div className="flex flex-col md:hidden">
             <div className="flex items-center gap-1.5">
               <span className="text-xl sm:text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-200 to-red-400 font-cinzel leading-none">
                 CHATURANGA
@@ -58,6 +70,34 @@ export const Navbar: React.FC<NavbarProps> = ({
             <span className="text-[11px] sm:text-xs font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-red-300 font-sanskrit tracking-widest mt-0.5 leading-none">
               चतुरङ्गम् • The Grand Chess Arena
             </span>
+          </div>
+
+          {/* Desktop/Tablet Logo Image */}
+          <div className="hidden md:block">
+            <img
+              src="/chaturanga logo.png"
+              alt="Chaturanga Grand Chess Arena"
+              className="h-10 sm:h-12 w-auto object-contain"
+              onError={(e) => {
+                // Fallback if image doesn't exist
+                (e.target as HTMLImageElement).style.display = 'none';
+                (e.target as HTMLImageElement).parentElement?.classList.add('flex-col');
+                const textFallback = (e.target as HTMLImageElement).nextElementSibling;
+                if (textFallback) (textFallback as HTMLElement).style.display = 'flex';
+              }}
+            />
+            {/* Hidden fallback text for desktop if image fails */}
+            <div className="hidden flex-col">
+              <div className="flex items-center gap-1.5">
+                <span className="text-2xl font-black tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-200 to-red-400 font-cinzel leading-none">
+                  CHATURANGA
+                </span>
+                <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping" />
+              </div>
+              <span className="text-xs font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-red-300 font-sanskrit tracking-widest mt-0.5 leading-none">
+                चतुरङ्गम् • The Grand Chess Arena
+              </span>
+            </div>
           </div>
         </div>
 

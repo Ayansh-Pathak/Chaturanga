@@ -11,7 +11,8 @@ const firebaseConfig = {
   storageBucket: "chaturanga-by-ayansh-pathak.firebasestorage.app",
   messagingSenderId: "1057979643450",
   appId: "1:1057979643450:web:d25d19d69186e241e0e703",
-  measurementId: "G-VXE6Z8S5PS"
+  measurementId: "G-VXE6Z8S5PS",
+  databaseURL: "https://chaturanga-by-ayansh-pathak-default-rtdb.firebaseio.com"
 };
 
 // Initialize Firebase

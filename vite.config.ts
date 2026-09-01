@@ -17,24 +17,12 @@ export default defineConfig(() => {
       },
     },
     build: {
-      target: 'esnext',
+      target: 'es2020', // Better compatibility for older WebViews (like Chromium 109)
       sourcemap: false,
-      minify: 'esbuild',
+      minify: true,
       cssMinify: true,
       cssCodeSplit: false, // Combine CSS for faster loading in WebView
-      chunkSizeWarningLimit: 1500,
-      rollupOptions: {
-        output: {
-          manualChunks(id) {
-            if (id.includes('node_modules')) {
-              if (id.includes('firebase')) return 'firebase';
-              if (id.includes('lucide-react')) return 'icons';
-              if (id.includes('react') || id.includes('scheduler') || id.includes('object-assign')) return 'react-core';
-              return 'vendor';
-            }
-          },
-        },
-      },
+      chunkSizeWarningLimit: 2000,
     },
     server: {
       // HMR is disabled in AI Studio via DISABLE_HMR env var.

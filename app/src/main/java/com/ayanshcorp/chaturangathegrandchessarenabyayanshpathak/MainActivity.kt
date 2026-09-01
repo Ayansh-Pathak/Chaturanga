@@ -1,18 +1,18 @@
 package com.ayanshcorp.chaturangathegrandchessarenabyayanshpathak
 
 import android.annotation.SuppressLint
-import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
-import android.webkit.ConsoleMessage
 import android.webkit.RenderProcessGoneDetail
 import android.webkit.WebChromeClient
+import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebSettings
 import android.webkit.WebView
+import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,13 +20,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.webkit.WebResourceErrorCompat
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewAssetLoader.AssetsPathHandler
-import androidx.webkit.WebViewClientCompat
-import androidx.webkit.WebViewFeature
 import com.google.firebase.FirebaseApp
 import com.google.firebase.analytics.FirebaseAnalytics
 import com.google.firebase.crashlytics.FirebaseCrashlytics
@@ -39,15 +35,24 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        try {
-            FirebaseApp.initializeApp(this)
-            firebaseAnalytics = FirebaseAnalytics.getInstance(this)
-            firebaseAnalytics.logEvent(FirebaseAnalytics.Event.APP_OPEN, null)
-            FirebaseCrashlytics.getInstance().isCrashlyticsCollectionEnabled = true
-            FirebasePerformance.getInstance().isPerformanceCollectionEnabled = true
-        } catch (e: Exception) {
-            Log.e("MainActivity", "Firebase init failed: ${e.message}")
-        }
+        // Safety: Offload all non-UI initialization to background
+        Thread {
+            try {
+                // Initialize Firebase with a safe check
+                if (FirebaseApp.getApps(this).isEmpty()) {
+                    FirebaseApp.initializeApp(this)
+                }
+                firebaseAnalytics = FirebaseAnalytics.getInstance(this)
+                firebaseAnalytics.logEvent(FirebaseAnalytics.Event.APP_OPEN, null)
+                
+                // Defer heavy metrics to after initial render
+                Thread.sleep(2000)
+                FirebaseCrashlytics.getInstance().isCrashlyticsCollectionEnabled = true
+                FirebasePerformance.getInstance().isPerformanceCollectionEnabled = true
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Deferred init failed: ${e.message}")
+            }
+        }.start()
 
         setContent {
             ChaturangaTheme {
@@ -57,8 +62,7 @@ class MainActivity : ComponentActivity() {
                     color = backgroundColor,
                 ) {
                     ChaturangaWebView(
-                        url = "https://appassets.androidplatform.net/assets/index.html",
-                        backgroundColor = backgroundColor,
+                        url = getString(R.string.index_url),
                     )
                 }
             }
@@ -66,13 +70,13 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-@SuppressLint("SetJavaScriptEnabled")
+@SuppressLint("SetJavaScriptEnabled", "WebViewClientOnRenderProcessGone")
 @Composable
-fun ChaturangaWebView(url: String, backgroundColor: Color) {
+fun ChaturangaWebView(url: String) {
     AndroidView(
         factory = { context ->
             val assetLoader = WebViewAssetLoader.Builder()
-                .addPathHandler("/assets/", AssetsPathHandler(context))
+                .addPathHandler("/", AssetsPathHandler(context))
                 .build()
 
             WebView(context).apply {
@@ -81,16 +85,15 @@ fun ChaturangaWebView(url: String, backgroundColor: Color) {
                     ViewGroup.LayoutParams.MATCH_PARENT,
                 )
                 
-                setBackgroundColor(backgroundColor.toArgb())
+                // Use a transparent background for the WebView itself
+                // so the Compose Surface color shows through immediately
+                setBackgroundColor(0) 
                 
                 @Suppress("DEPRECATION")
                 settings.apply {
                     javaScriptEnabled = true
                     domStorageEnabled = true
-                    allowFileAccess = true
-                    allowContentAccess = true
                     
-                    cacheMode = WebSettings.LOAD_DEFAULT
                     setSupportZoom(false)
                     
                     useWideViewPort = true
@@ -98,25 +101,29 @@ fun ChaturangaWebView(url: String, backgroundColor: Color) {
                     
                     databaseEnabled = true
                     mediaPlaybackRequiresUserGesture = false
+                    
+                    // Enhancement for modern web features
+                    mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
                 }
                 
-                setLayerType(View.LAYER_TYPE_HARDWARE, null)
+                setLayerType(View.LAYER_TYPE_SOFTWARE, null)
                 
-                webChromeClient = object : WebChromeClient() {
-                    override fun onConsoleMessage(consoleMessage: ConsoleMessage?): Boolean {
-                        Log.d("ChaturangaWebView", "[JS] ${consoleMessage?.message()} -- From line ${consoleMessage?.lineNumber()} of ${consoleMessage?.sourceId()}")
-                        return true
+                webChromeClient = object : WebChromeClient() {}
+                
+                webViewClient = @SuppressLint("WebViewClientOnRenderProcessGone") object : WebViewClient() {
+                    override fun onRenderProcessGone(
+                        view: WebView,
+                        detail: RenderProcessGoneDetail,
+                    ): Boolean {
+                        // Crucial safety check: if the web engine crashes, reload it automatically
+                        // to prevent the "app keeps stopping" popup.
+                        Log.e("ChaturangaWebView", "Render process lost. Reloading...")
+                        view.loadUrl(url)
+                        return true // This tells Android we handled the crash ourselves
                     }
 
-                    override fun onProgressChanged(view: WebView?, newProgress: Int) {
-                        super.onProgressChanged(view, newProgress)
-                        Log.d("ChaturangaWebView", "Loading progress: $newProgress%")
-                    }
-                }
-                
-                webViewClient = object : WebViewClientCompat() {
                     override fun shouldInterceptRequest(
-                        view: WebView?,
+                        view: WebView,
                         request: WebResourceRequest,
                     ): WebResourceResponse? {
                         return assetLoader.shouldInterceptRequest(request.url)
@@ -125,33 +132,14 @@ fun ChaturangaWebView(url: String, backgroundColor: Color) {
                     override fun onReceivedError(
                         view: WebView,
                         request: WebResourceRequest,
-                        error: WebResourceErrorCompat,
+                        error: WebResourceError,
                     ) {
-                        var description = "Error"
-                        if (WebViewFeature.isFeatureSupported(WebViewFeature.WEB_RESOURCE_ERROR_GET_DESCRIPTION)) {
-                            description = error.description.toString()
-                        }
-                        
+                        val description = error.description.toString()
                         Log.e("ChaturangaWebView", "Error loading: $description for URL: ${request.url}")
-                        
-                        // If the local load fails for the main page, attempt to load from production URL
                         if (request.url.toString().contains("index.html")) {
-                             view.post { view.loadUrl("https://ayansh-pathak.github.io/Chaturanga/") }
+                             val prodUrl = view.context.getString(R.string.prod_url)
+                             view.post { view.loadUrl(prodUrl) }
                         }
-                    }
-                    
-                    override fun onPageFinished(view: WebView?, url: String?) {
-                        super.onPageFinished(view, url)
-                        Log.d("ChaturangaWebView", "Finished loading: $url")
-                    }
-
-                    override fun onRenderProcessGone(
-                        view: WebView?,
-                        detail: RenderProcessGoneDetail?,
-                    ): Boolean {
-                        val crashed = (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) && (detail?.didCrash() == true)
-                        Log.e("ChaturangaWebView", "Render process gone. Crashed: $crashed")
-                        return true
                     }
                 }
                 
@@ -159,7 +147,5 @@ fun ChaturangaWebView(url: String, backgroundColor: Color) {
             }
         },
         modifier = Modifier.fillMaxSize(),
-    ) { webView ->
-        webView.visibility = View.VISIBLE
-    }
+    ) { _ -> }
 }

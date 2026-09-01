@@ -27,14 +27,17 @@ import {
   addDoc,
   deleteDoc,
   limit,
-  serverTimestamp
+  serverTimestamp,
+  getCountFromServer
 } from 'firebase/firestore';
 import { ref, set, push, onValue, remove, serverTimestamp as rtdbTimestamp } from 'firebase/database';
+import { storage } from '../utils/storage';
 
 interface AuthContextType {
   user: UserProfile | null;
   loading: boolean;
   isAuthenticated: boolean;
+  setLoading: React.Dispatch<React.SetStateAction<boolean>>;
   login: (emailOrUser: string, pass: string) => Promise<{ success: boolean; message: string }>;
   signup: (username: string, email: string, pass: string, avatar: string, country?: string, countryFlag?: string) => Promise<{ success: boolean; message: string }>;
   logout: () => Promise<void>;
@@ -55,6 +58,7 @@ interface AuthContextType {
   sendDirectMessage: (recipientName: string, text: string) => Promise<{ success: boolean; message: string }>;
   sendGlobalMessage: (text: string, asAnnouncement?: boolean) => Promise<void>;
   loginWithGoogle: () => Promise<{ success: boolean; message: string }>;
+  loginAsGuest: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<{ success: boolean; message: string }>;
   sendVerification: () => Promise<{ success: boolean; message: string }>;
   geminiHistory: { id: string; sender: 'user' | 'gemini'; text: string; timestamp: any }[];
@@ -63,12 +67,12 @@ interface AuthContextType {
 }
 
 const AVATAR_OPTIONS = [
-  'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
-  'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=200&q=80',
-  'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&q=80',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80',
-  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80'
+  'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=128&q=70',
+  'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=128&q=70',
+  'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=128&q=70',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=128&q=70',
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=128&q=70',
+  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=128&q=70'
 ];
 
 const initialGameHistory: GameRecord[] = [];
@@ -78,66 +82,82 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(() => {
     // Immediate load from cache to eliminate initial black screen
-    try {
-      const saved = localStorage.getItem('chaturanga_active_user');
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
+    return storage.get<UserProfile>('chaturanga_active_user');
   });
-  const [loading, setLoading] = useState(true);
-  const [gameHistory, setGameHistory] = useState<GameRecord[]>([]);
+  const [loading, setLoading] = useState(user === null);
+  const [gameHistory, setGameHistory] = useState<GameRecord[]>(() => {
+    return storage.get<GameRecord[]>('chaturanga_game_history') || [];
+  });
   const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
   const [directMessages, setDirectMessages] = useState<import('../types/chess').DirectMessage[]>([]);
   const [geminiHistory, setGeminiHistory] = useState<{ id: string; sender: 'user' | 'gemini'; text: string; timestamp: any }[]>([]);
   const [chatHistory, setChatHistory] = useState<{ sender: string; text: string; time: string }[]>([]);
 
-  // Safety timer: If Firebase takes too long, stop the loading screen
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (loading) {
-        setLoading(false);
-        logger.warn("Authentication sync took too long, proceeding with cached/guest state.");
-      }
-    }, 4500); // 4.5 seconds max for blocking loading screen
-    return () => clearTimeout(timer);
-  }, [loading]);
-
   // Firebase Auth sync
   useEffect(() => {
+    // Safety timeout: Ensure loading screen disappears even if Firebase hangs
+    const safetyTimeout = setTimeout(() => {
+      if (loading) {
+        logger.warn("Auth state sync timed out, forcing loading finish.");
+        setLoading(false);
+      }
+    }, 6000);
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
         if (firebaseUser) {
+          // Check if we already have the profile in memory or storage to avoid flickering
+          const cachedProfile = storage.get<UserProfile>('chaturanga_active_user');
+          if (cachedProfile && cachedProfile.id === firebaseUser.uid) {
+             setLoading(false); // Stop loading early if we have a matching cache
+          }
+
           const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
           if (userDoc.exists()) {
             const profile = userDoc.data() as UserProfile;
             setUser(profile);
-            localStorage.setItem('chaturanga_active_user', JSON.stringify(profile));
+            storage.set('chaturanga_active_user', profile, 24 * 60 * 60 * 1000); // 24h TTL
           } else {
+            logger.warn("Profile missing in Firestore for UID:", firebaseUser.uid);
             setUser(null);
-            localStorage.removeItem('chaturanga_active_user');
+            storage.remove('chaturanga_active_user');
           }
         } else {
-          setUser(null);
-          localStorage.removeItem('chaturanga_active_user');
+          // Only clear user if it's not a guest session (guests are not in Firebase)
+          if (!user?.isGuest) {
+            setUser(null);
+            storage.remove('chaturanga_active_user');
+          }
         }
       } catch (err) {
         logger.error("Auth sync failed:", err);
       } finally {
         setLoading(false);
+        clearTimeout(safetyTimeout);
       }
     }, (error) => {
       logger.error("Auth state listener error:", error);
       setLoading(false);
+      clearTimeout(safetyTimeout);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      clearTimeout(safetyTimeout);
+    };
   }, []);
 
-  // Persist user
+  // Sync game history with cache
+  useEffect(() => {
+    if (gameHistory.length > 0) {
+      storage.set('chaturanga_game_history', gameHistory, 60 * 60 * 1000); // 1h TTL
+    }
+  }, [gameHistory]);
+
+  // Persist user manually for edge cases
   useEffect(() => {
     if (user) {
-      localStorage.setItem('chaturanga_active_user', JSON.stringify(user));
+      storage.set('chaturanga_active_user', user, 7 * 24 * 60 * 60 * 1000); // 1 week TTL
     }
   }, [user]);
 
@@ -658,6 +678,59 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const loginAsGuest = async () => {
+    setLoading(true);
+    try {
+      // Rule: username should be like Guest1, Guest2 based on user count
+      // Optimization: Use getCountFromServer instead of fetching all docs
+      const usersRef = collection(db, 'users');
+      const snapshot = await getCountFromServer(usersRef);
+      const guestNum = snapshot.data().count + 1;
+      const guestUsername = `Guest${guestNum}`;
+
+      const guestUser: UserProfile = {
+        id: `guest_${Date.now()}`,
+        username: guestUsername,
+        email: 'guest@chaturanga.app',
+        avatar: AVATAR_OPTIONS[0],
+        title: 'Guest of Chaturanga',
+        bio: 'Exploring the arena as a guest warrior.',
+        joinedDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+        stats: {
+          rapid: 1200,
+          blitz: 1200,
+          bullet: 1200,
+          puzzle: 1200,
+          gamesPlayed: 0,
+          wins: 0,
+          losses: 0,
+          draws: 0,
+          currentStreak: 0,
+          bestStreak: 0,
+          puzzlesSolved: 0,
+          puzzleStreak: 0,
+          bestPuzzleStreak: 0
+        },
+        ratingHistory: [
+          { date: 'Today', rapid: 1200, blitz: 1200, bullet: 1200, puzzle: 1200 }
+        ],
+        tournamentMedals: [],
+        ratingMedals: [],
+        clubsJoined: [],
+        teamsJoined: [],
+        storagePreference: 'firestore',
+        isGuest: true
+      };
+
+      setUser(guestUser);
+      localStorage.setItem('chaturanga_active_user', JSON.stringify(guestUser));
+    } catch (err) {
+      logger.error("Guest login failed:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const sendPasswordReset = async (email: string) => {
     try {
       await sendPasswordResetEmail(auth, email);
@@ -684,6 +757,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         user,
         loading,
+        setLoading,
         isAuthenticated: !!user,
         login,
         signup,
@@ -708,6 +782,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         updateStoragePreference,
         sendGlobalMessage,
         loginWithGoogle,
+        loginAsGuest,
         sendPasswordReset,
         sendVerification
       }}
