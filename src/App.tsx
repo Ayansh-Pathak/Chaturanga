@@ -153,7 +153,7 @@ function ChaturangaApp() {
             </div>
 
             <div className="text-[11px] text-slate-400">
-              Featuring Elephant Head Bishops & Crown Kings • Elo Rating System • Official Medals
+              v0.9.9 • Featuring Elephant Head Bishops & Crown Kings • Elo Rating System • Official Medals
             </div>
           </div>
         </footer>
