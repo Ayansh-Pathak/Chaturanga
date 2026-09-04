@@ -35,12 +35,14 @@ export const ChessPiece: React.FC<ChessPieceProps> = React.memo(({
           fill: mainFill,
           stroke: strokeColor,
           color: strokeColor,
-          // Knights face each other: Black knight is mirrored
-          transform: isKnight && !isWhite ? 'scaleX(-1)' : 'none',
-          transformOrigin: 'center'
         }}
       >
-        <use href={`#piece-${type.toLowerCase()}`} />
+        <g style={{
+          transform: isKnight && !isWhite ? 'scaleX(-1)' : 'none',
+          transformOrigin: '50% 50%'
+        }}>
+          <use href={`#piece-${type.toLowerCase()}`} />
+        </g>
       </svg>
     </div>
   );

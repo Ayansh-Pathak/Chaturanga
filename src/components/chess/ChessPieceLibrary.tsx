@@ -27,7 +27,7 @@ export const PieceSpriteSheet: React.FC = () => (
        <path d="M30 84 C30 68 25 50 32 30 C34 22 40 14 46 12 C47 12 47 16 48 18 C50 16 52 14 55 14 C56 16 55 20 54 22 C62 20 72 23 76 30 C78 34 76 40 70 44 C67 46 64 45 61 44 C68 49 71 56 70 65 C68 74 65 79 68 84 Z" strokeWidth="3.5" strokeLinejoin="round" />
        <path d="M46 12 L49 6 L52 14 Z" strokeWidth="2.5" strokeLinejoin="round" />
        <path d="M52 14 L56 7 L58 16 Z" strokeWidth="2.5" strokeLinejoin="round" />
-       <circle cx="53" cy="24" r="1.8" fill="currentColor" stroke="none" />
+       <circle cx="62" cy="28" r="3.2" fill="currentColor" stroke="none" />
     </symbol>
 
     <symbol id="piece-b" viewBox="0 0 100 100">
@@ -36,8 +36,8 @@ export const PieceSpriteSheet: React.FC = () => (
       <path d="M32 40 C22 36 16 46 18 58 C20 68 28 72 32 68" strokeWidth="3" strokeLinejoin="round" />
       <path d="M68 40 C78 36 84 46 82 58 C80 68 72 72 68 68" strokeWidth="3" strokeLinejoin="round" />
       <path d="M45 46 C45 60 42 70 46 76 C48 80 54 82 58 78 C61 74 59 68 53 68 C50 68 49 71 50 73" fill="none" strokeWidth="4.5" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="42" cy="34" r="1.8" fill="currentColor" stroke="none" />
-      <circle cx="58" cy="34" r="1.8" fill="currentColor" stroke="none" />
+      <circle cx="41" cy="35" r="2.8" fill="currentColor" stroke="none" />
+      <circle cx="59" cy="35" r="2.8" fill="currentColor" stroke="none" />
     </symbol>
 
     <symbol id="piece-q" viewBox="0 0 100 100">
