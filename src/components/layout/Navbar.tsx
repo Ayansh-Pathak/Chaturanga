@@ -100,7 +100,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               </span>
             </div>
           </div>
-        </div>
+        </button>
 
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-1.5">
@@ -160,7 +160,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                   </span>
                 </div>
               </div>
-            </div>
+            </button>
           ) : (
             <button
               onClick={onOpenAuth}
