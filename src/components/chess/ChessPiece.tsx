@@ -22,12 +22,23 @@ export const ChessPiece: React.FC<ChessPieceProps> = React.memo(({
   const mainFill = isWhite ? '#ffffff' : '#1e2430';
   const strokeColor = isWhite ? '#2c3345' : '#e2e8f0';
 
+  const isKnight = type.toLowerCase() === 'n';
+
   return (
     <div className={`relative flex items-center justify-center ${className}`}>
       <svg
         viewBox="0 0 100 100"
         className="w-full h-full drop-shadow-md select-none pointer-events-none"
-        style={{ width: size, height: size, fill: mainFill, stroke: strokeColor, color: strokeColor }}
+        style={{
+          width: size,
+          height: size,
+          fill: mainFill,
+          stroke: strokeColor,
+          color: strokeColor,
+          // Knights face each other: Black knight is mirrored
+          transform: isKnight && !isWhite ? 'scaleX(-1)' : 'none',
+          transformOrigin: 'center'
+        }}
       >
         <use href={`#piece-${type.toLowerCase()}`} />
       </svg>
