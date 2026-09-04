@@ -10,6 +10,7 @@ interface AuthModalProps {
 }
 
 const AVATAR_OPTIONS = [
+  '/Chaturanga Logo.png',
   '/chaturanga-crown.png',
   'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=128&q=70',
   'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=128&q=70',
@@ -31,7 +32,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [selectedAvatar, setSelectedAvatar] = useState('/chaturanga-crown.png');
+  const [selectedAvatar, setSelectedAvatar] = useState('/Chaturanga Logo.png');
   const [resetEmail, setResetEmail] = useState('');
 
   // Email change state

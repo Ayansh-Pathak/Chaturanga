@@ -366,7 +366,7 @@ export const ClubsAndTeamsHub: React.FC = () => {
                           <span className="text-[9px] font-bold mt-0.5">Change</span>
                         </div>
                       )}
-                    </div>
+                    </button>
                     {isMember && (
                       <button
                         onClick={() => handleOpenAvatarModal('club')}
