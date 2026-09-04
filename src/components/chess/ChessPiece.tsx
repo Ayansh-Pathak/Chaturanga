@@ -37,10 +37,7 @@ export const ChessPiece: React.FC<ChessPieceProps> = React.memo(({
           color: strokeColor,
         }}
       >
-        <g style={{
-          transform: isKnight && !isWhite ? 'scaleX(-1)' : 'none',
-          transformOrigin: '50% 50%'
-        }}>
+        <g transform={isKnight && !isWhite ? "translate(100, 0) scale(-1, 1)" : undefined}>
           <use href={`#piece-${type.toLowerCase()}`} />
         </g>
       </svg>

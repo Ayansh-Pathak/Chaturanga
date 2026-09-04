@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.9.9",
   "description": "Chaturanga React application",
-  "author": "Alok",
+  "author": "Ayansh Pathak",
   "license": "MIT",
   "engines": {
     "node": ">=20.0.0"
