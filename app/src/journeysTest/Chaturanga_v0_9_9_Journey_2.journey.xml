@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<journey name="Chaturanga v0 9 9 Journey 2">
+<journey name="Chaturanga v1.0.0 Journey 2">
     <description>Verification of default avatars, accessibility fixes, and build stability</description>
     <actions xml:space="preserve">
         <action>Make sure that  🏷️ Unified Default Avatars: Updated [AuthModal.tsx](file:///C:/Users/alok4/StudioProjects/Chaturanga 1.1.3/src/components/auth/AuthModal.tsx) so that the Chaturanga Logo is the first and default option for new account sign-ups, matching the rest of the app.

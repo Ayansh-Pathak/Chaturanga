@@ -538,7 +538,7 @@ export const PlayHub: React.FC = () => {
             </div>
           </div>
           <div className="mt-4 pt-4 border-t border-slate-800 flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase">
-             <span>v0.9.9 Official</span>
+             <span>v1.0.0 Official</span>
              <span className="text-amber-500/60">FIDE Laws 2026</span>
           </div>
         </div>
