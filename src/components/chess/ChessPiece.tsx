@@ -27,7 +27,7 @@ export const ChessPiece: React.FC<ChessPieceProps> = React.memo(({
       <svg
         viewBox="0 0 100 100"
         className="w-full h-full drop-shadow-md select-none pointer-events-none"
-        style={{ width: size, height: size, fill: mainFill, stroke: strokeColor }}
+        style={{ width: size, height: size, fill: mainFill, stroke: strokeColor, color: strokeColor }}
       >
         <use href={`#piece-${type.toLowerCase()}`} />
       </svg>

@@ -460,12 +460,11 @@ export const PlayHub: React.FC = () => {
 
   const getBotTitle = (elo: number) => {
     if (elo < 800) return 'Beginner';
-    if (elo < 1000) return 'Casual';
-    if (elo < 1400) return 'Club Player';
+    if (elo < 1200) return 'Casual';
     if (elo < 1800) return 'Intermediate';
-    if (elo < 2100) return 'Expert';
-    if (elo < 2400) return 'Master';
-    if (elo < 2700) return 'Grandmaster';
+    if (elo < 2200) return 'Expert';
+    if (elo < 2500) return 'Master';
+    if (elo < 2800) return 'Grandmaster';
     return 'Super Grandmaster';
   };
 
@@ -895,7 +894,7 @@ export const PlayHub: React.FC = () => {
               <div className="space-y-2">
                 <div className="flex justify-between text-[10px] text-slate-400 font-mono">
                   <span>400 (Beginner)</span>
-                  <span>1000 (Club)</span>
+                  <span>1000 (Casual)</span>
                   <span>3000 (Grandmaster)</span>
                 </div>
                 <input
