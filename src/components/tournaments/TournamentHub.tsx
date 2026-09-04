@@ -234,7 +234,7 @@ const isParticipant = selectedTournament?.participants?.some(
     // Record game
     addGameRecord({
       white: { id: user.id, name: user.username, rating: user.stats.rapid, avatar: user.avatar },
-      black: { id: 'bot_opp', name: opponentBot?.name || 'Tournament Master', rating: opponentBot?.rating || 1650, avatar: opponentBot?.avatar || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80' },
+      black: { id: 'bot_opp', name: opponentBot?.name || 'Computer', rating: opponentBot?.rating || 1500, avatar: opponentBot?.avatar || '/chaturanga-crown.png' },
       result: isWin ? '1-0' : (isLoss ? '0-1' : '1/2-1/2'),
       reason: result.reason,
       timeControl: selectedTournament.timeControl,
@@ -638,7 +638,7 @@ const isParticipant = selectedTournament?.participants?.some(
 
                     {selectedTournament.status !== 'completed' && isUserInSelectedTour && (
                       <button
-                        onClick={() => handleStartMatch({ name: 'Grandmaster Vishy', rating: 1720, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80' })}
+                        onClick={() => handleStartMatch({ name: 'Computer', rating: user?.stats.rapid || 1500, avatar: '/chaturanga-crown.png' })}
                         className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-red-600 hover:from-blue-500 hover:to-red-500 text-white font-black text-xs flex items-center gap-1.5 shadow-md active:scale-95 border border-blue-400/30"
                       >
                         <Swords size={14} /> Play Match

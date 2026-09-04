@@ -36,10 +36,32 @@ app.get("/api/health", (_req, res) => {
 // 2. Content-Aware Gemini Chatbot API
 app.post("/api/gemini/chat", async (req, res) => {
   try {
-    const { message, history = [], context = {} } = req.body;
+    const { message, model, history = [], context = {} } = req.body;
 
     if (!message || typeof message !== "string") {
       return res.status(400).json({ error: "Message is required" });
+    }
+
+    // Map user-friendly model names to API IDs
+    let modelId = "gemini-1.5-flash"; // Default
+    if (model) {
+      const lowerModel = model.toLowerCase();
+      if (lowerModel.includes("3.8 flash-lite")) modelId = "gemini-3.8-flash-lite";
+      else if (lowerModel.includes("3.8 flash")) modelId = "gemini-3.8-flash";
+      else if (lowerModel.includes("3.7 flash")) modelId = "gemini-3.7-flash";
+      else if (lowerModel.includes("3.6 flash")) modelId = "gemini-3.6-flash";
+      else if (lowerModel.includes("3.5 flash-lite")) modelId = "gemini-3.5-flash-lite";
+      else if (lowerModel.includes("3.5 flash")) modelId = "gemini-3.5-flash";
+      else if (lowerModel.includes("3.1 flash-lite")) modelId = "gemini-3.1-flash-lite";
+      else if (lowerModel.includes("2.5 flash-lite")) modelId = "gemini-2.5-flash-lite";
+      else if (lowerModel.includes("2.5 flash")) modelId = "gemini-2.5-flash";
+      else if (lowerModel.includes("2.5 pro")) modelId = "gemini-2.5-pro";
+      else if (lowerModel.includes("1.5 pro")) modelId = "gemini-1.5-pro";
+      else if (lowerModel.includes("1.5 flash")) modelId = "gemini-1.5-flash";
+      else if (lowerModel.includes("1.0 pro")) modelId = "gemini-1.0-pro";
+      else if (lowerModel.includes("nano banana 2 lite")) modelId = "gemini-3.1-flash-lite";
+      else if (lowerModel.includes("nano banana 2")) modelId = "gemini-3.1-flash";
+      else if (lowerModel.includes("nano banana")) modelId = "gemini-2.5-flash";
     }
 
     const {
@@ -98,7 +120,7 @@ ${contextSnippet}`;
     const fullPrompt = `${conversationPrompt ? `${conversationPrompt}\n` : ""}User: ${message}\nChaturanga GM:`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
+      model: modelId,
       contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
       config: {
         systemInstruction,
@@ -306,7 +328,7 @@ app.post("/api/matchmake", (req, res) => {
           id,
           name: name || "Grandmaster",
           rating: userRating,
-          avatar: avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
+          avatar: avatar || "/chaturanga-crown.png",
           country: country || "🌍"
         }
       });
@@ -342,7 +364,7 @@ app.post("/api/matchmake", (req, res) => {
     name: name || "Player",
     rating: userRating,
     timeControl,
-    avatar: avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
+    avatar: avatar || "/chaturanga-crown.png",
     country: country || "🌍",
     timestamp: now,
     res

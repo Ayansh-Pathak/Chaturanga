@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <journey name="Chaturanga v1 5 5 Journey 1">
-    <description></description>
+    <description>Verify authentication, Gemini chatbot, game review, and puzzle features</description>
     <actions xml:space="preserve">
         <action>Verify that the app loads in under 20 seconds. If it does not then modify the code until it loads in under 20 seconds. The first priority is making sure that the app loads quickly.</action>
         <action>Make sure that all the types of user authentication work and delete whatever accounts you have created afterwards.</action>
@@ -8,6 +8,5 @@
         <action>Use the game review and the puzzles and verify they are working.</action>
         <action>Modify the code so that there is a play as guest option and the username should be like Guest1, Guest2 and test it.</action>
         <action>Use all features of the app but all of the data should be deleted afterwards since I do not want an ai account who is the one and only announcer or the account who does the first comment on my app.</action>
-        <action></action>
     </actions>
 </journey>

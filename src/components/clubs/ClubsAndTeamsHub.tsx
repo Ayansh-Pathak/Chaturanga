@@ -62,7 +62,7 @@ export const ClubsAndTeamsHub: React.FC = () => {
   const [isPrivate, setIsPrivate] = useState(false);
   const [clubPassword, setClubPassword] = useState('');
   const [banner, setBanner] = useState('');
-  const [createIcon, setCreateIcon] = useState('👑');
+  const [createIcon, setCreateIcon] = useState('/chaturanga-crown.png');
 
   const filteredClubs = clubs.filter((c) => {
     if (filterType === 'clubs' && c.isTeam) return false;
@@ -113,7 +113,7 @@ export const ClubsAndTeamsHub: React.FC = () => {
       banner,
       isPrivate,
       clubPassword.trim(),
-      createIcon || (isTeam ? '🛡️' : '👑')
+      createIcon || '/chaturanga-crown.png'
     );
     setSelectedClubId(newClub.id);
     setShowCreateModal(false);
@@ -147,7 +147,7 @@ export const ClubsAndTeamsHub: React.FC = () => {
 
   const handleSaveAvatar = async () => {
     if (!selectedClub) return;
-    const finalIcon = avatarPreview || avatarInputUrl || (selectedClub.isTeam ? '🛡️' : '👑');
+    const finalIcon = avatarPreview || avatarInputUrl || '/chaturanga-crown.png';
 
     if (avatarModalTarget === 'club') {
       await updateClubIcon(selectedClub.id, finalIcon);
@@ -200,7 +200,7 @@ export const ClubsAndTeamsHub: React.FC = () => {
   const isOwner = selectedClub?.ownerId === user?.id;
 
   const renderClubIcon = (iconStr: string, className = "w-full h-full object-cover") => {
-    if (iconStr && (iconStr.startsWith('http') || iconStr.startsWith('data:'))) {
+    if (iconStr && (iconStr.startsWith('/') || iconStr.startsWith('http') || iconStr.startsWith('data:'))) {
       return <img src={iconStr} alt="Emblem" className={className} />;
     }
     return <span className="text-2xl select-none">{iconStr || '👑'}</span>;
@@ -351,12 +351,13 @@ export const ClubsAndTeamsHub: React.FC = () => {
                 <div className="flex items-center gap-4">
                   {/* Profile Picture with Change Avatar Trigger */}
                   <div className="relative group">
-                    <div 
-                      className={`w-20 h-20 rounded-2xl bg-[#10192e] border-2 border-blue-400/80 shadow-2xl overflow-hidden flex items-center justify-center text-3xl relative ${
+                    <button
+                      className={`w-20 h-20 rounded-2xl bg-[#10192e] border-2 border-blue-400/80 shadow-2xl overflow-hidden flex items-center justify-center text-3xl relative p-0 ${
                         isMember ? 'cursor-pointer hover:border-blue-300' : ''
                       }`}
                       onClick={() => isMember && handleOpenAvatarModal('club')}
                       title={isMember ? `Click to change ${selectedClub.isTeam ? 'team' : 'club'} profile picture` : ''}
+                      type="button"
                     >
                       {renderClubIcon(selectedClub.icon, "w-full h-full object-cover")}
                       {isMember && (

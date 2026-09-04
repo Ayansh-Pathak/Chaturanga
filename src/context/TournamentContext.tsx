@@ -101,7 +101,7 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     } : {
       id: 'guest',
       username: 'Guest Player',
-      avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
+      avatar: '/Chaturanga Logo.png',
       rating: 1200,
       score: 0,
       wins: 0,

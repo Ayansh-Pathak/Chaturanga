@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { UserProfile, TournamentMedalData, GameRecord } from '../types/chess';
+import { UserProfile, TournamentMedalData, GameRecord, DirectMessage } from '../types/chess';
 import confetti from 'canvas-confetti';
 import { auth, db, rtdb, logger } from './arena-init';
 import {
@@ -52,21 +52,21 @@ interface AuthContextType {
   updateStoragePreference: (pref: 'firestore' | 'rtdb') => Promise<void>;
   gameHistory: GameRecord[];
   allUsers: UserProfile[];
-  directMessages: import('../types/chess').DirectMessage[];
-  chatHistory: { sender: string; text: string; time: string }[];
-  setChatHistory: React.Dispatch<React.SetStateAction<{ sender: string; text: string; time: string }[]>>;
+  directMessages: DirectMessage[];
   sendDirectMessage: (recipientName: string, text: string) => Promise<{ success: boolean; message: string }>;
   sendGlobalMessage: (text: string, asAnnouncement?: boolean) => Promise<void>;
   loginWithGoogle: () => Promise<{ success: boolean; message: string }>;
   loginAsGuest: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<{ success: boolean; message: string }>;
   sendVerification: () => Promise<{ success: boolean; message: string }>;
-  geminiHistory: { id: string; sender: 'user' | 'gemini'; text: string; timestamp: any }[];
+  geminiHistory: { id: string; sender: 'user' | 'gemini'; text: string; timestamp: unknown }[];
   saveGeminiMessage: (msg: { sender: 'user' | 'gemini'; text: string }) => Promise<void>;
   clearGeminiHistory: () => Promise<void>;
 }
 
 const AVATAR_OPTIONS = [
+  '/Chaturanga Logo.png',
+  '/chaturanga-crown.png',
   'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=128&q=70',
   'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=128&q=70',
   'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=128&q=70',
@@ -89,9 +89,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return storage.get<GameRecord[]>('chaturanga_game_history') || [];
   });
   const [allUsers, setAllUsers] = useState<UserProfile[]>([]);
-  const [directMessages, setDirectMessages] = useState<import('../types/chess').DirectMessage[]>([]);
-  const [geminiHistory, setGeminiHistory] = useState<{ id: string; sender: 'user' | 'gemini'; text: string; timestamp: any }[]>([]);
-  const [chatHistory, setChatHistory] = useState<{ sender: string; text: string; time: string }[]>([]);
+  const [directMessages, setDirectMessages] = useState<DirectMessage[]>([]);
+  const [geminiHistory, setGeminiHistory] = useState<{ id: string; sender: 'user' | 'gemini'; text: string; timestamp: unknown }[]>([]);
 
   // Firebase Auth sync
   useEffect(() => {
@@ -161,6 +160,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   }, [user]);
 
+  // Sync Gemini History
+  useEffect(() => {
+    if (!user || user.isGuest) {
+      setGeminiHistory([]);
+      return;
+    }
+
+    let unsubscribe: () => void;
+
+    if (user.storagePreference === 'rtdb') {
+      const historyRef = ref(rtdb, `users/${user.id}/gemini_history`);
+      unsubscribe = onValue(historyRef, (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          const list = Object.keys(data).map(key => ({
+            id: key,
+            ...data[key]
+          }));
+          // Sort by timestamp if available
+          list.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+          setGeminiHistory(list);
+        } else {
+          setGeminiHistory([]);
+        }
+      });
+    } else {
+      const q = query(
+        collection(db, 'users', user.id, 'gemini_history'),
+        orderBy('timestamp', 'asc')
+      );
+      unsubscribe = onSnapshot(q, (snapshot) => {
+        const list = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as any[];
+        setGeminiHistory(list);
+      });
+    }
+
+    return () => unsubscribe?.();
+  }, [user]);
+
   const login = async (emailOrUser: string, pass: string) => {
     if (!emailOrUser || !pass) {
       return { success: false, message: 'Please provide valid credentials.' };
@@ -190,9 +231,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await signInWithEmailAndPassword(auth, email, pass);
       return { success: true, message: 'Welcome back to Chaturanga!' };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Login error:', error);
-      return { success: false, message: error.message || 'Login failed.' };
+      return { success: false, message: error instanceof Error ? error.message : 'Login failed.' };
     }
   };
 
@@ -210,7 +251,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         id: userCredential.user.uid,
         username,
         email,
-        avatar: avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
+        avatar: avatar || '/Chaturanga Logo.png',
         title: 'Novice of Chaturanga',
         bio: 'Practicing tactical maneuvers and king defenses.',
         joinedDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
@@ -249,9 +290,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       return { success: true, message: 'Account created! Verification email sent.' };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Signup error:', error);
-      return { success: false, message: error.message || 'Signup failed.' };
+      return { success: false, message: error instanceof Error ? error.message : 'Signup failed.' };
     }
   };
 
@@ -288,8 +329,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         success: true,
         message: `Email successfully updated from ${oldEmail} to ${newEmail}! (Reversible at any time)`
       };
-    } catch (error: any) {
-      return { success: false, message: error.message };
+    } catch (error: unknown) {
+      return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
     }
   };
 
@@ -319,8 +360,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         success: true,
         message: `Email successfully reverted back to ${restoredEmail}!`
       };
-    } catch (error: any) {
-      return { success: false, message: error.message };
+    } catch (error: unknown) {
+      return { success: false, message: error instanceof Error ? error.message : 'Unknown error' };
     }
   };
 
@@ -637,7 +678,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           id: firebaseUser.uid,
           username: firebaseUser.displayName || 'Grandmaster',
           email: firebaseUser.email || '',
-          avatar: firebaseUser.photoURL || AVATAR_OPTIONS[0],
+          avatar: firebaseUser.photoURL || '/Chaturanga Logo.png',
           title: 'Novice of Chaturanga',
           bio: 'Practicing tactical maneuvers and king defenses.',
           joinedDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
@@ -672,9 +713,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       return { success: true, message: 'Signed in with Google!' };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Google Sign-In error:', error);
-      return { success: false, message: error.message || 'Google Sign-In failed.' };
+      return { success: false, message: error instanceof Error ? error.message : 'Google Sign-In failed.' };
     }
   };
 
@@ -692,7 +733,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         id: `guest_${Date.now()}`,
         username: guestUsername,
         email: 'guest@chaturanga.app',
-        avatar: AVATAR_OPTIONS[0],
+        avatar: '/Chaturanga Logo.png',
         title: 'Guest of Chaturanga',
         bio: 'Exploring the arena as a guest warrior.',
         joinedDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
@@ -724,7 +765,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setUser(guestUser);
       localStorage.setItem('chaturanga_active_user', JSON.stringify(guestUser));
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error("Guest login failed:", err);
     } finally {
       setLoading(false);
@@ -735,9 +776,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await sendPasswordResetEmail(auth, email);
       return { success: true, message: 'Password reset link sent to your email!' };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Password reset error:', error);
-      return { success: false, message: error.message || 'Failed to send password reset email.' };
+      return { success: false, message: error instanceof Error ? error.message : 'Failed to send password reset email.' };
     }
   };
 
@@ -746,9 +787,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await sendEmailVerification(auth.currentUser);
       return { success: true, message: 'Verification email resent successfully!' };
-    } catch (error: any) {
+    } catch (error: unknown) {
       logger.error('Verification resend error:', error);
-      return { success: false, message: error.message || 'Failed to resend verification email.' };
+      return { success: false, message: error instanceof Error ? error.message : 'Failed to resend verification email.' };
     }
   };
 
@@ -773,8 +814,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         gameHistory,
         allUsers,
         directMessages,
-        chatHistory,
-        setChatHistory,
         sendDirectMessage,
         geminiHistory,
         saveGeminiMessage,

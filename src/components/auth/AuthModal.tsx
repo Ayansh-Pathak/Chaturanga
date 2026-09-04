@@ -10,12 +10,13 @@ interface AuthModalProps {
 }
 
 const AVATAR_OPTIONS = [
-  'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
-  'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=200&q=80',
-  'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&q=80',
-  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
-  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=200&q=80',
-  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=200&q=80'
+  '/chaturanga-crown.png',
+  'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=128&q=70',
+  'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=128&q=70',
+  'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=128&q=70',
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=128&q=70',
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=128&q=70',
+  'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=128&q=70'
 ];
 
 export const AuthModal: React.FC<AuthModalProps> = ({
@@ -30,7 +31,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [selectedAvatar, setSelectedAvatar] = useState(AVATAR_OPTIONS[0]);
+  const [selectedAvatar, setSelectedAvatar] = useState('/chaturanga-crown.png');
   const [resetEmail, setResetEmail] = useState('');
 
   // Email change state
@@ -343,7 +344,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                   <img
                     key={idx}
                     src={av}
-                    alt={`Avatar ${idx}`}
+                    alt={idx === 0 ? "Chaturanga Logo" : `Avatar ${idx}`}
                     onClick={() => setSelectedAvatar(av)}
                     className={`w-10 h-10 rounded-xl object-cover cursor-pointer border-2 transition-all ${
                       selectedAvatar === av

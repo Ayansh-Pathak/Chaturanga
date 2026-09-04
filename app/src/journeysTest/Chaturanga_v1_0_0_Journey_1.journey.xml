@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<journey name="Chaturanga v1 0 0 Journey 1">
+    <description>Verify app loading on desktop</description>
+    <actions xml:space="preserve">
+        <action>Use the app and make sure it loads on the medium desktop.</action>
+    </actions>
+</journey>

@@ -42,19 +42,19 @@ if ((import.meta as any).env?.DEV && typeof window !== 'undefined') {
  * Arena Grandmaster Logger
  */
 export const logger = {
-  log: (message: string, ...args: any[]) => {
+  log: (message: string, ...args: unknown[]) => {
     if ((import.meta as any).env?.DEV) {
       // eslint-disable-next-line no-console
       console.log(`[Arena] ${message}`, ...args);
     }
   },
-  warn: (message: string, ...args: any[]) => {
+  warn: (message: string, ...args: unknown[]) => {
     if ((import.meta as any).env?.DEV) {
       // eslint-disable-next-line no-console
       console.warn(`[Arena Warning] ${message}`, ...args);
     }
   },
-  error: (message: string, ...args: any[]) => {
+  error: (message: string, ...args: unknown[]) => {
     // eslint-disable-next-line no-console
     console.error(`[Arena Error] ${message}`, ...args);
   }

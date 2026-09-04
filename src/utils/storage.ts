@@ -7,7 +7,7 @@ export const storage = {
   /**
    * Save data with optional TTL (in milliseconds)
    */
-  set: (key: string, value: any, ttl?: number) => {
+  set: (key: string, value: unknown, ttl?: number) => {
     const item = {
       value,
       expiry: ttl ? Date.now() + ttl : null,

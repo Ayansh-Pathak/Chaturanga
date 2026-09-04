@@ -20,3 +20,17 @@ export function apiUrl(path: string): string | null {
   if (IS_STATIC_HOST) return null;
   return path;
 }
+
+/**
+ * Get the correct asset URL based on host.
+ */
+export function getAssetUrl(path: string): string {
+  if (typeof window === 'undefined') return path;
+
+  // On Android, use the appassets.androidplatform.net domain
+  if (window.location.hostname === 'appassets.androidplatform.net') {
+    return `https://appassets.androidplatform.net${path.startsWith('/') ? '' : '/'}${path}`;
+  }
+
+  return path.startsWith('/') ? path : `/${path}`;
+}

@@ -23,7 +23,7 @@ export interface Announcement {
   text: string;
   authorName: string;
   authorAvatar: string;
-  createdAt: any;
+  createdAt: Timestamp | string;
 }
 
 interface FeedbackContextType {

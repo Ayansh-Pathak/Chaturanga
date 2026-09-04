@@ -35,16 +35,17 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
         
         {/* LOGO: "Chaturanga" with "चतुरङ्ग" in Sanskrit written under it */}
-        <div 
+        <button
           onClick={() => setActiveTab('play')}
-          className="flex items-center gap-3 cursor-pointer group select-none"
+          className="flex items-center gap-3 cursor-pointer group select-none bg-transparent border-none p-0 text-left outline-none"
+          aria-label="Chaturanga Home"
         >
           {/* Custom Royal Red & Blue Shield Icon */}
           <div className="relative w-11 h-11 rounded-xl bg-gradient-to-br from-blue-600 via-indigo-600 to-red-600 p-[2px] shadow-[0_0_20px_rgba(59,130,246,0.4)] transition-transform group-hover:scale-105">
             <div className="w-full h-full rounded-[10px] bg-[#0b1021] flex items-center justify-center relative overflow-hidden">
               <div className="absolute inset-0 bg-radial from-blue-500/20 to-red-500/10 opacity-70 pointer-events-none" />
               <img
-                src="/chaturanga logo.png"
+                src="/chaturanga-crown.png"
                 alt="Crown"
                 className="w-7 h-7 object-contain drop-shadow-[0_0_8px_rgba(245,158,11,0.6)]"
                 onError={(e) => {
@@ -75,7 +76,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* Desktop/Tablet Logo Image */}
           <div className="hidden md:block">
             <img
-              src="/chaturanga logo.png"
+              src="/chaturanga-logo.png"
               alt="Chaturanga Grand Chess Arena"
               className="h-10 sm:h-12 w-auto object-contain"
               onError={(e) => {
@@ -131,9 +132,10 @@ export const Navbar: React.FC<NavbarProps> = ({
         {/* User Account / Quick Stats */}
         <div className="flex items-center gap-3">
           {user ? (
-            <div 
+            <button
               onClick={() => setActiveTab('profile')}
-              className="flex items-center gap-2.5 p-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-gradient-to-r from-[#0c1427] to-[#1a0f1e] border border-blue-500/30 hover:border-red-500/50 transition-all cursor-pointer group shadow-[0_0_12px_rgba(59,130,246,0.15)]"
+              className="flex items-center gap-2.5 p-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-gradient-to-r from-[#0c1427] to-[#1a0f1e] border border-blue-500/30 hover:border-red-500/50 transition-all cursor-pointer group shadow-[0_0_12px_rgba(59,130,246,0.15)] text-left outline-none"
+              type="button"
             >
               <div className="relative">
                 <img

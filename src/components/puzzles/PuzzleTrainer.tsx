@@ -91,7 +91,7 @@ export const PuzzleTrainer: React.FC = () => {
   };
 
   useEffect(() => {
-    let timer: any;
+    let timer: ReturnType<typeof setInterval> | undefined;
     if (isRushActive && rushTimeLeft > 0) {
       timer = setInterval(() => {
         setRushTimeLeft((t) => {
@@ -103,7 +103,9 @@ export const PuzzleTrainer: React.FC = () => {
         });
       }, 1000);
     }
-    return () => clearInterval(timer);
+    return () => {
+      if (timer) clearInterval(timer);
+    };
   }, [isRushActive, rushTimeLeft]);
 
   const loadPuzzle = (p: PuzzleData) => {

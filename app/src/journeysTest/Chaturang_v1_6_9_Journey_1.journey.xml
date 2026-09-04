@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <journey name="Chaturang v1 6 9 Journey 1">
-    <description></description>
+    <description>General verification journey</description>
     <actions>
-        <action></action>
+        <action>Verify app loads and is ready</action>
     </actions>
 </journey>

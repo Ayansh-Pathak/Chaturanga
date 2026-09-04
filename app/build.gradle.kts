@@ -14,7 +14,7 @@ android {
         applicationId = "com.ayanshcorp.chaturangathegrandchessarenabyayanshpathak"
         minSdk = 24
         targetSdk = 37
-        versionCode = 31
+        versionCode = 1
         versionName = "0.9.9"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -63,9 +63,9 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.3.0")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
-    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4:1.12.0")
     debugImplementation("androidx.compose.ui:ui-tooling")
-    debugImplementation("androidx.compose.ui:ui-test-manifest")
+    debugImplementation("androidx.compose.ui:ui-test-manifest:1.12.0")
 }
 
 tasks.register<Copy>("copyWebDistToAssets") {

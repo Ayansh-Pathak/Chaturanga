@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { GameRecord } from '../../types/chess';
 import { TournamentMedal } from '../medals/TournamentMedal';
 import { RatingMedal } from '../medals/RatingMedal';
 import { GameReviewModal } from '../analysis/GameReviewModal';
@@ -36,6 +37,8 @@ import {
 } from 'lucide-react';
 
 const PRESET_AVATARS = [
+  '/Chaturanga Logo.png',
+  '/chaturanga-crown.png',
   'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
   'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?auto=format&fit=crop&w=200&q=80',
   'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=200&q=80',
@@ -80,7 +83,7 @@ export const ProfilePage: React.FC = () => {
   const [settingsMessage, setSettingsMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
 
   // Game review modal state
-  const [selectedGameForReview, setSelectedGameForReview] = useState<any | null>(null);
+  const [selectedGameForReview, setSelectedGameForReview] = useState<GameRecord | null>(null);
 
   if (!user) {
     return (
@@ -157,13 +160,15 @@ export const ProfilePage: React.FC = () => {
                 alt={user.username}
                 className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl object-cover ring-2 ring-blue-400/80 shadow-[0_0_20px_rgba(59,130,246,0.5)]"
               />
-              <button
-                onClick={() => setIsEditingProfile(true)}
-                className="absolute inset-0 bg-black/60 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white text-xs font-bold gap-1"
-                title="Edit avatar & profile"
-              >
-                <Camera size={16} />
-              </button>
+              {!user.isGuest && (
+                <button
+                  onClick={() => setIsEditingProfile(true)}
+                  className="absolute inset-0 bg-black/60 rounded-2xl opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white text-xs font-bold gap-1"
+                  title="Edit avatar & profile"
+                >
+                  <Camera size={16} />
+                </button>
+              )}
               <div className="absolute -bottom-2 -right-2 p-1.5 rounded-xl bg-gradient-to-br from-red-500 to-rose-600 text-white shadow-lg border border-red-300/40">
                 <Crown size={18} fill="#fff" />
               </div>
@@ -178,13 +183,15 @@ export const ProfilePage: React.FC = () => {
                 <span className="text-xs font-black px-3 py-1 rounded-full bg-gradient-to-r from-blue-600 to-red-600 text-white shadow-md border border-blue-300/30">
                   {user.title || 'Grandmaster of Chaturanga'}
                 </span>
-                <button
-                  onClick={() => setIsEditingProfile(true)}
-                  className="p-1 text-slate-400 hover:text-amber-400 transition-colors"
-                  title="Customize Profile"
-                >
-                  <Edit3 size={16} />
-                </button>
+                {!user.isGuest && (
+                  <button
+                    onClick={() => setIsEditingProfile(true)}
+                    className="p-1 text-slate-400 hover:text-amber-400 transition-colors"
+                    title="Customize Profile"
+                  >
+                    <Edit3 size={16} />
+                  </button>
+                )}
               </div>
 
               <p className="text-xs text-slate-300 max-w-lg leading-relaxed">{user.bio}</p>
@@ -733,19 +740,26 @@ export const ProfilePage: React.FC = () => {
               {/* Avatar Selection */}
               <div>
                 <label className="block text-xs font-bold text-slate-300 mb-2">Choose Avatar</label>
-                <div className="flex items-center gap-3 overflow-x-auto pb-2">
-                  {PRESET_AVATARS.map((av, i) => (
-                    <img
-                      key={i}
-                      src={av}
-                      alt="Avatar option"
-                      onClick={() => setEditAvatar(av)}
-                      className={`w-12 h-12 rounded-xl object-cover cursor-pointer border-2 transition-all ${
-                        editAvatar === av ? 'border-amber-400 scale-105 shadow-lg' : 'border-transparent opacity-70 hover:opacity-100'
-                      }`}
-                    />
-                  ))}
-                </div>
+                {user.isGuest ? (
+                  <div className="p-3 rounded-xl bg-blue-500/10 border border-blue-500/30 flex items-center gap-2 text-[10px] text-blue-300 font-bold">
+                    <Sparkles size={14} className="text-amber-400" />
+                    <span>Guest profiles use the default Chaturanga Crown avatar.</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 overflow-x-auto pb-2">
+                    {PRESET_AVATARS.map((av, i) => (
+                      <img
+                        key={i}
+                        src={av}
+                        alt="Avatar option"
+                        onClick={() => setEditAvatar(av)}
+                        className={`w-12 h-12 rounded-xl object-cover cursor-pointer border-2 transition-all ${
+                          editAvatar === av ? 'border-amber-400 scale-105 shadow-lg' : 'border-transparent opacity-70 hover:opacity-100'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="flex justify-end gap-2 pt-2">
@@ -758,7 +772,8 @@ export const ProfilePage: React.FC = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-black font-black text-xs shadow-lg"
+                  disabled={user.isGuest && editAvatar !== user.avatar}
+                  className="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-black font-black text-xs shadow-lg disabled:opacity-50"
                 >
                   Save Profile
                 </button>

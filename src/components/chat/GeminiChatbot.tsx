@@ -46,17 +46,14 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = ({
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showCommands, setShowCommands] = useState(false);
-  const [selectedModel, setSelectedModel] = useState('Gemini 3.7 Flash');
+  const [selectedModel, setSelectedModel] = useState('Gemini 3.8 Flash');
 
   const geminiModels = [
-    'Gemini 3.7 Flash',
-    'Gemini 3.6 Flash',
-    'Gemini 3.5 Flash',
-    'Gemini 3.5 Flash-Lite',
-    'Gemini 3.1 Flash-Lite',
-    'Gemini 2.5 Flash',
-    'Gemini 2.5 Flash-Lite',
-    'Gemini 2.5 Pro',
+    'Gemini 3.8 Flash',
+    'Gemini 3.8 Flash-Lite',
+    'Gemini 1.5 Pro',
+    'Gemini 1.5 Flash',
+    'Gemini 1.0 Pro',
     'Nano Banana 2 – gemini-3.1-flash-image',
     'Nano Banana 2 Lite – gemini-3.1-flash-lite-image',
     'Nano Banana – gemini-2.5-flash-image'
@@ -79,7 +76,7 @@ export const GeminiChatbot: React.FC<GeminiChatbotProps> = ({
         id: h.id,
         sender: h.sender,
         text: h.text,
-        timestamp: h.timestamp?.toDate ? h.timestamp.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'
+        timestamp: (h.timestamp as any)?.toDate ? (h.timestamp as any).toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Just now'
       }));
       setMessages(formatted);
     } else {
@@ -104,31 +101,118 @@ I am aware of your live chessboard, active tactical puzzles, and match moves. As
   };
 
   useEffect(() => {
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
     if (isOpen && !isMinimized) {
       scrollToBottom();
       // Auto-focus input when opened
-      setTimeout(() => inputRef.current?.focus(), 100);
+      timeoutId = setTimeout(() => inputRef.current?.focus(), 100);
     }
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
   }, [messages, isOpen, isMinimized]);
 
   const handleSendMessage = async (textToSend?: string) => {
-    const query = (textToSend || inputMessage).trim();
-    if (!query || isLoading) return;
+    const queryStr = (textToSend || inputMessage).trim();
+    if (!queryStr || isLoading) return;
 
-    const userMsgText = query;
+    // Handle Commands
+    if (queryStr.startsWith('/')) {
+      const parts = queryStr.split(' ');
+      const command = parts[0].toLowerCase();
+      const args = parts.slice(1).join(' ');
+
+      if (command === '/clear') {
+        if (user) {
+          await clearGeminiHistory();
+        } else {
+          setMessages([{ id: 'reset', sender: 'gemini', text: 'Chat history cleared. How can I guide your chess strategy today?', timestamp: 'Just now' }]);
+        }
+        setInputMessage('');
+        return;
+      }
+
+      if (command === '/help') {
+        const helpText = chatbotCommands.map(c => `**${c.cmd}**: ${c.desc}`).join('\n');
+        const helpMsg: ChatMessage = {
+          id: `help_${Date.now()}`,
+          sender: 'gemini',
+          text: `Available Commands:\n\n${helpText}`,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        };
+        setMessages(prev => [...prev, helpMsg]);
+        setInputMessage('');
+        return;
+      }
+
+      if (command === '/model') {
+        if (!args) {
+          const modelList = geminiModels.map(m => `• ${m}`).join('\n');
+          const modelMsg: ChatMessage = {
+            id: `model_${Date.now()}`,
+            sender: 'gemini',
+            text: `Current model: **${selectedModel}**\n\nAvailable models:\n${modelList}\n\nUse \`/model <name>\` to switch.`,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          };
+          setMessages(prev => [...prev, modelMsg]);
+        } else {
+          const matchedModel = geminiModels.find(m => m.toLowerCase().includes(args.toLowerCase()));
+          if (matchedModel) {
+            setSelectedModel(matchedModel);
+            const switchMsg: ChatMessage = {
+              id: `switch_${Date.now()}`,
+              sender: 'gemini',
+              text: `Switched to model: **${matchedModel}**`,
+              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            };
+            setMessages(prev => [...prev, switchMsg]);
+          } else {
+            const errMsg: ChatMessage = {
+              id: `err_${Date.now()}`,
+              sender: 'gemini',
+              text: `Model "**${args}**" not found.`,
+              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            };
+            setMessages(prev => [...prev, errMsg]);
+          }
+        }
+        setInputMessage('');
+        return;
+      }
+
+      // Contextual commands continue to the API with specific prompts
+      let contextualQuery = queryStr;
+      if (command === '/analyze') {
+        contextualQuery = `Analyze this FEN position: ${currentFen}. What are the key strategic themes?`;
+      } else if (command === '/suggest') {
+        contextualQuery = `Suggest the next best move for ${currentFen.split(' ')[1] === 'w' ? 'White' : 'Black'} in this position: ${currentFen}.`;
+      } else if (command === '/opening') {
+        contextualQuery = `Explain the opening theory for the current board state. PGN moves so far: ${lastMoves.join(', ')}.`;
+      }
+
+      // Proceed with the contextual query
+      await executeQuery(contextualQuery, queryStr);
+      return;
+    }
+
+    await executeQuery(queryStr);
+  };
+
+  const executeQuery = async (query: string, displayQuery?: string) => {
+    const userMsgText = displayQuery || query;
     if (user) {
       saveGeminiMessage({ sender: 'user', text: userMsgText });
     } else {
       const userMsg: ChatMessage = {
         id: `msg_${Date.now()}`,
         sender: 'user',
-        text: query,
+        text: userMsgText,
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, userMsg]);
     }
 
-    if (!textToSend) setInputMessage('');
+    setInputMessage('');
     setIsLoading(true);
 
     try {
@@ -148,7 +232,7 @@ I am aware of your live chessboard, active tactical puzzles, and match moves. As
             lastMoves,
             gameMode,
             botElo,
-            userRating: user?.stats.rapid || 1650,
+            userRating: user?.stats?.rapid || 1650,
             puzzleTheme,
             puzzleRating,
             tournamentInfo,
@@ -176,8 +260,9 @@ I am aware of your live chessboard, active tactical puzzles, and match moves. As
         };
         setMessages((prev) => [...prev, botMsg]);
       }
-    } catch (err: any) {
-      logger.error('Chat error:', err);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      logger.error('Chat error:', errorMessage);
       const botReply = `In this position (\`${currentFen.split(' ')[0]}\`), maintain central control with pawns and activate your pieces. Keep an eye out for tactical skewers and royal pins!`;
       if (user) {
         saveGeminiMessage({ sender: 'gemini', text: botReply });

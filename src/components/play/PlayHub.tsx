@@ -24,9 +24,8 @@ import {
 import confetti from 'canvas-confetti';
 import { logger } from '../../context/arena-init';
 
-// Chaturanga Logo SVG data URI for Computer Bot avatar
-const CHATURANGA_LOGO_AVATAR = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' stop-color='%232563eb'/%3E%3Cstop offset='50%25' stop-color='%236366f1'/%3E%3Cstop offset='100%25' stop-color='%23dc2626'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' rx='22' fill='%230b1021' stroke='url(%23g)' stroke-width='4'/%3E%3Ccircle cx='50' cy='50' r='36' fill='%23131a33'/%3E%3Cpath d='M25 65 L75 65 L70 42 L58 54 L50 30 L42 54 L30 42 Z' fill='%23fbbf24' stroke='%23f59e0b' stroke-width='2' stroke-linejoin='round'/%3E%3Ccircle cx='50' cy='28' r='4' fill='%23fbbf24'/%3E%3Ccircle cx='29' cy='40' r='3.5' fill='%23fbbf24'/%3E%3Ccircle cx='71' cy='40' r='3.5' fill='%23fbbf24'/%3E%3Ccircle cx='50' cy='58' r='3' fill='%230b1021'/%3E%3C/svg%3E";
-type PlayMode = 'computer' | 'local' | 'online';
+// Chaturanga Logo for Computer Bot avatar
+const CHATURANGA_LOGO_AVATAR = "/chaturanga-crown.png";
 
 export const PlayHub: React.FC = () => {
   const { user, updateRating, addGameRecord } = useAuth();
@@ -146,7 +145,7 @@ export const PlayHub: React.FC = () => {
 
   // Matchmaking timer effect
   useEffect(() => {
-    let interval: any;
+    let interval: ReturnType<typeof setInterval> | undefined;
     if (isMatchmaking) {
       setMatchmakingSearchSeconds(0);
       interval = setInterval(() => {
@@ -155,7 +154,9 @@ export const PlayHub: React.FC = () => {
     } else {
       setMatchmakingSearchSeconds(0);
     }
-    return () => clearInterval(interval);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [isMatchmaking]);
 
   // Clean up matchmaking when leaving component
@@ -195,7 +196,7 @@ export const PlayHub: React.FC = () => {
       const myRating = user ? user.stats.rapid : 1500;
       const myId = user ? user.id : `player_${Math.random().toString(36).slice(2, 9)}`;
       const myName = user ? user.username : 'Chaturanga Player';
-      const myAvatar = user ? user.avatar : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80';
+      const myAvatar = user ? user.avatar : '/chaturanga-crown.png';
 
       const pollMatchmaking = async () => {
         const controller = new AbortController();
@@ -240,10 +241,12 @@ export const PlayHub: React.FC = () => {
           } else {
             setIsMatchmaking(false);
           }
-        } catch (e: any) {
-          if (e.name !== 'AbortError') {
+        } catch (e: unknown) {
+          if (e instanceof Error && e.name !== 'AbortError') {
             logger.error('Matchmaking error:', e);
             setIsMatchmaking(false);
+          } else if (!(e instanceof Error)) {
+             setIsMatchmaking(false);
           }
         }
       };
@@ -435,7 +438,7 @@ export const PlayHub: React.FC = () => {
           id: mode === 'bot' ? 'bot_computer' : 'local_p2',
           name: mode === 'bot' ? 'Computer' : 'Local Warrior',
           rating: mode === 'bot' ? botElo : 1500,
-          avatar: mode === 'bot' ? CHATURANGA_LOGO_AVATAR : 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
+          avatar: mode === 'bot' ? CHATURANGA_LOGO_AVATAR : '/chaturanga-crown.png',
         },
         result: resString,
         reason: result.reason,
@@ -536,7 +539,7 @@ export const PlayHub: React.FC = () => {
             </div>
           </div>
           <div className="mt-4 pt-4 border-t border-slate-800 flex items-center justify-between text-[10px] text-slate-500 font-bold uppercase">
-             <span>v1.5.7 Official</span>
+             <span>v0.9.9 Official</span>
              <span className="text-amber-500/60">FIDE Laws 2026</span>
           </div>
         </div>
@@ -714,7 +717,7 @@ export const PlayHub: React.FC = () => {
                 </div>
               ) : (
                 <img
-                  src={onlineOpponent?.avatar || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80"}
+                  src={onlineOpponent?.avatar || "/chaturanga-crown.png"}
                   alt="Online Opponent"
                   className="w-10 h-10 rounded-xl object-cover ring-1 ring-red-400/60"
                 />
@@ -776,8 +779,7 @@ export const PlayHub: React.FC = () => {
             <div className="flex items-center gap-3">
               <img
                 src={
-                  user?.avatar ||
-                  'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80'
+                  user?.avatar || '/chaturanga-crown.png'
                 }
                 alt="White Player"
                 className="w-10 h-10 rounded-xl object-cover ring-1 ring-blue-400/60"

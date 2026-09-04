@@ -3,9 +3,16 @@ import { BookOpen, Users, Loader2 } from 'lucide-react';
 import { db, logger } from '../../context/arena-init';
 import { collection, getDocs, query, orderBy, limit } from 'firebase/firestore';
 
+interface FamousPlayer {
+  name: string;
+  title: string;
+  rating: number;
+  avatar: string;
+}
+
 // Simple static library page showing a few chess e‑books and popular YouTube channels.
 export const LibraryPage: React.FC = () => {
-  const [famousPlayers, setFamousPlayers] = useState<any[]>([]);
+  const [famousPlayers, setFamousPlayers] = useState<FamousPlayer[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewLimit, setViewLimit] = useState(100);
 
@@ -23,22 +30,28 @@ export const LibraryPage: React.FC = () => {
         setFamousPlayers(players);
       } else {
         // Fallback if DB is empty
-        const fallback = [
-          { name: 'Magnus Carlsen', title: 'GM', rating: 2832, avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=100&q=80' },
-          { name: 'Viswanathan Anand', title: 'GM', rating: 2751, avatar: 'https://images.unsplash.com/photo-1599566150163-29194dcaad36?auto=format&fit=crop&w=100&q=80' },
-          { name: 'Hikaru Nakamura', title: 'GM', rating: 2802, avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80' },
-          { name: 'Alireza Firouzja', title: 'GM', rating: 2737, avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=100&q=80' },
-          { name: 'Rameshbabu Praggnanandhaa', title: 'GM', rating: 2747, avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=100&q=80' },
-          { name: 'Levy Rozman', title: 'IM', rating: 2322, avatar: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=100&q=80' }
-        ];
-        setFamousPlayers(fallback);
+        setFamousPlayers(FALLBACK_LEGENDS);
       }
     } catch (error) {
       logger.error("Error fetching players:", error);
+      setFamousPlayers(FALLBACK_LEGENDS);
     } finally {
       setLoading(false);
     }
   };
+
+  const FALLBACK_LEGENDS = [
+    { name: 'Magnus Carlsen', title: 'GM', rating: 2832, avatar: '/chaturanga-crown.png' },
+    { name: 'Viswanathan Anand', title: 'GM', rating: 2751, avatar: '/chaturanga-crown.png' },
+    { name: 'Hikaru Nakamura', title: 'GM', rating: 2802, avatar: '/chaturanga-crown.png' },
+    { name: 'Garry Kasparov', title: 'GM', rating: 2851, avatar: '/chaturanga-crown.png' },
+    { name: 'Bobby Fischer', title: 'GM', rating: 2785, avatar: '/chaturanga-crown.png' },
+    { name: 'Mikhail Tal', title: 'GM', rating: 2705, avatar: '/chaturanga-crown.png' },
+    { name: 'Judit Polgár', title: 'GM', rating: 2735, avatar: '/chaturanga-crown.png' },
+    { name: 'Anatoly Karpov', title: 'GM', rating: 2780, avatar: '/chaturanga-crown.png' },
+    { name: 'Rameshbabu Praggnanandhaa', title: 'GM', rating: 2747, avatar: '/chaturanga-crown.png' },
+    { name: 'Gukesh D', title: 'GM', rating: 2766, avatar: '/chaturanga-crown.png' }
+  ];
 
   const ebooks = [
     {

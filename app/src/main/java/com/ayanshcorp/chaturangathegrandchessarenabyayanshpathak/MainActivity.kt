@@ -1,6 +1,7 @@
 package com.ayanshcorp.chaturangathegrandchessarenabyayanshpathak
 
 import android.annotation.SuppressLint
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -15,6 +16,11 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -30,29 +36,30 @@ import com.google.firebase.perf.FirebasePerformance
 import com.ayanshcorp.chaturangathegrandchessarenabyayanshpathak.ui.theme.ChaturangaTheme
 
 class MainActivity : ComponentActivity() {
-    private lateinit var firebaseAnalytics: FirebaseAnalytics
+    private var firebaseAnalytics: FirebaseAnalytics? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        // Safety: Offload all non-UI initialization to background
-        Thread {
+        // Safety: Offload all non-UI initialization to background using Coroutines
+        lifecycleScope.launch(Dispatchers.IO) {
             try {
                 // Initialize Firebase with a safe check
-                if (FirebaseApp.getApps(this).isEmpty()) {
-                    FirebaseApp.initializeApp(this)
+                if (FirebaseApp.getApps(this@MainActivity).isEmpty()) {
+                    FirebaseApp.initializeApp(this@MainActivity)
                 }
-                firebaseAnalytics = FirebaseAnalytics.getInstance(this)
-                firebaseAnalytics.logEvent(FirebaseAnalytics.Event.APP_OPEN, null)
+                val analytics = FirebaseAnalytics.getInstance(this@MainActivity)
+                firebaseAnalytics = analytics
+                analytics.logEvent(FirebaseAnalytics.Event.APP_OPEN, null)
                 
                 // Defer heavy metrics to after initial render
-                Thread.sleep(2000)
+                delay(2000.milliseconds)
                 FirebaseCrashlytics.getInstance().isCrashlyticsCollectionEnabled = true
                 FirebasePerformance.getInstance().isPerformanceCollectionEnabled = true
             } catch (e: Exception) {
                 Log.e("MainActivity", "Deferred init failed: ${e.message}")
             }
-        }.start()
+        }
 
         setContent {
             ChaturangaTheme {
@@ -75,7 +82,6 @@ class MainActivity : ComponentActivity() {
 fun ChaturangaWebView(url: String) {
     AndroidView(
         factory = { context ->
-            @SuppressLint("WebViewClientOnRenderProcessGone")
             val assetLoader = WebViewAssetLoader.Builder()
                 .addPathHandler("/", AssetsPathHandler(context))
                 .build()
@@ -90,7 +96,6 @@ fun ChaturangaWebView(url: String) {
                 // so the Compose Surface color shows through immediately
                 setBackgroundColor(0) 
                 
-                @Suppress("DEPRECATION")
                 settings.apply {
                     javaScriptEnabled = true
                     domStorageEnabled = true
@@ -100,28 +105,29 @@ fun ChaturangaWebView(url: String) {
                     useWideViewPort = true
                     loadWithOverviewMode = true
                     
-                    databaseEnabled = true
                     mediaPlaybackRequiresUserGesture = false
                     
                     // Enhancement for modern web features
                     mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
                 }
                 
-                setLayerType(View.LAYER_TYPE_SOFTWARE, null)
+                // Use Hardware Acceleration for smoother rendering
+                setLayerType(View.LAYER_TYPE_HARDWARE, null)
                 
                 webChromeClient = object : WebChromeClient() {}
                 
-                @SuppressLint("WebViewClientOnRenderProcessGone")
-                class ChaturangaWebViewClient : WebViewClient() {
+                @SuppressLint("MissingOnRenderProcessGone")
+                val chaturangaClient = object : WebViewClient() {
                     override fun onRenderProcessGone(
-                        view: WebView?,
-                        detail: RenderProcessGoneDetail?,
+                        view: WebView,
+                        detail: RenderProcessGoneDetail,
                     ): Boolean {
-                        // Crucial safety check: if the web engine crashes, reload it automatically
-                        // to prevent the "app keeps stopping" popup.
-                        Log.e("ChaturangaWebView", "Render process lost. Reloading...")
-                        view?.loadUrl(url)
-                        return true // This tells Android we handled the crash ourselves
+                        val reason = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                            if (detail.didCrash()) "Crash" else "Killed"
+                        } else "Lost"
+                        Log.e("ChaturangaWebView", "Render process lost. Reason: $reason")
+                        view.loadUrl(url)
+                        return true
                     }
 
                     override fun shouldInterceptRequest(
@@ -145,7 +151,7 @@ fun ChaturangaWebView(url: String) {
                     }
                 }
                 
-                webViewClient = ChaturangaWebViewClient()
+                webViewClient = chaturangaClient
                 
                 loadUrl(url)
             }
