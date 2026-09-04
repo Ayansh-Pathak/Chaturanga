@@ -27,14 +27,11 @@ export const ChessPiece: React.FC<ChessPieceProps> = React.memo(({
   const isKnight = type.toLowerCase() === 'n';
   const file = square ? square[0] : '';
 
-  // Knights face each other:
-  // White knights on kingside (e-h files, including g1) face left.
-  // Black knights on queenside (a-d files, including b8) face left.
-  // Base piece faces right, so mirroring (flipping left) is applied to these cases.
-  const shouldMirror = isKnight && (
-    (color === 'w' && file >= 'e') ||
-    (color === 'b' && file && file <= 'd')
-  );
+  // Knights face each other (towards the center files):
+  // Base design faces RIGHT.
+  // Knights on files a-d (including White b1 and Black b8) keep base orientation.
+  // Knights on files e-h (including White g1 and Black g8) are mirrored to face LEFT.
+  const shouldMirror = isKnight && file && file >= 'e';
 
   return (
     <div className={`relative flex items-center justify-center ${className}`}>
