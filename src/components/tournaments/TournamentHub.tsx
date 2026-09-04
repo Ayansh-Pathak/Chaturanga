@@ -30,11 +30,11 @@ import { logger } from '../../context/arena-init';
 
 export const TournamentHub: React.FC = () => {
   const { user } = useAuth();
-const { tournaments } = useTournaments();
+  const { tournaments } = useTournaments();
 
-const currentUserId = user?.id;
-const [isUpdatingMembership, setIsUpdatingMembership] = useState(false);
-const [membershipError, setMembershipError] = useState<string | null>(null);
+  const currentUserId = user?.id;
+  const [isUpdatingMembership, setIsUpdatingMembership] = useState(false);
+  const [membershipError, setMembershipError] = useState<string | null>(null);
 
   const { createTournament, joinTournament, leaveTournament, rejoinTournament, startTournament, simulateNextRound } = useTournaments();
   const { awardTournamentMedal, addGameRecord, updateRating } = useAuth();
@@ -65,6 +65,20 @@ const isParticipant = selectedTournament?.participants?.some(
   const [rounds, setRounds] = useState(5);
   const [isClubOnly, setIsClubOnly] = useState(false);
   const [selectedClubId, setSelectedClubId] = useState<string>(userClubs[0]?.id || clubs[0]?.id || '');
+
+  // Sync selected tournament when tournaments load
+  React.useEffect(() => {
+    if (tournaments.length > 0 && !selectedTournament) {
+      setSelectedTournament(tournaments[0]);
+    }
+  }, [tournaments, selectedTournament]);
+
+  // Sync selected club when clubs load
+  React.useEffect(() => {
+    if (!selectedClubId && (userClubs.length > 0 || clubs.length > 0)) {
+      setSelectedClubId(userClubs[0]?.id || clubs[0]?.id || '');
+    }
+  }, [userClubs, clubs, selectedClubId]);
 
   const showToast = (text: string, type: 'success' | 'error' = 'success') => {
     setToastMessage({ text, type });

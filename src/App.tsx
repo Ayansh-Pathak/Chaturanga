@@ -111,29 +111,13 @@ function ChaturangaApp() {
         }>
           {activeTab === 'play' && <PlayHub />}
 
-          {activeTab === 'puzzles' && (
-            <PuzzleProvider>
-              <PuzzleTrainer />
-            </PuzzleProvider>
-          )}
+          {activeTab === 'puzzles' && <PuzzleTrainer />}
 
-          {activeTab === 'tournaments' && (
-            <TournamentProvider>
-              <TournamentHub />
-            </TournamentProvider>
-          )}
+          {activeTab === 'tournaments' && <TournamentHub />}
 
-          {activeTab === 'clubs' && (
-            <ClubProvider>
-              <ClubsAndTeamsHub />
-            </ClubProvider>
-          )}
+          {activeTab === 'clubs' && <ClubsAndTeamsHub />}
 
-          {activeTab === 'feedback' && (
-            <FeedbackProvider>
-              <FeedbackPage />
-            </FeedbackProvider>
-          )}
+          {activeTab === 'feedback' && <FeedbackPage />}
 
           {activeTab === 'chat' && <PlayerChat />}
           {activeTab === 'profile' && <ProfilePage />}
@@ -180,7 +164,15 @@ function ChaturangaApp() {
 export default function App() {
   return (
     <AuthProvider>
-      <ChaturangaApp />
+      <TournamentProvider>
+        <ClubProvider>
+          <FeedbackProvider>
+            <PuzzleProvider>
+              <ChaturangaApp />
+            </PuzzleProvider>
+          </FeedbackProvider>
+        </ClubProvider>
+      </TournamentProvider>
     </AuthProvider>
   );
 }
