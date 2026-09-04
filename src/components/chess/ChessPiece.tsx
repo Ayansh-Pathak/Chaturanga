@@ -6,6 +6,7 @@ export type PieceColor = 'w' | 'b';
 interface ChessPieceProps {
   type: PieceSymbol;
   color: PieceColor;
+  square?: string;
   className?: string;
   size?: number | string;
 }
@@ -13,6 +14,7 @@ interface ChessPieceProps {
 export const ChessPiece: React.FC<ChessPieceProps> = React.memo(({
   type,
   color,
+  square,
   className = '',
   size = '100%',
 }) => {
@@ -23,6 +25,16 @@ export const ChessPiece: React.FC<ChessPieceProps> = React.memo(({
   const strokeColor = isWhite ? '#2c3345' : '#e2e8f0';
 
   const isKnight = type.toLowerCase() === 'n';
+  const file = square ? square[0] : '';
+
+  // Knights face each other:
+  // White knights on kingside (e-h files, including g1) face left.
+  // Black knights on queenside (a-d files, including b8) face left.
+  // Base piece faces right, so mirroring (flipping left) is applied to these cases.
+  const shouldMirror = isKnight && (
+    (color === 'w' && file >= 'e') ||
+    (color === 'b' && file && file <= 'd')
+  );
 
   return (
     <div className={`relative flex items-center justify-center ${className}`}>
@@ -37,7 +49,7 @@ export const ChessPiece: React.FC<ChessPieceProps> = React.memo(({
           color: strokeColor,
         }}
       >
-        <g transform={isKnight && !isWhite ? "translate(100, 0) scale(-1, 1)" : undefined}>
+        <g transform={shouldMirror ? "translate(100, 0) scale(-1, 1)" : undefined}>
           <use href={`#piece-${type.toLowerCase()}`} />
         </g>
       </svg>

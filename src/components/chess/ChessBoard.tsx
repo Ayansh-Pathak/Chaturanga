@@ -383,6 +383,7 @@ export const ChessBoard: React.FC<ChessBoardProps> = ({
                       <ChessPiece
                         type={piece.type as PieceSymbol}
                         color={piece.color as PieceColor}
+                        square={square}
                       />
                     </div>
                   )}
