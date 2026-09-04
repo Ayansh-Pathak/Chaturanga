@@ -232,7 +232,7 @@ I am aware of your live chessboard, active tactical puzzles, and match moves. As
             lastMoves,
             gameMode,
             botElo,
-            userRating: user?.stats?.rapid || 1650,
+            userRating: user?.stats?.rapid || 1000,
             puzzleTheme,
             puzzleRating,
             tournamentInfo,

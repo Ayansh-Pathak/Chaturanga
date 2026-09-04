@@ -41,16 +41,16 @@ export const PuzzleTrainer: React.FC = () => {
   const [autoAdvance, setAutoAdvance] = useState<boolean>(true);
 
   // Active puzzle game instance & board FEN
-  const [puzzleFen, setPuzzleFen] = useState<string>(currentPuzzle.fen);
+  const [puzzleFen, setPuzzleFen] = useState<string>(currentPuzzle?.fen || 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1');
   const [puzzleLastMove, setPuzzleLastMove] = useState<{ from: Square; to: Square } | null>(null);
   const [puzzleKey, setPuzzleKey] = useState<number>(1);
   const [moveIndex, setMoveIndex] = useState<number>(0);
   const [status, setStatus] = useState<'solving' | 'correct' | 'failed' | 'skipped'>('solving');
   const [hintUsed, setHintUsed] = useState<boolean>(false);
-  const [streak, setStreak] = useState<number>(user?.stats.puzzleStreak || 0);
+  const [streak, setStreak] = useState<number>(user?.stats?.puzzleStreak || 0);
   const [isBotResponding, setIsBotResponding] = useState<boolean>(false);
 
-  const chessRef = useRef<Chess>(new Chess(currentPuzzle.fen));
+  const chessRef = useRef<Chess>(new Chess(currentPuzzle?.fen || 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'));
 
   const tacticalThemes = [
     'All',
@@ -158,12 +158,13 @@ export const PuzzleTrainer: React.FC = () => {
   };
 
   const getFormattedSolutionMoves = () => {
+    if (!currentPuzzle) return [];
     const moves: { num: number; white: string; black?: string }[] = [];
     const isWhite = currentPuzzle.toMove === 'w';
     let moveNum = 1;
     let idx = 0;
 
-    if (!isWhite) {
+    if (!isWhite && currentPuzzle.solution.length > 0) {
       moves.push({
         num: moveNum,
         white: '...',
@@ -353,7 +354,7 @@ export const PuzzleTrainer: React.FC = () => {
           <div className="flex-1 lg:flex-none p-3.5 rounded-2xl bg-[#080d1a]/90 border border-blue-500/30 text-center min-w-[105px]">
             <span className="text-[10px] font-bold uppercase text-slate-400 block">Puzzle Rating</span>
             <strong className="text-base font-black text-blue-400 font-mono">
-              ⚡ {user?.stats.puzzle || 1740}
+              ⚡ {user?.stats.puzzle || 1000}
             </strong>
           </div>
 
@@ -658,7 +659,7 @@ export const PuzzleTrainer: React.FC = () => {
               </div>
             )}
 
-            {hintUsed && (
+            {hintUsed && currentPuzzle && (
               <div className="p-3 rounded-xl bg-blue-950/40 border border-blue-500/30 text-xs text-blue-200">
                 💡 <strong>Grandmaster Hint:</strong> Look for {currentPuzzle.themes.join(' or ')} on move 1: <code className="text-amber-300 font-mono font-bold">{currentPuzzle.solution[0]}</code>
               </div>

@@ -148,8 +148,8 @@ app.post("/api/gemini/analyze", async (req, res) => {
       moves = [],
       finalFen,
       playerColor = "w",
-      userRating = 1650,
-      botElo = 1500,
+      userRating = 1000,
+      botElo = 1000,
       gameResult = "1-0",
       timeControl = "5+0",
     } = req.body;
@@ -281,7 +281,7 @@ function purgeStaleTickets() {
 app.get("/api/matchmake/status", (req, res) => {
   purgeStaleTickets();
   const timeControl = req.query.timeControl as string;
-  const rating = Number(req.query.rating) || 1500;
+  const rating = Number(req.query.rating) || 1000;
   
   const activeInTc = matchmakingQueue.filter(p => !timeControl || p.timeControl === timeControl);
   const activeInDeviation = activeInTc.filter(p => Math.abs(p.rating - rating) <= 20);
@@ -303,7 +303,7 @@ app.post("/api/matchmake", (req, res) => {
   const now = Date.now();
   purgeStaleTickets();
 
-  const userRating = Number(rating) || 1500;
+  const userRating = Number(rating) || 1000;
 
   // Search for an active player who clicked 'Play Online' in last 5 min with same timeControl & Elo within 20 points
   const matchIndex = matchmakingQueue.findIndex(p =>

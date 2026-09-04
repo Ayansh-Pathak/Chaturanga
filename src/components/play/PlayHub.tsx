@@ -31,7 +31,7 @@ export const PlayHub: React.FC = () => {
   const { user, updateRating, addGameRecord } = useAuth();
 
   const [mode, setMode] = useState<'bot' | 'local' | 'online'>('bot');
-  const [botElo, setBotElo] = useState<number>(1500);
+  const [botElo, setBotElo] = useState<number>(1000);
   const [boardTheme, setBoardTheme] = useState<BoardTheme>('classic');
   const [gameKey, setGameKey] = useState<number>(1);
   const [moveHistory, setMoveHistory] = useState<string[]>([]);
@@ -193,7 +193,7 @@ export const PlayHub: React.FC = () => {
       setMatchmakingStatusText('Searching for real players (active in last 5m, ±20 Elo)...');
 
       const tc = isCustomTime ? `${customMinutes}+${customIncrement}` : selectedTimeControl;
-      const myRating = user ? user.stats.rapid : 1500;
+      const myRating = user ? user.stats.rapid : 1000;
       const myId = user ? user.id : `player_${Math.random().toString(36).slice(2, 9)}`;
       const myName = user ? user.username : 'Chaturanga Player';
       const myAvatar = user ? user.avatar : '/chaturanga-crown.png';
@@ -282,7 +282,7 @@ export const PlayHub: React.FC = () => {
     if (gameStatus || chessRef.current.isGameOver()) return;
     setIsBotThinking(true);
 
-    const thinkTime = Math.min(1500, Math.max(400, 300 + (botElo / 3000) * 800));
+    const thinkTime = Math.min(1000, Math.max(400, 300 + (botElo / 3000) * 800));
 
     setTimeout(() => {
       try {
@@ -437,7 +437,7 @@ export const PlayHub: React.FC = () => {
         black: {
           id: mode === 'bot' ? 'bot_computer' : 'local_p2',
           name: mode === 'bot' ? 'Computer' : 'Local Warrior',
-          rating: mode === 'bot' ? botElo : 1500,
+          rating: mode === 'bot' ? botElo : 1000,
           avatar: mode === 'bot' ? CHATURANGA_LOGO_AVATAR : '/chaturanga-crown.png',
         },
         result: resString,
@@ -744,7 +744,7 @@ export const PlayHub: React.FC = () => {
                   )}
                 </div>
                 <div className="flex items-center gap-2 text-[10px] text-slate-400 font-mono">
-                  <span>⚡ {mode === 'bot' ? botElo : mode === 'online' ? (onlineOpponent ? onlineOpponent.rating : '?') : 1500} Elo</span>
+                  <span>⚡ {mode === 'bot' ? botElo : mode === 'online' ? (onlineOpponent ? onlineOpponent.rating : '?') : 1000} Elo</span>
                 </div>
               </div>
             </div>
@@ -793,7 +793,7 @@ export const PlayHub: React.FC = () => {
                   </span>
                 </div>
                 <span className="text-[10px] text-blue-400 font-mono">
-                  ⚡ {user?.stats.rapid || 1650} Elo
+                  ⚡ {user?.stats.rapid || 1000} Elo
                 </span>
               </div>
             </div>
@@ -895,7 +895,7 @@ export const PlayHub: React.FC = () => {
               <div className="space-y-2">
                 <div className="flex justify-between text-[10px] text-slate-400 font-mono">
                   <span>400 (Beginner)</span>
-                  <span>1500 (Club)</span>
+                  <span>1000 (Club)</span>
                   <span>3000 (Grandmaster)</span>
                 </div>
                 <input
@@ -1156,7 +1156,7 @@ export const PlayHub: React.FC = () => {
                 <div>
                   <span className="text-[10px] text-slate-400 uppercase font-bold block">Elo Target</span>
                   <span className="font-mono font-bold text-amber-300">
-                    {(user ? user.stats.rapid : 1500) - 20} – {(user ? user.stats.rapid : 1500) + 20}
+                    {(user ? user.stats.rapid : 1000) - 20} – {(user ? user.stats.rapid : 1000) + 20}
                   </span>
                   <span className="text-[10px] text-slate-500 block">(±20 deviation)</span>
                 </div>
@@ -1198,8 +1198,8 @@ export const PlayHub: React.FC = () => {
         pgn={lastPgn || '1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5'}
         whitePlayerName={user?.username || 'Player 1'}
         blackPlayerName={mode === 'bot' ? 'Computer' : 'Player 2'}
-        whiteRating={user?.stats.rapid || 1650}
-        blackRating={mode === 'bot' ? botElo : 1500}
+        whiteRating={user?.stats.rapid || 1000}
+        blackRating={mode === 'bot' ? botElo : 1000}
         timeControl={isCustomTime ? `${customMinutes}+${customIncrement}` : selectedTimeControl}
         gameResult={gameResult}
         reason={gameStatus || 'Game in progress'}

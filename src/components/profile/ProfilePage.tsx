@@ -138,10 +138,10 @@ export const ProfilePage: React.FC = () => {
   const chartData = user.ratingHistory?.length
     ? user.ratingHistory
     : [
-        { date: 'Aug 1', rapid: 1400, blitz: 1350, bullet: 1300, puzzle: 1450 },
-        { date: 'Aug 8', rapid: 1480, blitz: 1420, bullet: 1370, puzzle: 1520 },
-        { date: 'Aug 15', rapid: 1550, blitz: 1500, bullet: 1440, puzzle: 1610 },
-        { date: 'Aug 22', rapid: 1610, blitz: 1550, bullet: 1490, puzzle: 1680 },
+        { date: 'Aug 1', rapid: 1000, blitz: 1000, bullet: 1000, puzzle: 1000 },
+        { date: 'Aug 8', rapid: 1080, blitz: 1020, bullet: 1070, puzzle: 1120 },
+        { date: 'Aug 15', rapid: 1150, blitz: 1100, bullet: 1140, puzzle: 1210 },
+        { date: 'Aug 22', rapid: 1210, blitz: 1150, bullet: 1190, puzzle: 1280 },
         { date: 'Aug 25', rapid: user.stats.rapid, blitz: user.stats.blitz, bullet: user.stats.bullet, puzzle: user.stats.puzzle },
       ];
 

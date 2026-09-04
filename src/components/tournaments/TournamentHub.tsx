@@ -188,7 +188,7 @@ const isParticipant = selectedTournament?.participants?.some(
 
         // Trigger tournament bot response
         setIsOpponentThinking(true);
-        const oppRating = opponentBot?.rating || 1650;
+        const oppRating = opponentBot?.rating || 1000;
         const thinkTime = Math.min(1200, Math.max(400, 300 + (oppRating / 3000) * 700));
 
         setTimeout(() => {
@@ -248,7 +248,7 @@ const isParticipant = selectedTournament?.participants?.some(
     // Record game
     addGameRecord({
       white: { id: user.id, name: user.username, rating: user.stats.rapid, avatar: user.avatar },
-      black: { id: 'bot_opp', name: opponentBot?.name || 'Computer', rating: opponentBot?.rating || 1500, avatar: opponentBot?.avatar || '/chaturanga-crown.png' },
+      black: { id: 'bot_opp', name: opponentBot?.name || 'Computer', rating: opponentBot?.rating || 1000, avatar: opponentBot?.avatar || '/chaturanga-crown.png' },
       result: isWin ? '1-0' : (isLoss ? '0-1' : '1/2-1/2'),
       reason: result.reason,
       timeControl: selectedTournament.timeControl,
@@ -476,7 +476,7 @@ const isParticipant = selectedTournament?.participants?.some(
                         {selectedTournament.name} — Round {selectedTournament.currentRound}
                       </h3>
                       <p className="text-xs text-slate-400">
-                        Match vs {opponentBot?.name || 'Grandmaster'} ({opponentBot?.rating || 1650} Elo)
+                        Match vs {opponentBot?.name || 'Grandmaster'} ({opponentBot?.rating || 1000} Elo)
                       </p>
                     </div>
                   </div>
@@ -652,7 +652,7 @@ const isParticipant = selectedTournament?.participants?.some(
 
                     {selectedTournament.status !== 'completed' && isUserInSelectedTour && (
                       <button
-                        onClick={() => handleStartMatch({ name: 'Computer', rating: user?.stats.rapid || 1500, avatar: '/chaturanga-crown.png' })}
+                        onClick={() => handleStartMatch({ name: 'Computer', rating: user?.stats.rapid || 1000, avatar: '/chaturanga-crown.png' })}
                         className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-red-600 hover:from-blue-500 hover:to-red-500 text-white font-black text-xs flex items-center gap-1.5 shadow-md active:scale-95 border border-blue-400/30"
                       >
                         <Swords size={14} /> Play Match
