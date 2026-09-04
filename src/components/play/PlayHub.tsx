@@ -460,8 +460,8 @@ export const PlayHub: React.FC = () => {
 
   const getBotTitle = (elo: number) => {
     if (elo < 800) return 'Beginner';
-    if (elo < 1200) return 'Casual';
-    if (elo < 1500) return 'Club Player';
+    if (elo < 1000) return 'Casual';
+    if (elo < 1400) return 'Club Player';
     if (elo < 1800) return 'Intermediate';
     if (elo < 2100) return 'Expert';
     if (elo < 2400) return 'Master';
@@ -916,7 +916,7 @@ export const PlayHub: React.FC = () => {
               <div className="grid grid-cols-4 gap-1.5 pt-1">
                 {[
                   { label: '800', val: 800 },
-                  { label: '1200', val: 1200 },
+                  { label: '1000', val: 1000 },
                   { label: '1600', val: 1600 },
                   { label: '2400', val: 2400 },
                 ].map((preset) => (

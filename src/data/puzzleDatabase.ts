@@ -515,7 +515,7 @@ const templates: PuzzleTemplate[] = [
     fenPattern: "r1bqk2r/pp2bppp/2np1n2/2p1p3/4P3/P1PP1N2/1PB2PPP/RNBQ1RK1 b kq - 0 8",
     solutionGen: () => ["O-O", "h3", "Be6"],
     theme: ["Prophylaxis", "Safety"],
-    ratingBase: 1200,
+    ratingBase: 1000,
     toMove: "b",
     titleBase: "Standard Castle",
     descBase: "Black to move. Complete kingside development."

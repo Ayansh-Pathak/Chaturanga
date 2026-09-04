@@ -72,8 +72,8 @@ export const PuzzleTrainer: React.FC = () => {
 
   const ratingRanges = [
     { label: 'All Ratings (800 - 2650+)', min: 0, max: 9999 },
-    { label: 'Beginner (800 - 1199)', min: 800, max: 1199 },
-    { label: 'Intermediate (1200 - 1599)', min: 1200, max: 1599 },
+    { label: 'Beginner (800 - 999)', min: 800, max: 999 },
+    { label: 'Intermediate (1000 - 1599)', min: 1000, max: 1599 },
     { label: 'Advanced (1600 - 1999)', min: 1600, max: 1999 },
     { label: 'Master / GM (2000+)', min: 2000, max: 9999 },
   ];

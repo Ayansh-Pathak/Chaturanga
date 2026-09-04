@@ -97,7 +97,7 @@ export const ClubProvider: React.FC<{ children: React.ReactNode }> = ({ children
           userId: user ? user.id : 'guest',
           username: user ? user.username : 'Guest Player',
           avatar: user ? user.avatar : 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80',
-          rating: user ? user.stats.rapid : 1200,
+          rating: user ? user.stats.rapid : 1000,
           role: 'owner',
           joinedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
         }

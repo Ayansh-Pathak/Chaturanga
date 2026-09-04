@@ -256,10 +256,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         bio: 'Practicing tactical maneuvers and king defenses.',
         joinedDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
         stats: {
-          rapid: 1200,
-          blitz: 1200,
-          bullet: 1200,
-          puzzle: 1200,
+          rapid: 1000,
+          blitz: 1000,
+          bullet: 1000,
+          puzzle: 1000,
           gamesPlayed: 0,
           wins: 0,
           losses: 0,
@@ -271,7 +271,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           bestPuzzleStreak: 0
         },
         ratingHistory: [
-          { date: 'Today', rapid: 1200, blitz: 1200, bullet: 1200, puzzle: 1200 }
+          { date: 'Today', rapid: 1000, blitz: 1000, bullet: 1000, puzzle: 1000 }
         ],
         tournamentMedals: [],
         ratingMedals: [],
@@ -683,10 +683,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           bio: 'Practicing tactical maneuvers and king defenses.',
           joinedDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
           stats: {
-            rapid: 1200,
-            blitz: 1200,
-            bullet: 1200,
-            puzzle: 1200,
+            rapid: 1000,
+            blitz: 1000,
+            bullet: 1000,
+            puzzle: 1000,
             gamesPlayed: 0,
             wins: 0,
             losses: 0,
@@ -698,7 +698,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             bestPuzzleStreak: 0
           },
           ratingHistory: [
-            { date: 'Today', rapid: 1200, blitz: 1200, bullet: 1200, puzzle: 1200 }
+            { date: 'Today', rapid: 1000, blitz: 1000, bullet: 1000, puzzle: 1000 }
           ],
           tournamentMedals: [],
           ratingMedals: [],
@@ -738,10 +738,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         bio: 'Exploring the arena as a guest warrior.',
         joinedDate: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
         stats: {
-          rapid: 1200,
-          blitz: 1200,
-          bullet: 1200,
-          puzzle: 1200,
+          rapid: 1000,
+          blitz: 1000,
+          bullet: 1000,
+          puzzle: 1000,
           gamesPlayed: 0,
           wins: 0,
           losses: 0,
@@ -753,7 +753,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           bestPuzzleStreak: 0
         },
         ratingHistory: [
-          { date: 'Today', rapid: 1200, blitz: 1200, bullet: 1200, puzzle: 1200 }
+          { date: 'Today', rapid: 1000, blitz: 1000, bullet: 1000, puzzle: 1000 }
         ],
         tournamentMedals: [],
         ratingMedals: [],
