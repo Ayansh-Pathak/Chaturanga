@@ -1,0 +1,1 @@
+const o=typeof window<"u"&&(window.location.hostname.endsWith("github.io")||window.location.hostname.endsWith("netlify.app")||window.location.hostname.endsWith("pages.dev"));function i(n){return o?null:n}export{i as a};
