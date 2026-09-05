@@ -62,7 +62,11 @@ const COUNTRY_OPTIONS = [
   { name: 'China', flag: '🇨🇳' },
 ];
 
-export const ProfilePage: React.FC = () => {
+interface ProfilePageProps {
+  onViewPrivacy?: () => void;
+}
+
+export const ProfilePage: React.FC<ProfilePageProps> = ({ onViewPrivacy }) => {
   const { user, updateEmail, revertEmail, updateProfile, gameHistory, updateStoragePreference } = useAuth();
 
   const [activeSubTab, setActiveSubTab] = useState<'trophies' | 'ratings' | 'graph' | 'history' | 'settings'>('trophies');
@@ -599,6 +603,17 @@ export const ProfilePage: React.FC = () => {
               >
                 Confirm & Update Email with Current Password
               </button>
+
+              <div className="pt-4 flex justify-center">
+                <button
+                  type="button"
+                  onClick={onViewPrivacy}
+                  className="flex items-center gap-2 text-[10px] font-bold text-slate-500 hover:text-blue-400 transition-colors uppercase tracking-widest"
+                >
+                  <Shield size={12} />
+                  View Privacy Policy
+                </button>
+              </div>
             </form>
 
             {/* Storage Preference Section */}

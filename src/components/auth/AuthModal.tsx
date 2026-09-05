@@ -6,6 +6,7 @@ import { X, Lock, Mail, User, ShieldCheck, RefreshCw, KeyRound } from 'lucide-re
 interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onViewPrivacy?: () => void;
   initialMode?: 'login' | 'signup' | 'change_email';
 }
 
@@ -23,6 +24,7 @@ const AVATAR_OPTIONS = [
 export const AuthModal: React.FC<AuthModalProps> = ({
   isOpen,
   onClose,
+  onViewPrivacy,
   initialMode = 'login',
 }) => {
   const { user, login, signup, updateEmail, revertEmail, loginWithGoogle, loginAsGuest, sendPasswordReset, sendVerification } = useAuth();
@@ -233,6 +235,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
               Sign In to Chaturanga
             </button>
 
+            <p className="text-[10px] text-slate-500 text-center px-4 leading-relaxed">
+              By signing in, you accept our <button type="button" onClick={onViewPrivacy} className="text-blue-400 font-bold hover:underline">Privacy Policy</button>. We improve the app using analytics data.
+            </p>
+
             <div className="flex justify-between items-center text-xs text-blue-400 mt-2 px-1">
               <button
                 type="button"
@@ -363,6 +369,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             >
               Create Account & Enter Arena
             </button>
+
+            <p className="text-[10px] text-slate-500 text-center px-4 leading-relaxed">
+              By clicking "Create Account", you accept our <button type="button" onClick={onViewPrivacy} className="text-blue-400 font-bold hover:underline">Privacy Policy</button>. We collect engagement data via Google Analytics and Firebase.
+            </p>
 
             <button
               type="button"

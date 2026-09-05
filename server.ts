@@ -2,7 +2,6 @@ import express from "express";
 import path from "path";
 import dotenv from "dotenv";
 import { GoogleGenAI } from "@google/genai";
-import { createServer as createViteServer } from "vite";
 
 dotenv.config();
 
@@ -396,24 +395,34 @@ app.post("/api/matchmake/cancel", (req, res) => {
 });
 
 // Vite middleware for development & static file handling for production
-async function startServer() {
+export async function startServer(port?: number): Promise<{ port: number }> {
+  const actualPort = port || PORT;
+
   if (process.env.NODE_ENV !== "production") {
+    const { createServer: createViteServer } = await import("vite");
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), "dist");
+    // Use __dirname for packaged app compatibility (pkg, Electron)
+    const distPath = path.join(__dirname, "..", "dist");
     app.use(express.static(distPath));
     app.get("*", (_req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Chaturanga server running on http://localhost:${PORT}`);
+  return new Promise((resolve) => {
+    app.listen(actualPort, "0.0.0.0", () => {
+      console.log(`Chaturanga server running on http://localhost:${actualPort}`);
+      resolve({ port: actualPort });
+    });
   });
 }
 
-startServer();
+// Auto-start when run directly (not when imported by Electron)
+if (!process.env.CHATURANGA_ELECTRON) {
+  startServer();
+}

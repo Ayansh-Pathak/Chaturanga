@@ -4,6 +4,10 @@ var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
 var __copyProps = (to, from, except, desc) => {
   if (from && typeof from === "object" || typeof from === "function") {
     for (let key of __getOwnPropNames(from))
@@ -20,13 +24,18 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
   isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
   mod
 ));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
 // server.ts
+var server_exports = {};
+__export(server_exports, {
+  startServer: () => startServer
+});
+module.exports = __toCommonJS(server_exports);
 var import_express = __toESM(require("express"), 1);
 var import_path = __toESM(require("path"), 1);
 var import_dotenv = __toESM(require("dotenv"), 1);
 var import_genai = require("@google/genai");
-var import_vite = require("vite");
 import_dotenv.default.config();
 var app = (0, import_express.default)();
 var PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3e3;
@@ -51,9 +60,29 @@ app.get("/api/health", (_req, res) => {
 });
 app.post("/api/gemini/chat", async (req, res) => {
   try {
-    const { message, history = [], context = {} } = req.body;
+    const { message, model, history = [], context = {} } = req.body;
     if (!message || typeof message !== "string") {
       return res.status(400).json({ error: "Message is required" });
+    }
+    let modelId = "gemini-1.5-flash";
+    if (model) {
+      const lowerModel = model.toLowerCase();
+      if (lowerModel.includes("3.8 flash-lite")) modelId = "gemini-3.8-flash-lite";
+      else if (lowerModel.includes("3.8 flash")) modelId = "gemini-3.8-flash";
+      else if (lowerModel.includes("3.7 flash")) modelId = "gemini-3.7-flash";
+      else if (lowerModel.includes("3.6 flash")) modelId = "gemini-3.6-flash";
+      else if (lowerModel.includes("3.5 flash-lite")) modelId = "gemini-3.5-flash-lite";
+      else if (lowerModel.includes("3.5 flash")) modelId = "gemini-3.5-flash";
+      else if (lowerModel.includes("3.1 flash-lite")) modelId = "gemini-3.1-flash-lite";
+      else if (lowerModel.includes("2.5 flash-lite")) modelId = "gemini-2.5-flash-lite";
+      else if (lowerModel.includes("2.5 flash")) modelId = "gemini-2.5-flash";
+      else if (lowerModel.includes("2.5 pro")) modelId = "gemini-2.5-pro";
+      else if (lowerModel.includes("1.5 pro")) modelId = "gemini-1.5-pro";
+      else if (lowerModel.includes("1.5 flash")) modelId = "gemini-1.5-flash";
+      else if (lowerModel.includes("1.0 pro")) modelId = "gemini-1.0-pro";
+      else if (lowerModel.includes("nano banana 2 lite")) modelId = "gemini-3.1-flash-lite";
+      else if (lowerModel.includes("nano banana 2")) modelId = "gemini-3.1-flash";
+      else if (lowerModel.includes("nano banana")) modelId = "gemini-2.5-flash";
     }
     const {
       currentFen,
@@ -119,7 +148,7 @@ I am your Grandmaster AI coach. Based on your current position (${currentFen ? `
 ` : ""}User: ${message}
 Chaturanga GM:`;
     const response = await ai.models.generateContent({
-      model: "gemini-1.5-flash",
+      model: modelId,
       contents: [{ role: "user", parts: [{ text: fullPrompt }] }],
       config: {
         systemInstruction,
@@ -143,8 +172,8 @@ app.post("/api/gemini/analyze", async (req, res) => {
       moves = [],
       finalFen,
       playerColor = "w",
-      userRating = 1650,
-      botElo = 1500,
+      userRating = 1e3,
+      botElo = 1e3,
       gameResult = "1-0",
       timeControl = "5+0"
     } = req.body;
@@ -249,7 +278,7 @@ function purgeStaleTickets() {
 app.get("/api/matchmake/status", (req, res) => {
   purgeStaleTickets();
   const timeControl = req.query.timeControl;
-  const rating = Number(req.query.rating) || 1500;
+  const rating = Number(req.query.rating) || 1e3;
   const activeInTc = matchmakingQueue.filter((p) => !timeControl || p.timeControl === timeControl);
   const activeInDeviation = activeInTc.filter((p) => Math.abs(p.rating - rating) <= 20);
   res.json({
@@ -266,7 +295,7 @@ app.post("/api/matchmake", (req, res) => {
   }
   const now = Date.now();
   purgeStaleTickets();
-  const userRating = Number(rating) || 1500;
+  const userRating = Number(rating) || 1e3;
   const matchIndex = matchmakingQueue.findIndex(
     (p) => p.id !== id && p.timeControl === timeControl && Math.abs(p.rating - userRating) <= 20 && now - p.timestamp <= 5 * 60 * 1e3
   );
@@ -283,7 +312,7 @@ app.post("/api/matchmake", (req, res) => {
           id,
           name: name || "Grandmaster",
           rating: userRating,
-          avatar: avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
+          avatar: avatar || "/chaturanga-crown.png",
           country: country || "\u{1F30D}"
         }
       });
@@ -313,7 +342,7 @@ app.post("/api/matchmake", (req, res) => {
     name: name || "Player",
     rating: userRating,
     timeControl,
-    avatar: avatar || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=200&q=80",
+    avatar: avatar || "/chaturanga-crown.png",
     country: country || "\u{1F30D}",
     timestamp: now,
     res
@@ -340,23 +369,34 @@ app.post("/api/matchmake/cancel", (req, res) => {
   }
   res.json({ success: true, message: "Removed from matchmaking queue" });
 });
-async function startServer() {
+async function startServer(port) {
+  const actualPort = port || PORT;
   if (process.env.NODE_ENV !== "production") {
-    const vite = await (0, import_vite.createServer)({
+    const { createServer: createViteServer } = await import("vite");
+    const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa"
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = import_path.default.join(process.cwd(), "dist");
+    const distPath = import_path.default.join(__dirname, "..", "dist");
     app.use(import_express.default.static(distPath));
     app.get("*", (_req, res) => {
       res.sendFile(import_path.default.join(distPath, "index.html"));
     });
   }
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`Chaturanga server running on http://localhost:${PORT}`);
+  return new Promise((resolve) => {
+    app.listen(actualPort, "0.0.0.0", () => {
+      console.log(`Chaturanga server running on http://localhost:${actualPort}`);
+      resolve({ port: actualPort });
+    });
   });
 }
-startServer();
+if (!process.env.CHATURANGA_ELECTRON) {
+  startServer();
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (module.exports = {
+  startServer
+});
 //# sourceMappingURL=server.cjs.map

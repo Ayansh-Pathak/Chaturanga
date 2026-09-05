@@ -6,6 +6,7 @@ import { FeedbackProvider } from './context/FeedbackContext';
 import { PuzzleProvider } from './context/PuzzleContext';
 import { Navbar } from './components/layout/Navbar';
 import { AuthModal } from './components/auth/AuthModal';
+import { PrivacyPolicyModal } from './components/layout/PrivacyPolicyModal';
 import { useAuth } from './context/AuthContext';
 import { Crown } from 'lucide-react';
 import { PieceSpriteSheet } from './components/chess/ChessPieceLibrary';
@@ -36,6 +37,7 @@ function ChaturangaApp() {
   const { loading, setLoading, loginAsGuest } = useAuth();
   const [activeTab, setActiveTab] = useState<TabId>(getInitialTab);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
   const [showRescueButton, setShowRescueButton] = useState(false);
   const [isDashboardReady, setIsDashboardReady] = useState(false);
 
@@ -120,7 +122,7 @@ function ChaturangaApp() {
           {activeTab === 'feedback' && <FeedbackPage />}
 
           {activeTab === 'chat' && <PlayerChat />}
-          {activeTab === 'profile' && <ProfilePage />}
+          {activeTab === 'profile' && <ProfilePage onViewPrivacy={() => setIsPrivacyOpen(true)} />}
           {activeTab === 'library' && <LibraryPage />}
         </Suspense>
       </main>
@@ -136,8 +138,14 @@ function ChaturangaApp() {
               <span>— The Ancient Origin of Chess under FIDE Laws</span>
             </div>
 
-            <div className="text-[11px] text-slate-400">
-              v1.0.00• Featuring Elephant Head Bishops & Crown Kings • Elo Rating System • Official Medals
+            <div className="text-[11px] text-slate-400 flex flex-wrap items-center gap-x-4 gap-y-2">
+              <span>v1.0.00 • Featuring Elephant Head Bishops & Crown Kings • Elo Rating System • Official Medals</span>
+              <button
+                onClick={() => setIsPrivacyOpen(true)}
+                className="text-blue-400 hover:text-blue-300 hover:underline transition-colors font-bold uppercase tracking-wider text-[9px]"
+              >
+                Privacy Policy
+              </button>
             </div>
           </div>
         </footer>
@@ -148,6 +156,7 @@ function ChaturangaApp() {
         <AuthModal
           isOpen={isAuthOpen}
           onClose={() => setIsAuthOpen(false)}
+          onViewPrivacy={() => setIsPrivacyOpen(true)}
         />
       )}
 
@@ -157,6 +166,12 @@ function ChaturangaApp() {
           <GeminiChatbot gameMode={activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} />
         </Suspense>
       )}
+
+      {/* Privacy Policy Modal */}
+      <PrivacyPolicyModal
+        isOpen={isPrivacyOpen}
+        onClose={() => setIsPrivacyOpen(false)}
+      />
     </div>
   );
 }
